@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class DamageCalculationConfig:
-    attack_scaling: float
-    defense_scaling: float
+    ad_diff_scaling: float
+    ad_parity_dmg: float
     random_factor_max: float
     random_factor_min: float
     llm_dmg_impact: int
@@ -160,8 +160,8 @@ class DamageCalculator:
         self,
         game_config: GameConfig,
     ):
-        self.attack_scaling = game_config.damage_calculation.attack_scaling
-        self.defense_scaling = game_config.damage_calculation.defense_scaling
+        self.ad_diff_scaling = game_config.damage_calculation.ad_diff_scaling
+        self.ad_parity_dmg = game_config.damage_calculation.ad_parity_dmg
         self.random_factor_max = game_config.damage_calculation.random_factor_max
         self.random_factor_min = game_config.damage_calculation.random_factor_min
         self.llm_dmg_impact = game_config.damage_calculation.llm_dmg_impact
@@ -248,7 +248,7 @@ class DamageCalculator:
         random_factor = random.uniform(self.random_factor_min, self.random_factor_max)
         base_dmg = max(
             1,
-            (attack * self.attack_scaling - defense * self.defense_scaling)
+            (self.ad_parity_dmg + (self.ad_diff_scaling * (attack - defense)))
             * random_factor,
         )
 

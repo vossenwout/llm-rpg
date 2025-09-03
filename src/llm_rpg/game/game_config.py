@@ -157,8 +157,8 @@ class GameConfig:
     @cached_property
     def damage_calculation(self) -> DamageCalculationConfig:
         return DamageCalculationConfig(
-            attack_scaling=self.game_config["damage_calculator"]["attack_scaling"],
-            defense_scaling=self.game_config["damage_calculator"]["defense_scaling"],
+            ad_diff_scaling=self.game_config["damage_calculator"]["ad_diff_scaling"],
+            ad_parity_dmg=self.game_config["damage_calculator"]["ad_parity_dmg"],
             random_factor_max=self.game_config["damage_calculator"][
                 "random_factor_max"
             ],

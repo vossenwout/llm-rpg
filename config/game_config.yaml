@@ -64,8 +64,8 @@ enemy:
     focus: 10
     max_hp: 5
 damage_calculator:
-  attack_scaling: 0.5
-  defense_scaling: 0.25
+  ad_diff_scaling: 0.5
+  ad_parity_dmg: 1.25
   random_factor_max: 1.05
   random_factor_min: 0.95
   llm_dmg_impact: 2
