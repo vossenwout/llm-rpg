@@ -34,11 +34,13 @@ LLM-RPG is intended to be a role-playing game that leverages large language mode
    poetry install
    ```
 
-3. Set up your environment variables. You need to set the `GROQ_API_KEY` to use a GroqLLM model. You can do this by creating a `.env` file in the `config` directory:
+3. Set up your environment variables. You need to set the `GROQ_API_KEY` to use a GroqLLM model. You can do this by creating a `.env` file in the project root directory:
 
    ```plaintext
    GROQ_API_KEY=your_api_key_here
    ```
+
+4. Install the `poetry-dotenv-plugin`: `poetry self add poetry-dotenv-plugin`
 
 You can get a Groq API key from [here](https://groq.com/). This gives you free tokens each day.
 
