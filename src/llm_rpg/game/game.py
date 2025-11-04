@@ -1,10 +1,12 @@
 from __future__ import annotations
+import pygame
 from llm_rpg.game.game_config import GameConfig
 from llm_rpg.scenes.factory import SceneFactory
 from llm_rpg.systems.hero.hero import Hero
 
 from typing import TYPE_CHECKING
 from llm_rpg.scenes.scene import SceneTypes
+from llm_rpg.utils.theme import Theme
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.scene import Scene
@@ -26,6 +28,12 @@ class Game:
         self.scene_factory = SceneFactory(self)
         self.current_scene: Scene = self.scene_factory.get_initial_scene()
         self.battles_won = 0
+        # pygame initialization
+        pygame.init()
+        pygame.display.set_caption("LLM RPG")
+        self.theme = Theme()
+        self.clock = pygame.time.Clock()
+        self.screen = pygame.display.set_mode((800, 600))
 
     def change_scene(self, scene_type: SceneTypes):
         if scene_type == SceneTypes.BATTLE:
@@ -42,11 +50,14 @@ class Game:
             raise ValueError(f"Tried to change to invalid scene: {scene_type}")
 
     def run(self):
-        # print initial scene
-        self.current_scene.render()
         while self.is_running:
-            self.current_scene.handle_input()
-            self.current_scene.update()
-            self.current_scene.render()
+            dt = self.clock.tick(60) / 1000.0
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.is_running = False
+                self.current_scene.handle_input(event)
+            self.current_scene.update(dt)
+            self.current_scene.render(self.screen)
+            pygame.display.flip()
 
         print(f"Total llm cost $: {self.llm.llm_cost_tracker.total_cost}")
