@@ -8,3 +8,15 @@
 
 ### Planning:
 - Don't start writing code after a first request, always plan first and report to me what you are going to do for confimation.
+
+### Tests:
+- Only add tests for core game logic calculations, nothing else.
+
+### Run git add . and pre-commit after each feature
+After you finish a feature, please run:
+
+```bash
+git add .
+pre-commit run --all-files
+```
+If it fails, fix the issues and run again.

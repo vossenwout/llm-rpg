@@ -13,15 +13,14 @@ if TYPE_CHECKING:
 class BattleStartState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
-        self.intro_timer = 0.6  # small pause to show matchup
+        self.ready_to_start = False
 
     def handle_input(self, event: pygame.event.Event):
-        # No input needed on intro screen
-        pass
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+            self.ready_to_start = True
 
     def update(self, dt: float):
-        self.intro_timer -= dt
-        if self.intro_timer <= 0:
+        if self.ready_to_start:
             self.battle_scene.change_state(BattleStates.TURN)
 
     def _draw_hp_bar(
@@ -85,7 +84,9 @@ class BattleStartState(State):
         screen.blit(vs_text, vs_text.get_rect(center=(screen.get_width() // 2, 220)))
 
         subtitle = self.battle_scene.game.theme.fonts["small"].render(
-            "Get ready...", True, self.battle_scene.game.theme.colors["text_hint"]
+            "Press Enter to start",
+            True,
+            self.battle_scene.game.theme.colors["text_hint"],
         )
         screen.blit(
             subtitle,
