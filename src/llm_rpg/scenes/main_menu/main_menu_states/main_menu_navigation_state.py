@@ -42,8 +42,7 @@ class MainMenuNavigationState(State):
 
     def render(self, screen: pygame.Surface):
         # Clear screen with a background color
-        screen.fill((20, 20, 40))  # Dark blue background
-
+        screen.fill((0, 0, 0))  # Black
         # Render title
         title_text = self.scene.game.theme.fonts["title"].render(
             "LLM RPG", True, self.scene.game.theme.colors["primary"]
@@ -75,13 +74,3 @@ class MainMenuNavigationState(State):
                 center=(screen.get_width() // 2, start_y + (index - 1) * spacing)
             )
             screen.blit(option_surface, option_rect)
-
-        # Render navigation hints at the bottom
-        hint_text = "↑/↓: Navigate  |  Enter: Select"
-        hint_surface = self.scene.game.theme.fonts["small"].render(
-            hint_text, True, self.scene.game.theme.colors["text_hint"]
-        )
-        hint_rect = hint_surface.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - 50)
-        )
-        screen.blit(hint_surface, hint_rect)

@@ -47,3 +47,7 @@ class RestingHubScene(Scene):
             self.current_state = RestingHubViewCharacterState(self)
         elif new_state == RestingHubStates.LEVEL_UP:
             self.current_state = RestingHubLevelUpState(self)
+        elif new_state == RestingHubStates.GET_ITEM:
+            self.current_state = RestingHubGetItemState(self)
+        else:
+            raise ValueError(f"Invalid state: {new_state}")

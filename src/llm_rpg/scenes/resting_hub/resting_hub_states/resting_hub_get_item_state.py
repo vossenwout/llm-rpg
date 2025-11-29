@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-
 import random
+import pygame
 from typing import TYPE_CHECKING, List, Optional
-
 
 from llm_rpg.objects.item import (
     ALL_ITEMS,
@@ -13,11 +12,6 @@ from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
     RestingHubStates,
 )
 from llm_rpg.scenes.state import State
-from llm_rpg.utils.rendering import render_state_transition_header
-from llm_rpg.utils.user_navigation_input import (
-    UserNavigationInput,
-    get_user_navigation_input,
-)
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -26,15 +20,14 @@ if TYPE_CHECKING:
 class RestingHubGetItemState(State):
     def __init__(self, resting_hub_scene: RestingHubScene):
         self.resting_hub_scene = resting_hub_scene
-        self.message_queue = []
-        self.last_user_navigation_input = UserNavigationInput(-1, True)
+        self.message_queue: list[str] = []
         self.selected_item: Optional[Item] = None
         self.is_replacing_item = False
-        self.display_discovered_items = True
-        self.display_current_items_to_drop = False
-        self.display_state_transition_header = True
         self.n_items_to_drop = 3
         self.items: List[Item] = self._initialize_items()
+        self.selected_index = 0  # includes cancel at index 0
+        self.chosen_item: Optional[Item] = None
+        self.choice_made = False
 
     def _initialize_items(self):
         all_possible_items = ALL_ITEMS
@@ -50,108 +43,112 @@ class RestingHubGetItemState(State):
         n_items_to_drop = min(self.n_items_to_drop, len(items_to_choose_from))
         return random.sample(items_to_choose_from, n_items_to_drop)
 
-    def handle_input(self):
+    def _current_options(self) -> list[str]:
         if self.is_replacing_item:
-            possible_choices = [0]
-            for i in range(len(self.resting_hub_scene.game.hero.inventory.items)):
-                possible_choices.append(i + 1)
-            self.last_user_navigation_input = get_user_navigation_input(
-                possible_choices
-            )
-        elif self.resting_hub_scene.game.hero.discovered_item:
-            self.last_user_navigation_input = get_user_navigation_input([0, 1, 2, 3])
+            options = ["Cancel"]
+            for item in self.resting_hub_scene.game.hero.inventory.items:
+                options.append(f"Replace {item.name}: {item.description}")
+            return options
+        else:
+            options = ["Don't pick up anything"]
+            for item in self.items:
+                options.append(f"{item.name}: {item.description}")
+            return options
 
-    def update(self):
-        # reset display flags
-        self.display_discovered_items = False
-        self.display_current_items_to_drop = False
-        self.display_state_transition_header = False
-        if not self.resting_hub_scene.game.hero.discovered_item:
+    def handle_input(self, event: pygame.event.Event):
+        if event.type == pygame.KEYDOWN:
+            options_len = len(self._current_options())
+            if event.key == pygame.K_DOWN:
+                self.selected_index = (self.selected_index + 1) % options_len
+            elif event.key == pygame.K_UP:
+                self.selected_index = (self.selected_index - 1) % options_len
+            elif event.key == pygame.K_RETURN:
+                self.choice_made = True
+
+    def update(self, dt: float):
+        hero = self.resting_hub_scene.game.hero
+        if not hero.discovered_item:
             self.resting_hub_scene.change_state(RestingHubStates.NAVIGATION)
-        else:
-            if self.last_user_navigation_input.is_valid:
-                if self.is_replacing_item:
-                    if self.last_user_navigation_input.choice == 0:
-                        self.display_discovered_items = True
-                    else:
-                        item_to_remove = (
-                            self.resting_hub_scene.game.hero.inventory.items[
-                                self.last_user_navigation_input.choice - 1
-                            ]
-                        )
-                        self.resting_hub_scene.game.hero.replace_item_with_discovered_item(
-                            item_to_remove=item_to_remove,
-                            discovered_item=self.chosen_item,
-                        )
-                        self.message_queue.append(
-                            f"You have replaced your {item_to_remove.name} with a {self.chosen_item.name}."
-                        )
-                    self.is_replacing_item = False
-                else:
-                    if self.last_user_navigation_input.choice == 0:
-                        self.resting_hub_scene.game.hero.dont_pick_up_item()
-                    else:
-                        self.chosen_item = self.items[
-                            self.last_user_navigation_input.choice - 1
-                        ]
-                        if self.resting_hub_scene.game.hero.inventory.is_full():
-                            self.is_replacing_item = True
-                            self.display_current_items_to_drop = True
-                        else:
-                            self.resting_hub_scene.game.hero.pick_up_discovered_item(
-                                self.chosen_item
-                            )
-                            self.message_queue.append(
-                                f"You have received a {self.chosen_item.name}."
-                            )
+            return
 
-    def _display_current_items_to_drop(self):
-        print(
-            f"You have reached your limit of {self.resting_hub_scene.game.hero.inventory.max_items} items."
-        )
-        print(f"Which item do you want to replace with {self.chosen_item.name}?")
-        for index, item in enumerate(self.resting_hub_scene.game.hero.inventory.items):
-            print(f"[{index + 1}] {item.name}: {item.description}")
-        print("")
-        print("Or press:")
-        print("[0] to cancel dropping items.")
+        if not self.choice_made:
+            return
 
-    def _display_discovered_items(self):
-        print("")
-        print("The enemy has dropped some items.")
-        print("Choose one item to pick up.")
-        for index, item in enumerate(self.items):
-            print(f"[{index + 1}] {item.name}: {item.description}")
-        print("")
-        print("Or press:")
-        print("[0] to not pick up any item.")
-
-    def _display_invalid_input(self):
+        self.choice_made = False
         if self.is_replacing_item:
-            total_choices = len(self.resting_hub_scene.game.hero.inventory.items) + 1
+            if self.selected_index == 0:
+                # cancel replacing, show discovered items again
+                self.is_replacing_item = False
+                self.selected_index = 0
+                return
+            item_to_remove = hero.inventory.items[self.selected_index - 1]
+            hero.replace_item_with_discovered_item(
+                item_to_remove=item_to_remove, discovered_item=self.chosen_item
+            )
+            self.message_queue.append(
+                f"Replaced {item_to_remove.name} with {self.chosen_item.name}."
+            )
+            hero.discovered_item = False
         else:
-            total_choices = len(self.items) + 1
-        base_string = "Invalid input: choose "
-        for i in range(total_choices):
-            base_string += f"[{i}]"
-            if i < total_choices - 1:
-                base_string += ", "
+            if self.selected_index == 0:
+                hero.dont_pick_up_item()
+                hero.discovered_item = False
             else:
-                base_string += "."
-        self.message_queue.append(base_string)
+                self.chosen_item = self.items[self.selected_index - 1]
+                if hero.inventory.is_full():
+                    self.is_replacing_item = True
+                    self.selected_index = 0
+                    return
+                hero.pick_up_discovered_item(self.chosen_item)
+                self.message_queue.append(f"Picked up {self.chosen_item.name}.")
+                hero.discovered_item = False
 
-    def _render_message_queue(self):
-        for message in self.message_queue:
-            print(message)
-        self.message_queue = []
+    def _render_messages(self, screen: pygame.Surface, start_y: int):
+        for i, message in enumerate(self.message_queue[-3:]):
+            surf = self.resting_hub_scene.game.theme.fonts["small"].render(
+                message, True, self.resting_hub_scene.game.theme.colors["text_selected"]
+            )
+            screen.blit(surf, (60, start_y + i * 22))
 
-    def render(self):
-        if self.display_state_transition_header:
-            render_state_transition_header("Item Discovery")
-        if self.display_discovered_items:
-            self._display_discovered_items()
-        elif self.display_current_items_to_drop:
-            self._display_current_items_to_drop()
-        elif not self.last_user_navigation_input.is_valid:
-            self._display_invalid_input()
-        self._render_message_queue()
+    def render(self, screen: pygame.Surface):
+        screen.fill(self.resting_hub_scene.game.theme.colors["background"])
+
+        title = self.resting_hub_scene.game.theme.fonts["title"].render(
+            "Item Discovery", True, self.resting_hub_scene.game.theme.colors["primary"]
+        )
+        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, 70)))
+
+        subtitle = self.resting_hub_scene.game.theme.fonts["small"].render(
+            "Select an item to pick up (or skip)",
+            True,
+            self.resting_hub_scene.game.theme.colors["text_hint"],
+        )
+        screen.blit(subtitle, subtitle.get_rect(center=(screen.get_width() // 2, 130)))
+
+        options = self._current_options()
+        start_y = 180
+        spacing = 70
+        for idx, text in enumerate(options):
+            is_selected = idx == self.selected_index
+            color = (
+                self.resting_hub_scene.game.theme.colors["text_selected"]
+                if is_selected
+                else self.resting_hub_scene.game.theme.colors["text"]
+            )
+            prefix = "> " if is_selected else "  "
+            surf = self.resting_hub_scene.game.theme.fonts["medium"].render(
+                prefix + text, True, color
+            )
+            screen.blit(surf, (60, start_y + idx * spacing))
+
+        self._render_messages(screen, start_y + len(options) * spacing + 10)
+
+        hint = self.resting_hub_scene.game.theme.fonts["small"].render(
+            "Use ↑/↓ and Enter",
+            True,
+            self.resting_hub_scene.game.theme.colors["text_hint"],
+        )
+        screen.blit(
+            hint,
+            hint.get_rect(center=(screen.get_width() // 2, screen.get_height() - 40)),
+        )

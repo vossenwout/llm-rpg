@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-
+import pygame
 from typing import TYPE_CHECKING
 
 from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.scenes.state import State
-from llm_rpg.utils.rendering import render_state_transition_header
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -14,23 +13,83 @@ if TYPE_CHECKING:
 class BattleStartState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
-        self.display_state_transition_header = True
+        self.intro_timer = 0.6  # small pause to show matchup
 
-    def handle_input(self):
+    def handle_input(self, event: pygame.event.Event):
+        # No input needed on intro screen
         pass
 
-    def update(self):
-        self.display_state_transition_header = False
-        self.battle_scene.change_state(BattleStates.TURN)
+    def update(self, dt: float):
+        self.intro_timer -= dt
+        if self.intro_timer <= 0:
+            self.battle_scene.change_state(BattleStates.TURN)
 
-    def _render_battle_number(self):
-        print(f"Battle {self.battle_scene.game.battles_won + 1}")
+    def _draw_hp_bar(
+        self, screen: pygame.Surface, x: int, y: int, hp: int, max_hp: int
+    ):
+        bar_width = 220
+        bar_height = 18
+        pct = max(hp, 0) / max(max_hp, 1)
+        outline_rect = pygame.Rect(x, y, bar_width, bar_height)
+        fill_rect = pygame.Rect(x, y, int(bar_width * pct), bar_height)
+        pygame.draw.rect(
+            screen, self.battle_scene.game.theme.colors["text"], outline_rect, 2
+        )
+        pygame.draw.rect(screen, (80, 200, 120), fill_rect)
 
-    def render(self):
-        if self.display_state_transition_header:
-            render_state_transition_header("Battle Description")
-        self._render_battle_number()
-        self.battle_scene.hero.render()
-        print("---- VS ----")
-        print("")
-        self.battle_scene.enemy.render()
+    def render(self, screen: pygame.Surface):
+        screen.fill(self.battle_scene.game.theme.colors["background"])
+
+        title = self.battle_scene.game.theme.fonts["title"].render(
+            "Battle Start", True, self.battle_scene.game.theme.colors["primary"]
+        )
+        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, 70)))
+
+        vs_text = self.battle_scene.game.theme.fonts["large"].render(
+            "VS", True, self.battle_scene.game.theme.colors["text"]
+        )
+
+        # Hero info
+        hero = self.battle_scene.hero
+        hero_text = self.battle_scene.game.theme.fonts["large"].render(
+            hero.name or "Hero", True, self.battle_scene.game.theme.colors["text"]
+        )
+        screen.blit(
+            hero_text, hero_text.get_rect(center=(screen.get_width() * 0.25, 200))
+        )
+        self._draw_hp_bar(
+            screen,
+            int(screen.get_width() * 0.15),
+            250,
+            hero.hp,
+            hero.get_current_stats().max_hp,
+        )
+
+        # Enemy info
+        enemy = self.battle_scene.enemy
+        enemy_text = self.battle_scene.game.theme.fonts["large"].render(
+            enemy.name, True, self.battle_scene.game.theme.colors["text"]
+        )
+        screen.blit(
+            enemy_text, enemy_text.get_rect(center=(screen.get_width() * 0.75, 200))
+        )
+        self._draw_hp_bar(
+            screen,
+            int(screen.get_width() * 0.65),
+            250,
+            enemy.hp,
+            enemy.get_current_stats().max_hp,
+        )
+
+        # VS in the middle
+        screen.blit(vs_text, vs_text.get_rect(center=(screen.get_width() // 2, 220)))
+
+        subtitle = self.battle_scene.game.theme.fonts["small"].render(
+            "Get ready...", True, self.battle_scene.game.theme.colors["text_hint"]
+        )
+        screen.blit(
+            subtitle,
+            subtitle.get_rect(
+                center=(screen.get_width() // 2, screen.get_height() - 80)
+            ),
+        )

@@ -1,15 +1,10 @@
 from __future__ import annotations
 
-from llm_rpg.scenes.scene import SceneTypes
-from llm_rpg.scenes.state import State
-
+import pygame
 from typing import TYPE_CHECKING
 
-from llm_rpg.utils.rendering import render_state_transition_header
-from llm_rpg.utils.user_navigation_input import (
-    UserNavigationInput,
-    get_user_navigation_input,
-)
+from llm_rpg.scenes.scene import SceneTypes
+from llm_rpg.scenes.state import State
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.game_over.game_over_scene import GameOverScene
@@ -18,55 +13,76 @@ if TYPE_CHECKING:
 class GameOverEndScreenState(State):
     def __init__(self, scene: GameOverScene):
         self.scene = scene
-        self.display_state_transition_header = True
-        self.display_end_screen = True
-        self.last_user_navigation_input: UserNavigationInput | None = None
+        self.menu_options = {1: "Main Menu", 2: "Quit"}
+        self.selected_index = 1
+        self.option_selected = False
 
-    def handle_input(self):
-        self.last_user_navigation_input = get_user_navigation_input([1, 2])
+    def handle_input(self, event: pygame.event.Event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                self.selected_index += 1
+                if self.selected_index > len(self.menu_options):
+                    self.selected_index = 1
+            elif event.key == pygame.K_UP:
+                self.selected_index -= 1
+                if self.selected_index < 1:
+                    self.selected_index = len(self.menu_options)
+            elif event.key == pygame.K_RETURN:
+                self.option_selected = True
 
-    def update(self):
-        self.display_end_screen = False
-        self.display_state_transition_header = False
-        if self.last_user_navigation_input.is_valid:
-            if self.last_user_navigation_input.choice == 1:
+    def update(self, dt: float):
+        if self.option_selected:
+            if self.selected_index == 1:
                 self.scene.game.change_scene(SceneTypes.MAIN_MENU)
-            elif self.last_user_navigation_input.choice == 2:
+            elif self.selected_index == 2:
                 self.scene.game.is_running = False
 
-    def _render_game_over_screen(self):
-        print(
-            """
+    def render(self, screen: pygame.Surface):
+        screen.fill(self.scene.game.theme.colors["background"])
 
-   ▄██████▄     ▄████████   ▄▄▄▄███▄▄▄▄      ▄████████      ▄██████▄   ▄█    █▄     ▄████████    ▄████████ 
-  ███    ███   ███    ███ ▄██▀▀▀███▀▀▀██▄   ███    ███     ███    ███ ███    ███   ███    ███   ███    ███ 
-  ███    █▀    ███    ███ ███   ███   ███   ███    █▀      ███    ███ ███    ███   ███    █▀    ███    ███ 
- ▄███          ███    ███ ███   ███   ███  ▄███▄▄▄         ███    ███ ███    ███  ▄███▄▄▄      ▄███▄▄▄▄██▀ 
-▀▀███ ████▄  ▀███████████ ███   ███   ███ ▀▀███▀▀▀         ███    ███ ███    ███ ▀▀███▀▀▀     ▀▀███▀▀▀▀▀   
-  ███    ███   ███    ███ ███   ███   ███   ███    █▄      ███    ███ ███    ███   ███    █▄  ▀███████████ 
-  ███    ███   ███    ███ ███   ███   ███   ███    ███     ███    ███ ███    ███   ███    ███   ███    ███ 
-  ████████▀    ███    █▀   ▀█   ███   █▀    ██████████      ▀██████▀   ▀██████▀    ██████████   ███    ███ 
-                                                                                                ███    ███ 
-
-"""
+        title_text = self.scene.game.theme.fonts["title"].render(
+            "Game Over", True, self.scene.game.theme.colors["primary"]
         )
-        print("You have been defeated by the enemy.")
-        print("Please select an option:\n")
-        print("[1] Go to main menu")
-        print("[2] Exit game")
+        screen.blit(
+            title_text, title_text.get_rect(center=(screen.get_width() // 2, 120))
+        )
 
-    def _render_invalid_choice(self):
-        print("Invalid choice. Choose [1] or [2]:")
+        # Placeholder graphic block
+        placeholder_surface = self.scene.game.theme.fonts["large"].render(
+            "☠", True, self.scene.game.theme.colors["text"]
+        )
+        screen.blit(
+            placeholder_surface,
+            placeholder_surface.get_rect(center=(screen.get_width() // 2, 200)),
+        )
 
-    def render(self):
-        if self.display_state_transition_header:
-            render_state_transition_header(
-                "Game Over",
+        start_y = 320
+        spacing = 60
+        for index, option_text in self.menu_options.items():
+            is_selected = index == self.selected_index
+            color = (
+                self.scene.game.theme.colors["text_selected"]
+                if is_selected
+                else self.scene.game.theme.colors["text"]
             )
-        if self.display_end_screen:
-            self._render_game_over_screen()
-        if (
-            self.last_user_navigation_input
-            and not self.last_user_navigation_input.is_valid
-        ):
-            self._render_invalid_choice()
+            prefix = "> " if is_selected else "  "
+            full_text = f"{prefix}{option_text}"
+            option_surface = self.scene.game.theme.fonts["medium"].render(
+                full_text, True, color
+            )
+            option_rect = option_surface.get_rect(
+                center=(screen.get_width() // 2, start_y + (index - 1) * spacing)
+            )
+            screen.blit(option_surface, option_rect)
+
+        hint_surface = self.scene.game.theme.fonts["small"].render(
+            "Use ↑/↓ and press Enter",
+            True,
+            self.scene.game.theme.colors["text_hint"],
+        )
+        screen.blit(
+            hint_surface,
+            hint_surface.get_rect(
+                center=(screen.get_width() // 2, screen.get_height() - 60)
+            ),
+        )
