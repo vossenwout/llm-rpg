@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.scenes.state import State
+from llm_rpg.utils.ui import draw_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -44,43 +45,41 @@ class BattleStartState(State):
         )
         screen.blit(title, title.get_rect(center=(screen.get_width() // 2, 70)))
 
-        vs_text = self.battle_scene.game.theme.fonts["large"].render(
-            "VS", True, self.battle_scene.game.theme.colors["text"]
-        )
+        hero_panel = pygame.Rect(80, 150, 300, 170)
+        enemy_panel = pygame.Rect(screen.get_width() - 380, 150, 300, 170)
+        draw_panel(screen, hero_panel, self.battle_scene.game.theme)
+        draw_panel(screen, enemy_panel, self.battle_scene.game.theme)
 
-        # Hero info
         hero = self.battle_scene.hero
+        enemy = self.battle_scene.enemy
+
         hero_text = self.battle_scene.game.theme.fonts["large"].render(
             hero.name or "Hero", True, self.battle_scene.game.theme.colors["text"]
         )
-        screen.blit(
-            hero_text, hero_text.get_rect(center=(screen.get_width() * 0.25, 200))
-        )
+        screen.blit(hero_text, hero_text.get_rect(center=hero_panel.center))
         self._draw_hp_bar(
             screen,
-            int(screen.get_width() * 0.15),
-            250,
+            hero_panel.x + 30,
+            hero_panel.bottom - 50,
             hero.hp,
             hero.get_current_stats().max_hp,
         )
 
-        # Enemy info
-        enemy = self.battle_scene.enemy
         enemy_text = self.battle_scene.game.theme.fonts["large"].render(
             enemy.name, True, self.battle_scene.game.theme.colors["text"]
         )
-        screen.blit(
-            enemy_text, enemy_text.get_rect(center=(screen.get_width() * 0.75, 200))
-        )
+        screen.blit(enemy_text, enemy_text.get_rect(center=enemy_panel.center))
         self._draw_hp_bar(
             screen,
-            int(screen.get_width() * 0.65),
-            250,
+            enemy_panel.x + 30,
+            enemy_panel.bottom - 50,
             enemy.hp,
             enemy.get_current_stats().max_hp,
         )
 
-        # VS in the middle
+        vs_text = self.battle_scene.game.theme.fonts["large"].render(
+            "VS", True, self.battle_scene.game.theme.colors["primary"]
+        )
         screen.blit(vs_text, vs_text.get_rect(center=(screen.get_width() // 2, 220)))
 
         subtitle = self.battle_scene.game.theme.fonts["small"].render(

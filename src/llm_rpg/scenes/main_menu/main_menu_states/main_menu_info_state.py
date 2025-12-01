@@ -3,6 +3,7 @@ from __future__ import annotations
 import pygame
 from llm_rpg.scenes.main_menu.main_menu_states.main_menu_states import MainMenuStates
 from llm_rpg.scenes.state import State
+from llm_rpg.utils.ui import draw_panel
 
 from typing import TYPE_CHECKING
 
@@ -25,17 +26,17 @@ class MainMenuInfoState(State):
             self.scene.change_state(MainMenuStates.NAVIGATION)
 
     def render(self, screen: pygame.Surface):
-        # Clear screen with a background color
-        screen.fill((0, 0, 0))  # Black
+        screen.fill(self.scene.game.theme.colors["background"])
 
-        # Render title
         title_text = self.scene.game.theme.fonts["title"].render(
             "Game Info", True, self.scene.game.theme.colors["primary"]
         )
         title_rect = title_text.get_rect(center=(screen.get_width() // 2, 80))
         screen.blit(title_text, title_rect)
 
-        # Render game info text
+        panel_rect = pygame.Rect(80, 140, screen.get_width() - 160, 360)
+        draw_panel(screen, panel_rect, self.scene.game.theme)
+
         info_lines = [
             "You choose a character class and fight against increasingly difficult enemies.",
             "You can freely type your actions and an LLM will judge the consequences.",
@@ -60,7 +61,6 @@ class MainMenuInfoState(State):
             )
             screen.blit(text_surface, text_rect)
 
-        # Render back instruction
         back_text = self.scene.game.theme.fonts["medium"].render(
             "Press ENTER or ESC to go back",
             True,

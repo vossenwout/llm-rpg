@@ -7,6 +7,7 @@ from llm_rpg.systems.battle.damage_calculator import DamageCalculationResult
 from llm_rpg.systems.hero.hero import ProposedHeroAction
 from llm_rpg.systems.battle.battle_log import BattleEvent
 from llm_rpg.scenes.state import State
+from llm_rpg.utils.ui import draw_panel, draw_blinking_cursor
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -215,22 +216,37 @@ class BattleTurnState(State):
         hero = self.battle_scene.hero
         enemy = self.battle_scene.enemy
 
+        hero_panel = pygame.Rect(40, 40, 320, 140)
+        enemy_panel = pygame.Rect(screen.get_width() - 360, 40, 320, 140)
+        draw_panel(screen, hero_panel, self.battle_scene.game.theme)
+        draw_panel(screen, enemy_panel, self.battle_scene.game.theme)
+
         hero_name = self.battle_scene.game.theme.fonts["large"].render(
             hero.name or "Hero", True, self.battle_scene.game.theme.colors["text"]
         )
-        screen.blit(hero_name, hero_name.get_rect(topleft=(40, 60)))
-        self._draw_hp_bar(screen, 40, 110, hero.hp, hero.get_current_stats().max_hp)
+        screen.blit(
+            hero_name,
+            hero_name.get_rect(center=(hero_panel.centerx, hero_panel.y + 40)),
+        )
+        self._draw_hp_bar(
+            screen,
+            hero_panel.x + 20,
+            hero_panel.bottom - 50,
+            hero.hp,
+            hero.get_current_stats().max_hp,
+        )
 
         enemy_name = self.battle_scene.game.theme.fonts["large"].render(
             enemy.name, True, self.battle_scene.game.theme.colors["text"]
         )
         screen.blit(
-            enemy_name, enemy_name.get_rect(topright=(screen.get_width() - 40, 60))
+            enemy_name,
+            enemy_name.get_rect(center=(enemy_panel.centerx, enemy_panel.y + 40)),
         )
         self._draw_hp_bar(
             screen,
-            screen.get_width() - 40 - 180,
-            110,
+            enemy_panel.x + 20,
+            enemy_panel.bottom - 50,
             enemy.hp,
             enemy.get_current_stats().max_hp,
         )
@@ -242,38 +258,47 @@ class BattleTurnState(State):
             n_events=2, debug_mode=self.battle_scene.game.config.debug_mode
         )
         lines = log_text.splitlines()
-        start_y = 320
+        log_panel = pygame.Rect(40, 220, screen.get_width() - 80, 140)
+        draw_panel(screen, log_panel, self.battle_scene.game.theme)
+        start_y = log_panel.y + 24
         for i, line in enumerate(lines):
             surf = self.battle_scene.game.theme.fonts["small"].render(
                 line, True, self.battle_scene.game.theme.colors["text"]
             )
-            screen.blit(surf, (60, start_y + i * 24))
+            screen.blit(surf, (log_panel.x + 20, start_y + i * 24))
 
     def _render_input_box(self, screen: pygame.Surface):
         prompt = f"Your focus allows {self.battle_scene.hero.get_current_stats().focus} characters."
         prompt_surface = self.battle_scene.game.theme.fonts["small"].render(
             prompt, True, self.battle_scene.game.theme.colors["text_hint"]
         )
-        screen.blit(prompt_surface, (60, 200))
+        input_panel = pygame.Rect(40, 380, screen.get_width() - 80, 120)
+        draw_panel(screen, input_panel, self.battle_scene.game.theme)
 
-        box_width = screen.get_width() - 120
-        box_height = 48
-        box_rect = pygame.Rect(60, 230, box_width, box_height)
-        pygame.draw.rect(
-            screen, self.battle_scene.game.theme.colors["text"], box_rect, 2
-        )
+        screen.blit(prompt_surface, (input_panel.x + 12, input_panel.y - 24))
 
-        display_text = self.input_text + "|"
         text_surface = self.battle_scene.game.theme.fonts["medium"].render(
-            display_text, True, self.battle_scene.game.theme.colors["text_selected"]
+            self.input_text, True, self.battle_scene.game.theme.colors["text_selected"]
         )
-        screen.blit(text_surface, (70, 240))
+        text_pos = (input_panel.x + 16, input_panel.y + 24)
+        screen.blit(text_surface, text_pos)
+
+        cursor_x = text_pos[0] + text_surface.get_width() + 4
+        cursor_y = text_pos[1]
+        draw_blinking_cursor(
+            screen,
+            cursor_x,
+            cursor_y,
+            text_surface.get_height(),
+            self.battle_scene.game.theme,
+            pygame.time.get_ticks(),
+        )
 
         if self.error_message:
             error_surface = self.battle_scene.game.theme.fonts["small"].render(
                 self.error_message, True, (255, 60, 60)
             )
-            screen.blit(error_surface, (60, 285))
+            screen.blit(error_surface, (input_panel.x + 12, input_panel.y + 70))
 
         enter_surface = self.battle_scene.game.theme.fonts["small"].render(
             "Press Enter to act", True, self.battle_scene.game.theme.colors["text_hint"]

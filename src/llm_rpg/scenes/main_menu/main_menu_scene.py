@@ -11,6 +11,7 @@ from llm_rpg.scenes.main_menu.main_menu_states.main_menu_navigation_state import
 )
 from llm_rpg.scenes.main_menu.main_menu_states.main_menu_states import MainMenuStates
 from llm_rpg.scenes.scene import Scene
+from llm_rpg.utils.sprites import SpriteSheet
 
 
 if TYPE_CHECKING:
@@ -20,6 +21,8 @@ if TYPE_CHECKING:
 class MainMenuScene(Scene):
     def __init__(self, game: Game):
         super().__init__(game=game)
+        self.logo_sheet = SpriteSheet("sprites/logo.json")
+        self.logo_sprite = self.logo_sheet.get_scaled("logo.png", self.game.theme.scale)
         self.current_state = MainMenuNavigationState(self)
 
     def change_state(self, new_state: MainMenuStates):
