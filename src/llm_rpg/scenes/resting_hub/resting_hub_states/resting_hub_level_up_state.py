@@ -57,21 +57,26 @@ class RestingHubLevelUpState(State):
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.resting_hub_scene.game.theme.colors["background"])
+        spacing = self.resting_hub_scene.game.theme.spacing
 
         title = self.resting_hub_scene.game.theme.fonts["title"].render(
             "Level Up!", True, self.resting_hub_scene.game.theme.colors["primary"]
         )
-        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, 80)))
+        screen.blit(
+            title, title.get_rect(center=(screen.get_width() // 2, spacing(1.5)))
+        )
 
         prompt = self.resting_hub_scene.game.theme.fonts["medium"].render(
             "Choose a stat to increase",
             True,
             self.resting_hub_scene.game.theme.colors["text"],
         )
-        screen.blit(prompt, prompt.get_rect(center=(screen.get_width() // 2, 140)))
+        screen.blit(
+            prompt, prompt.get_rect(center=(screen.get_width() // 2, spacing(2.75)))
+        )
 
-        start_y = 200
-        spacing = 70
+        start_y = spacing(3.5)
+        vertical_step = spacing(2)
         for index, stat in self.stat_options.items():
             is_selected = index == self.selected_index
             color = (
@@ -89,7 +94,10 @@ class RestingHubLevelUpState(State):
             screen.blit(
                 surf,
                 surf.get_rect(
-                    center=(screen.get_width() // 2, start_y + (index - 1) * spacing)
+                    center=(
+                        screen.get_width() // 2,
+                        start_y + (index - 1) * vertical_step,
+                    )
                 ),
             )
 
@@ -100,5 +108,7 @@ class RestingHubLevelUpState(State):
         )
         screen.blit(
             hint,
-            hint.get_rect(center=(screen.get_width() // 2, screen.get_height() - 50)),
+            hint.get_rect(
+                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
+            ),
         )

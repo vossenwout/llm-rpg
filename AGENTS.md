@@ -8,3 +8,6 @@
 
 ### Tests:
 - Only add tests for core game logic calculations, nothing else.
+
+### __init__.py files:
+Don't add __init__.py files to folders, this is not necessary.

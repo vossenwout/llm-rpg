@@ -5,6 +5,10 @@ description = ""
 authors = ["WoutVossen <vossen.w@hotmail.com>"]
 readme = "README.md"
 packages = [{include = "llm_rpg", from = "src"}]
+include = [
+    { path = "src/llm_rpg/assets/**/*", format = "wheel" },
+    { path = "src/llm_rpg/assets/**/*", format = "sdist" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"

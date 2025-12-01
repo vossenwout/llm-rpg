@@ -52,6 +52,7 @@ class BattleHeroThinkingState(State):
         self.max_wait = 60.0
         self.result_queue: queue.Queue[Outcome] = queue.Queue(maxsize=1)
         self.ui_cfg = BattleUIConfig()
+        self.error_message = ""
 
     def handle_input(self, event: pygame.event.Event):
         return
@@ -89,6 +90,8 @@ class BattleHeroThinkingState(State):
             and self.pending_outcome is not None
             and self.animation_timer >= self.minimum_display
         ):
+            if not self.pending_outcome["success"]:
+                self.error_message = self.pending_outcome["message"]
             self._apply_outcome()
             self.battle_scene.change_state(BattleStates.HERO_RESULT)
 
@@ -107,6 +110,21 @@ class BattleHeroThinkingState(State):
             text="Hero is thinking",
             dots=self.dots,
         )
+        if self.error_message:
+            error_surface = self.battle_scene.game.theme.fonts["small"].render(
+                self.error_message,
+                True,
+                (255, 60, 60),
+            )
+            screen.blit(
+                error_surface,
+                error_surface.get_rect(
+                    center=(
+                        screen.get_width() // 2,
+                        screen.get_height() - self.battle_scene.game.theme.spacing(1),
+                    )
+                ),
+            )
 
     def _process_action(self):
         try:

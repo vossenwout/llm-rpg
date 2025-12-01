@@ -112,22 +112,27 @@ class RestingHubGetItemState(State):
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.resting_hub_scene.game.theme.colors["background"])
+        spacing = self.resting_hub_scene.game.theme.spacing
 
         title = self.resting_hub_scene.game.theme.fonts["title"].render(
             "Item Discovery", True, self.resting_hub_scene.game.theme.colors["primary"]
         )
-        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, 70)))
+        screen.blit(
+            title, title.get_rect(center=(screen.get_width() // 2, spacing(1.25)))
+        )
 
         subtitle = self.resting_hub_scene.game.theme.fonts["small"].render(
             "Select an item to pick up (or skip)",
             True,
             self.resting_hub_scene.game.theme.colors["text_hint"],
         )
-        screen.blit(subtitle, subtitle.get_rect(center=(screen.get_width() // 2, 130)))
+        screen.blit(
+            subtitle, subtitle.get_rect(center=(screen.get_width() // 2, spacing(2.25)))
+        )
 
         options = self._current_options()
-        start_y = 180
-        spacing = 70
+        start_y = spacing(3)
+        vertical_step = spacing(2)
         for idx, text in enumerate(options):
             is_selected = idx == self.selected_index
             color = (
@@ -139,9 +144,11 @@ class RestingHubGetItemState(State):
             surf = self.resting_hub_scene.game.theme.fonts["medium"].render(
                 prefix + text, True, color
             )
-            screen.blit(surf, (60, start_y + idx * spacing))
+            screen.blit(surf, (spacing(0.5), start_y + idx * vertical_step))
 
-        self._render_messages(screen, start_y + len(options) * spacing + 10)
+        self._render_messages(
+            screen, start_y + len(options) * vertical_step + spacing(0.25)
+        )
 
         hint = self.resting_hub_scene.game.theme.fonts["small"].render(
             "Use ↑/↓ and Enter",
@@ -150,5 +157,7 @@ class RestingHubGetItemState(State):
         )
         screen.blit(
             hint,
-            hint.get_rect(center=(screen.get_width() // 2, screen.get_height() - 40)),
+            hint.get_rect(
+                center=(screen.get_width() // 2, screen.get_height() - spacing(0.5))
+            ),
         )

@@ -49,14 +49,3 @@ class Enemy(Character):
         )
 
         return self.llm.generate_completion(prompt)
-
-    def render(self):
-        print(f"👾 {self.name} lvl {self.level}")
-        print(self.description)
-        print("")
-        print(self.ascii_render)
-        print("")
-        print(f"HP: {self.get_current_stats().max_hp}")
-        print(f"Attack: {self.get_current_stats().attack}")
-        print(f"Defense: {self.get_current_stats().defense}")
-        print("")

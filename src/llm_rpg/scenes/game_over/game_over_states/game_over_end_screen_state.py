@@ -39,12 +39,14 @@ class GameOverEndScreenState(State):
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.scene.game.theme.colors["background"])
+        spacing = self.scene.game.theme.spacing
 
         title_text = self.scene.game.theme.fonts["title"].render(
             "Game Over", True, self.scene.game.theme.colors["primary"]
         )
         screen.blit(
-            title_text, title_text.get_rect(center=(screen.get_width() // 2, 120))
+            title_text,
+            title_text.get_rect(center=(screen.get_width() // 2, spacing(2))),
         )
 
         # Placeholder graphic block
@@ -53,11 +55,13 @@ class GameOverEndScreenState(State):
         )
         screen.blit(
             placeholder_surface,
-            placeholder_surface.get_rect(center=(screen.get_width() // 2, 200)),
+            placeholder_surface.get_rect(
+                center=(screen.get_width() // 2, spacing(3.5))
+            ),
         )
 
-        start_y = 320
-        spacing = 60
+        start_y = spacing(5)
+        vertical_step = spacing(1.75)
         for index, option_text in self.menu_options.items():
             is_selected = index == self.selected_index
             color = (
@@ -71,7 +75,10 @@ class GameOverEndScreenState(State):
                 full_text, True, color
             )
             option_rect = option_surface.get_rect(
-                center=(screen.get_width() // 2, start_y + (index - 1) * spacing)
+                center=(
+                    screen.get_width() // 2,
+                    start_y + (index - 1) * vertical_step,
+                )
             )
             screen.blit(option_surface, option_rect)
 
@@ -83,6 +90,6 @@ class GameOverEndScreenState(State):
         screen.blit(
             hint_surface,
             hint_surface.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - 60)
+                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
             ),
         )

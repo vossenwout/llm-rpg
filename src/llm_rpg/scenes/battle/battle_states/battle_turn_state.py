@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.systems.hero.hero import ProposedHeroAction
 from llm_rpg.scenes.state import State
+from llm_rpg.ui.components import draw_panel, draw_blinking_cursor
 from llm_rpg.ui.battle_ui import draw_hp_bar
 
 if TYPE_CHECKING:
@@ -19,7 +20,6 @@ class BattleTurnState(State):
         self.submit_requested = False
         self.input_timer = 0.0
 
-        # Backspace repeat state (mirrors hero name screen)
         self.backspace_held = False
         self.backspace_timer = 0.0
         self.backspace_initial_delay = 0.5
@@ -33,9 +33,7 @@ class BattleTurnState(State):
                 self.backspace_held = True
                 self.backspace_timer = 0.0
             else:
-                # capture printable characters
                 if event.unicode.isprintable():
-                    # enforce max length by focus here for immediate feedback
                     max_chars = self.battle_scene.hero.get_current_stats().focus
                     if len(self.input_text.replace(" ", "")) < max_chars:
                         self.input_text += event.unicode
@@ -50,7 +48,6 @@ class BattleTurnState(State):
             self.input_text = self.input_text[:-1]
 
     def _build_proposed_action(self) -> ProposedHeroAction:
-        # Empty submission -> do nothing action with long time
         if len(self.input_text.strip()) == 0:
             return ProposedHeroAction(
                 action="Decided to do nothing this turn.",
@@ -77,10 +74,8 @@ class BattleTurnState(State):
         )
 
     def update(self, dt: float):
-        # track input time
         self.input_timer += dt
 
-        # Handle backspace hold
         if self.backspace_held:
             if self.backspace_timer == 0.0:
                 self._delete_character()
@@ -99,7 +94,6 @@ class BattleTurnState(State):
             proposed_action = self._build_proposed_action()
             if not proposed_action.is_valid:
                 self.error_message = proposed_action.invalid_reason or "Invalid action."
-                # reset timer for next attempt
                 self.input_timer = 0.0
                 return
 
@@ -112,16 +106,32 @@ class BattleTurnState(State):
     def _render_stats(self, screen: pygame.Surface):
         hero = self.battle_scene.hero
         enemy = self.battle_scene.enemy
+        spacing = self.battle_scene.game.theme.spacing
+
+        hero_panel = pygame.Rect(spacing(0.5), spacing(0.5), spacing(8), spacing(4.5))
+        enemy_panel = pygame.Rect(
+            screen.get_width() - spacing(0.5) - spacing(8),
+            spacing(0.5),
+            spacing(8),
+            spacing(4.5),
+        )
+        draw_panel(screen, hero_panel, self.battle_scene.game.theme)
+        draw_panel(screen, enemy_panel, self.battle_scene.game.theme)
 
         hero_name = self.battle_scene.game.theme.fonts["large"].render(
             hero.name or "Hero", True, self.battle_scene.game.theme.colors["text"]
         )
-        screen.blit(hero_name, hero_name.get_rect(topleft=(40, 60)))
+        screen.blit(
+            hero_name,
+            hero_name.get_rect(
+                topleft=(hero_panel.x + spacing(0.5), hero_panel.y + spacing(0.5))
+            ),
+        )
         draw_hp_bar(
             screen=screen,
             theme=self.battle_scene.game.theme,
-            x=40,
-            y=110,
+            x=hero_panel.x + spacing(0.5),
+            y=hero_panel.y + spacing(2),
             hp=hero.hp,
             max_hp=hero.get_current_stats().max_hp,
         )
@@ -130,19 +140,22 @@ class BattleTurnState(State):
             enemy.name, True, self.battle_scene.game.theme.colors["text"]
         )
         screen.blit(
-            enemy_name, enemy_name.get_rect(topright=(screen.get_width() - 40, 60))
+            enemy_name,
+            enemy_name.get_rect(
+                topright=(
+                    enemy_panel.right - spacing(0.5),
+                    enemy_panel.y + spacing(0.5),
+                )
+            ),
         )
         draw_hp_bar(
             screen=screen,
             theme=self.battle_scene.game.theme,
-            x=screen.get_width() - 40 - 180,
-            y=110,
+            x=enemy_panel.x + spacing(0.5),
+            y=enemy_panel.y + spacing(2),
             hp=enemy.hp,
             max_hp=enemy.get_current_stats().max_hp,
         )
-
-    def _render_battle_log(self, screen: pygame.Surface):
-        return
 
     def _render_input_box(self, screen: pygame.Surface):
         focus_limit = self.battle_scene.hero.get_current_stats().focus
@@ -151,26 +164,45 @@ class BattleTurnState(State):
         prompt_surface = self.battle_scene.game.theme.fonts["small"].render(
             prompt, True, self.battle_scene.game.theme.colors["text_hint"]
         )
-        screen.blit(prompt_surface, (60, 200))
+        spacing = self.battle_scene.game.theme.spacing
+        input_panel = pygame.Rect(
+            spacing(0.5),
+            screen.get_height() - spacing(3.5),
+            screen.get_width() - spacing(1),
+            spacing(3),
+        )
+        draw_panel(screen, input_panel, self.battle_scene.game.theme)
 
-        box_width = screen.get_width() - 120
-        box_height = 48
-        box_rect = pygame.Rect(60, 230, box_width, box_height)
-        pygame.draw.rect(
-            screen, self.battle_scene.game.theme.colors["text"], box_rect, 2
+        screen.blit(
+            prompt_surface,
+            (input_panel.x + spacing(0.5), input_panel.y - spacing(0.75)),
         )
 
-        display_text = self.input_text + "|"
         text_surface = self.battle_scene.game.theme.fonts["medium"].render(
-            display_text, True, self.battle_scene.game.theme.colors["text_selected"]
+            self.input_text, True, self.battle_scene.game.theme.colors["text_selected"]
         )
-        screen.blit(text_surface, (70, 240))
+        text_pos = (input_panel.x + spacing(0.5), input_panel.y + spacing(0.75))
+        screen.blit(text_surface, text_pos)
+
+        cursor_x = text_pos[0] + text_surface.get_width() + 4
+        cursor_y = text_pos[1]
+        draw_blinking_cursor(
+            screen,
+            cursor_x,
+            cursor_y,
+            text_surface.get_height(),
+            self.battle_scene.game.theme,
+            pygame.time.get_ticks(),
+        )
 
         if self.error_message:
             error_surface = self.battle_scene.game.theme.fonts["small"].render(
                 self.error_message, True, (255, 60, 60)
             )
-            screen.blit(error_surface, (60, 285))
+            screen.blit(
+                error_surface,
+                (input_panel.x + spacing(0.5), input_panel.y + spacing(2)),
+            )
 
         enter_surface = self.battle_scene.game.theme.fonts["small"].render(
             "Press Enter to act", True, self.battle_scene.game.theme.colors["text_hint"]
@@ -178,12 +210,11 @@ class BattleTurnState(State):
         screen.blit(
             enter_surface,
             enter_surface.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - 50)
+                center=(screen.get_width() // 2, screen.get_height() - spacing(0.75))
             ),
         )
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.battle_scene.game.theme.colors["background"])
         self._render_stats(screen)
-        self._render_battle_log(screen)
         self._render_input_box(screen)

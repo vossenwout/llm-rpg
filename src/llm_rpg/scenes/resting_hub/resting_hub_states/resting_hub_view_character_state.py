@@ -30,11 +30,14 @@ class RestingHubViewCharacterState(State):
     def render(self, screen: pygame.Surface):
         screen.fill(self.resting_hub_scene.game.theme.colors["background"])
         hero = self.resting_hub_scene.game.hero
+        spacing = self.resting_hub_scene.game.theme.spacing
 
         title = self.resting_hub_scene.game.theme.fonts["title"].render(
             "Character", True, self.resting_hub_scene.game.theme.colors["primary"]
         )
-        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, 60)))
+        screen.blit(
+            title, title.get_rect(center=(screen.get_width() // 2, spacing(1.25)))
+        )
 
         # Basic info
         info_lines = [
@@ -43,13 +46,13 @@ class RestingHubViewCharacterState(State):
             f"Class: {hero.class_name}",
             f"Description: {hero.description}",
         ]
-        y = 140
+        y = spacing(2.5)
         for line in info_lines:
             surf = self.resting_hub_scene.game.theme.fonts["medium"].render(
                 line, True, self.resting_hub_scene.game.theme.colors["text"]
             )
-            screen.blit(surf, (40, y))
-            y += 36
+            screen.blit(surf, (spacing(0.5), y))
+            y += spacing(1)
 
         # Stats
         stats = hero.get_current_stats()
@@ -59,20 +62,20 @@ class RestingHubViewCharacterState(State):
             f"Focus: {stats.focus}",
             f"HP: {stats.max_hp}",
         ]
-        y += 12
+        y += spacing(0.5)
         for line in stat_lines:
             surf = self.resting_hub_scene.game.theme.fonts["small"].render(
                 line, True, self.resting_hub_scene.game.theme.colors["text"]
             )
-            screen.blit(surf, (40, y))
-            y += 22
+            screen.blit(surf, (spacing(0.5), y))
+            y += spacing(0.75)
 
         # Items
         items_title = self.resting_hub_scene.game.theme.fonts["medium"].render(
             "Items:", True, self.resting_hub_scene.game.theme.colors["text_selected"]
         )
-        screen.blit(items_title, (40, y + 10))
-        y += 40
+        screen.blit(items_title, (spacing(0.5), y + spacing(0.25)))
+        y += spacing(1.25)
 
         if hero.inventory.items:
             for item in hero.inventory.items:
@@ -80,16 +83,16 @@ class RestingHubViewCharacterState(State):
                 surf = self.resting_hub_scene.game.theme.fonts["small"].render(
                     line, True, self.resting_hub_scene.game.theme.colors["text"]
                 )
-                screen.blit(surf, (50, y))
-                y += 22
+                screen.blit(surf, (spacing(0.75), y))
+                y += spacing(0.75)
         else:
             surf = self.resting_hub_scene.game.theme.fonts["small"].render(
                 "No items equipped.",
                 True,
                 self.resting_hub_scene.game.theme.colors["text_hint"],
             )
-            screen.blit(surf, (50, y))
-            y += 22
+            screen.blit(surf, (spacing(0.75), y))
+            y += spacing(0.75)
 
         hint = self.resting_hub_scene.game.theme.fonts["small"].render(
             "Press Enter/Esc to go back",
@@ -98,5 +101,7 @@ class RestingHubViewCharacterState(State):
         )
         screen.blit(
             hint,
-            hint.get_rect(center=(screen.get_width() // 2, screen.get_height() - 40)),
+            hint.get_rect(
+                center=(screen.get_width() // 2, screen.get_height() - spacing(0.5))
+            ),
         )

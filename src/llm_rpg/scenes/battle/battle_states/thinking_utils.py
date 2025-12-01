@@ -70,5 +70,7 @@ def apply_outcome(outcome: Outcome, battle_scene):
         battle_scene.enemy.inflict_damage(outcome["damage"])
     else:
         battle_scene.hero.inflict_damage(outcome["damage"])
+    if outcome["event"].is_hero_turn:
+        battle_scene.creativity_tracker.add_action(outcome["event"].proposed_action)
     battle_scene.battle_log.add_event(outcome["event"])
     battle_scene.latest_event = outcome["event"]

@@ -5,6 +5,7 @@ from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
 from typing import TYPE_CHECKING
 from llm_rpg.scenes.main_menu.main_menu_states.main_menu_states import MainMenuStates
+from llm_rpg.ui.components import draw_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.main_menu.main_menu_scene import MainMenuScene
@@ -41,32 +42,34 @@ class MainMenuNavigationState(State):
                 self.scene.change_state(MainMenuStates.INFO)
 
     def render(self, screen: pygame.Surface):
-        # Clear screen with a background color
-        screen.fill((0, 0, 0))  # Black
-        # Render title
-        title_text = self.scene.game.theme.fonts["title"].render(
-            "LLM RPG", True, self.scene.game.theme.colors["primary"]
+        screen.fill(self.scene.game.theme.colors["background"])
+        margin = self.scene.game.theme.spacing(2)
+        logo_rect = self.scene.logo_sprite.get_rect(
+            center=(screen.get_width() // 2, margin * 2)
         )
-        title_rect = title_text.get_rect(center=(screen.get_width() // 2, 100))
-        screen.blit(title_text, title_rect)
+        screen.blit(self.scene.logo_sprite, logo_rect)
 
-        # Render menu options
-        start_y = 300
-        spacing = 60
+        panel_width = screen.get_width() - margin * 2
+        panel_height = self.scene.game.theme.spacing(6)
+        panel_rect = pygame.Rect(
+            margin,
+            margin * 3,
+            panel_width,
+            panel_height,
+        )
+        draw_panel(screen, panel_rect, self.scene.game.theme)
+
+        start_y = panel_rect.top + self.scene.game.theme.spacing(1)
+        spacing = self.scene.game.theme.spacing(2)
         for index, option_text in self.menu_options.items():
-            # Determine color based on selection
             is_selected = index == self.selected_index
             color = (
                 self.scene.game.theme.colors["text_selected"]
                 if is_selected
                 else self.scene.game.theme.colors["text"]
             )
-
-            # Add selection indicator
             prefix = "> " if is_selected else "  "
             full_text = f"{prefix}{option_text}"
-
-            # Render the option
             option_surface = self.scene.game.theme.fonts["medium"].render(
                 full_text, True, color
             )

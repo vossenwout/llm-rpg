@@ -47,17 +47,16 @@ class HeroCreationChooseClassState(State):
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.scene.game.theme.colors["background"])
+        spacing = self.scene.game.theme.spacing
 
-        # Title
         title_text = self.scene.game.theme.fonts["title"].render(
             "Choose Your Class", True, self.scene.game.theme.colors["primary"]
         )
-        title_rect = title_text.get_rect(center=(screen.get_width() // 2, 80))
+        title_rect = title_text.get_rect(center=(screen.get_width() // 2, spacing(1.5)))
         screen.blit(title_text, title_rect)
 
-        # Options
-        start_y = 200
-        spacing = 90
+        start_y = spacing(3)
+        vertical_step = spacing(2.5)
         for index, hero_class in self.navigation_class_mapping.items():
             is_selected = index == self.selected_index
             color = (
@@ -72,16 +71,15 @@ class HeroCreationChooseClassState(State):
                 option_text, True, color
             )
             option_rect = option_surface.get_rect(
-                midleft=(80, start_y + (index - 1) * spacing)
+                midleft=(spacing(1), start_y + (index - 1) * vertical_step)
             )
             screen.blit(option_surface, option_rect)
 
-            # Description and starting item
             description_surface = self.scene.game.theme.fonts["small"].render(
                 hero_class.description, True, self.scene.game.theme.colors["text"]
             )
             description_rect = description_surface.get_rect(
-                topleft=(100, option_rect.bottom + 5)
+                topleft=(spacing(1.25), option_rect.bottom + spacing(0.25))
             )
             screen.blit(description_surface, description_rect)
 
@@ -91,17 +89,16 @@ class HeroCreationChooseClassState(State):
                 self.scene.game.theme.colors["text_hint"],
             )
             item_rect = item_surface.get_rect(
-                topleft=(100, description_rect.bottom + 2)
+                topleft=(spacing(1.25), description_rect.bottom + spacing(0.25))
             )
             screen.blit(item_surface, item_rect)
 
-        # Instructions
         instruction_surface = self.scene.game.theme.fonts["small"].render(
             "Use ↑/↓ and press Enter to confirm",
             True,
             self.scene.game.theme.colors["text_hint"],
         )
         instruction_rect = instruction_surface.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - 50)
+            center=(screen.get_width() // 2, screen.get_height() - spacing(1))
         )
         screen.blit(instruction_surface, instruction_rect)

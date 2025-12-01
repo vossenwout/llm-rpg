@@ -43,21 +43,24 @@ class RestingHubNavigationState(State):
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.resting_hub_scene.game.theme.colors["background"])
+        spacing = self.resting_hub_scene.game.theme.spacing
 
         title = self.resting_hub_scene.game.theme.fonts["title"].render(
             "Resting Hub", True, self.resting_hub_scene.game.theme.colors["primary"]
         )
-        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, 80)))
+        screen.blit(
+            title, title.get_rect(center=(screen.get_width() // 2, spacing(1.5)))
+        )
 
         subtitle = self.resting_hub_scene.game.theme.fonts["small"].render(
             f"Battles won: {self.resting_hub_scene.game.battles_won}",
             True,
             self.resting_hub_scene.game.theme.colors["text_hint"],
         )
-        screen.blit(subtitle, (40, 140))
+        screen.blit(subtitle, (spacing(0.5), spacing(2.5)))
 
-        start_y = 220
-        spacing = 70
+        start_y = spacing(3)
+        vertical_step = spacing(2)
         for index, option in self.menu_options.items():
             is_selected = index == self.selected_index
             color = (
@@ -70,7 +73,7 @@ class RestingHubNavigationState(State):
                 prefix + option, True, color
             )
             text_rect = text_surface.get_rect(
-                center=(screen.get_width() // 2, start_y + (index - 1) * spacing)
+                center=(screen.get_width() // 2, start_y + (index - 1) * vertical_step)
             )
             screen.blit(text_surface, text_rect)
 
@@ -81,5 +84,7 @@ class RestingHubNavigationState(State):
         )
         screen.blit(
             hint,
-            hint.get_rect(center=(screen.get_width() // 2, screen.get_height() - 50)),
+            hint.get_rect(
+                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
+            ),
         )

@@ -25,15 +25,16 @@ class Game:
             base_stats=self.config.hero_base_stats,
             max_items=self.config.hero_max_items,
         )
-        self.scene_factory = SceneFactory(self)
-        self.current_scene: Scene = self.scene_factory.get_initial_scene()
-        self.battles_won = 0
-        # pygame initialization
+        # pygame initialization early so surfaces can convert properly
         pygame.init()
         pygame.display.set_caption("LLM RPG")
         self.theme = Theme()
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((800, 600))
+
+        self.scene_factory = SceneFactory(self)
+        self.current_scene: Scene = self.scene_factory.get_initial_scene()
+        self.battles_won = 0
 
     def change_scene(self, scene_type: SceneTypes):
         if scene_type == SceneTypes.BATTLE:
