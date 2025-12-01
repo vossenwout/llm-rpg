@@ -18,6 +18,11 @@ class BattleLog:
     def add_event(self, event: BattleEvent):
         self.events.append(event)
 
+    def get_recent_events(self, n_events: int):
+        if n_events <= 0:
+            return []
+        return self.events[-n_events:]
+
     def to_string_for_battle_ai(self, n_actions: int = 5):
         battle_log_text = ""
         for event in self.events[-n_actions:]:
