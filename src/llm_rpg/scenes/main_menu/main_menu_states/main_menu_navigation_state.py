@@ -27,11 +27,11 @@ class MainMenuNavigationState(State):
                 self.selected_index += 1
                 if self.selected_index > len(self.menu_options):
                     self.selected_index = 1
-            if event.key == pygame.K_UP:
+            elif event.key == pygame.K_UP:
                 self.selected_index -= 1
                 if self.selected_index < 1:
                     self.selected_index = len(self.menu_options)
-            if event.key == pygame.K_RETURN:
+            elif event.key == pygame.K_RETURN:
                 self.option_selected = True
 
     def update(self, dt: float):

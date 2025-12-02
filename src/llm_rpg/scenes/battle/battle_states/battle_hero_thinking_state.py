@@ -190,4 +190,3 @@ class BattleHeroThinkingState(State):
             return
         apply_outcome(self.pending_outcome, self.battle_scene)
         self.pending_outcome = None
-        self.result_ready = False

@@ -46,6 +46,7 @@ class BattleTurnState(State):
     def _delete_character(self):
         if len(self.input_text) > 0:
             self.input_text = self.input_text[:-1]
+            self.error_message = ""
 
     def _build_proposed_action(self) -> ProposedHeroAction:
         if len(self.input_text.strip()) == 0:
