@@ -56,7 +56,8 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.is_running = False
-                self.current_scene.handle_input(event)
+                else:
+                    self.current_scene.handle_input(event)
             self.current_scene.update(dt)
             self.current_scene.render(self.screen)
             pygame.display.flip()

@@ -125,7 +125,11 @@ class BattleHeroThinkingState(State):
     def _process_action(self):
         try:
             if self.proposed_action is None:
-                outcome = self._build_error_outcome("No action provided.")
+                outcome = make_error_outcome(
+                    is_hero_turn=True,
+                    actor_name=self.battle_scene.hero.name,
+                    message="No action provided.",
+                )
                 self.result_queue.put(outcome)
                 self.processing_done = True
                 return
