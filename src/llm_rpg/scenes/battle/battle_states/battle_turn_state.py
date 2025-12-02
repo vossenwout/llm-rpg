@@ -6,7 +6,7 @@ from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.systems.hero.hero import ProposedHeroAction
 from llm_rpg.scenes.state import State
 from llm_rpg.ui.components import draw_panel, draw_blinking_cursor
-from llm_rpg.ui.battle_ui import draw_hp_bar
+from llm_rpg.ui.battle_ui import render_stats_row
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -104,57 +104,11 @@ class BattleTurnState(State):
             self.battle_scene.change_state(BattleStates.HERO_THINKING)
 
     def _render_stats(self, screen: pygame.Surface):
-        hero = self.battle_scene.hero
-        enemy = self.battle_scene.enemy
-        spacing = self.battle_scene.game.theme.spacing
-
-        hero_panel = pygame.Rect(spacing(0.5), spacing(0.5), spacing(8), spacing(4.5))
-        enemy_panel = pygame.Rect(
-            screen.get_width() - spacing(0.5) - spacing(8),
-            spacing(0.5),
-            spacing(8),
-            spacing(4.5),
-        )
-        draw_panel(screen, hero_panel, self.battle_scene.game.theme)
-        draw_panel(screen, enemy_panel, self.battle_scene.game.theme)
-
-        hero_name = self.battle_scene.game.theme.fonts["large"].render(
-            hero.name or "Hero", True, self.battle_scene.game.theme.colors["text"]
-        )
-        screen.blit(
-            hero_name,
-            hero_name.get_rect(
-                topleft=(hero_panel.x + spacing(0.5), hero_panel.y + spacing(0.5))
-            ),
-        )
-        draw_hp_bar(
+        render_stats_row(
             screen=screen,
             theme=self.battle_scene.game.theme,
-            x=hero_panel.x + spacing(0.5),
-            y=hero_panel.y + spacing(2),
-            hp=hero.hp,
-            max_hp=hero.get_current_stats().max_hp,
-        )
-
-        enemy_name = self.battle_scene.game.theme.fonts["large"].render(
-            enemy.name, True, self.battle_scene.game.theme.colors["text"]
-        )
-        screen.blit(
-            enemy_name,
-            enemy_name.get_rect(
-                topright=(
-                    enemy_panel.right - spacing(0.5),
-                    enemy_panel.y + spacing(0.5),
-                )
-            ),
-        )
-        draw_hp_bar(
-            screen=screen,
-            theme=self.battle_scene.game.theme,
-            x=enemy_panel.x + spacing(0.5),
-            y=enemy_panel.y + spacing(2),
-            hp=enemy.hp,
-            max_hp=enemy.get_current_stats().max_hp,
+            hero=self.battle_scene.hero,
+            enemy=self.battle_scene.enemy,
         )
 
     def _render_input_box(self, screen: pygame.Surface):

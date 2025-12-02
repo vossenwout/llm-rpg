@@ -11,3 +11,6 @@
 
 ### __init__.py files:
 Don't add __init__.py files to folders, this is not necessary.
+
+### Type hints:
+Always use type hints for function parameters and signatures.

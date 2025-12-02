@@ -10,7 +10,6 @@ from llm_rpg.systems.battle.battle_log import BattleEvent
 from llm_rpg.ui.battle_ui import (
     render_stats_row,
     advance_dots,
-    BattleUIConfig,
     render_processing_text,
 )
 from llm_rpg.scenes.battle.battle_states.thinking_utils import (
@@ -46,7 +45,6 @@ class BattleEnemyThinkingState(State):
         self.minimum_display = 0.25
         self.max_wait = 20.0
         self.result_queue: queue.Queue[Outcome] = queue.Queue(maxsize=1)
-        self.ui_cfg = BattleUIConfig()
         self.error_message = ""
 
     def handle_input(self, event: pygame.event.Event):
@@ -58,7 +56,6 @@ class BattleEnemyThinkingState(State):
             dots=self.dots,
             dot_timer=self.dot_timer,
             dt=dt,
-            period=self.ui_cfg.dots_period,
         )
 
         if not self.processing_started:
@@ -97,7 +94,6 @@ class BattleEnemyThinkingState(State):
             theme=self.battle_scene.game.theme,
             hero=self.battle_scene.hero,
             enemy=self.battle_scene.enemy,
-            config=self.ui_cfg,
         )
         render_processing_text(
             screen=screen,

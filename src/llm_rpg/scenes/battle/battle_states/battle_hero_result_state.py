@@ -8,7 +8,6 @@ from llm_rpg.ui.battle_ui import (
     render_event_card,
     render_stats_row,
     prompt_for_battle_end,
-    BattleUIConfig,
 )
 
 if TYPE_CHECKING:
@@ -20,7 +19,6 @@ class BattleHeroResultState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
         self.event: BattleEvent | None = battle_scene.latest_event
-        self.ui_cfg = BattleUIConfig()
 
     def handle_input(self, event: pygame.event.Event):
         if event.type == pygame.KEYDOWN and event.key in (
@@ -42,7 +40,6 @@ class BattleHeroResultState(State):
             theme=self.battle_scene.game.theme,
             hero=self.battle_scene.hero,
             enemy=self.battle_scene.enemy,
-            config=self.ui_cfg,
         )
         if self.event:
             prompt = prompt_for_battle_end(
