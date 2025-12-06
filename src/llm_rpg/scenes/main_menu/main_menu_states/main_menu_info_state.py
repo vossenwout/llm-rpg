@@ -36,10 +36,9 @@ class MainMenuInfoState(State):
         screen.blit(title_text, title_rect)
 
         info_lines = [
-            "You choose a character class and fight against increasingly difficult enemies.",
+            "Create a character and fight against increasingly difficult enemies.",
             "You can freely type your actions and an LLM will judge the consequences.",
-            "LLM will judge your action based on the battle situation, your character class, and your items dasda asd asd ass dasd a ds.",
-            "Besides LLM-based damage, your character has the following attributes:",
+            "Damage is based on AI estimates of feasibility and potential damage and your character's attributes:",
             "  - Attack: influences damage dealt to enemies",
             "  - Defense: influences damage taken from enemies",
             "  - HP: how much damage you can take",
