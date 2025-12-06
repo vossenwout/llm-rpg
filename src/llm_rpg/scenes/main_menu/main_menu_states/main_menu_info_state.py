@@ -3,7 +3,7 @@ from __future__ import annotations
 import pygame
 from llm_rpg.scenes.main_menu.main_menu_states.main_menu_states import MainMenuStates
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_panel
+from llm_rpg.ui.components import draw_text_panel
 
 from typing import TYPE_CHECKING
 
@@ -29,26 +29,16 @@ class MainMenuInfoState(State):
         screen.fill(self.scene.game.theme.colors["background"])
         margin = self.scene.game.theme.spacing(2)
 
-        title_text = self.scene.game.theme.fonts["title"].render(
+        title_text = self.scene.game.theme.fonts["large"].render(
             "Game Info", True, self.scene.game.theme.colors["primary"]
         )
-        title_rect = title_text.get_rect(center=(screen.get_width() // 2, margin * 1.5))
+        title_rect = title_text.get_rect(center=(screen.get_width() // 2, margin * 4))
         screen.blit(title_text, title_rect)
-
-        panel_rect = pygame.Rect(
-            margin,
-            margin * 2,
-            screen.get_width() - margin * 2,
-            screen.get_height() - margin * 5,
-        )
-        draw_panel(screen, panel_rect, self.scene.game.theme)
 
         info_lines = [
             "You choose a character class and fight against increasingly difficult enemies.",
             "You can freely type your actions and an LLM will judge the consequences.",
-            "LLM will judge your action based on the battle situation, your character class, and your items.",
-            "LLM will output: feasibility of action and potential damage.",
-            "",
+            "LLM will judge your action based on the battle situation, your character class, and your items dasda asd asd ass dasd a ds.",
             "Besides LLM-based damage, your character has the following attributes:",
             "  - Attack: influences damage dealt to enemies",
             "  - Defense: influences damage taken from enemies",
@@ -56,18 +46,20 @@ class MainMenuInfoState(State):
             "  - Focus: How many characters you can type in each turn",
         ]
 
-        start_y = panel_rect.top + self.scene.game.theme.spacing(1)
-        line_spacing = self.scene.game.theme.spacing(1)
-        for i, line in enumerate(info_lines):
-            text_surface = self.scene.game.theme.fonts["small"].render(
-                line, True, self.scene.game.theme.colors["text"]
-            )
-            text_rect = text_surface.get_rect(
-                center=(screen.get_width() // 2, start_y + i * line_spacing)
-            )
-            screen.blit(text_surface, text_rect)
+        panel_width = screen.get_width() - margin * 10
 
-        back_text = self.scene.game.theme.fonts["medium"].render(
+        draw_text_panel(
+            screen,
+            info_lines,
+            self.scene.game.theme.fonts["small"],
+            self.scene.game.theme,
+            text_color=self.scene.game.theme.colors["text"],
+            align="left",
+            max_width=panel_width,
+            auto_wrap=True,
+        )
+
+        back_text = self.scene.game.theme.fonts["small"].render(
             "Press ENTER or ESC to go back",
             True,
             self.scene.game.theme.colors["text_selected"],

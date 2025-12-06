@@ -51,17 +51,17 @@ class MainMenuNavigationState(State):
 
     def _render_menu_options(self, screen: pygame.Surface):
         margin = self.scene.game.theme.spacing(2)
-        panel_width = screen.get_width() - margin * 2
-        panel_height = self.scene.game.theme.spacing(6)
+        panel_width = screen.get_width() - margin * 6
+        panel_height = self.scene.game.theme.spacing(11)
         panel_rect = pygame.Rect(
-            margin,
             margin * 3,
+            margin * 6,
             panel_width,
             panel_height,
         )
         draw_panel(screen, panel_rect, self.scene.game.theme)
-        start_y = panel_rect.top + self.scene.game.theme.spacing(1)
-        spacing = self.scene.game.theme.spacing(2)
+        start_y = panel_rect.top + self.scene.game.theme.spacing(4)
+        spacing = self.scene.game.theme.spacing(3)
         for index, option_text in self.menu_options.items():
             is_selected = index == self.selected_index
             color = (
@@ -69,15 +69,27 @@ class MainMenuNavigationState(State):
                 if is_selected
                 else self.scene.game.theme.colors["text"]
             )
-            prefix = "> " if is_selected else "  "
-            full_text = f"{prefix}{option_text}"
+
             option_surface = self.scene.game.theme.fonts["medium"].render(
-                full_text, False, color
+                option_text, False, color
             )
+            y_pos = start_y + (index - 1) * spacing
             option_rect = option_surface.get_rect(
-                center=(screen.get_width() // 2, start_y + (index - 1) * spacing)
+                center=(screen.get_width() // 2, y_pos)
             )
             screen.blit(option_surface, option_rect)
+
+            if is_selected:
+                arrow_size = self.scene.game.theme.spacing(1)
+                arrow_x = option_rect.left - self.scene.game.theme.spacing(2)
+                arrow_y = option_rect.centery
+
+                points = [
+                    (arrow_x, arrow_y),
+                    (arrow_x - arrow_size, arrow_y - arrow_size // 2),
+                    (arrow_x - arrow_size, arrow_y + arrow_size // 2),
+                ]
+                pygame.draw.polygon(screen, color, points)
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.scene.game.theme.colors["background"])

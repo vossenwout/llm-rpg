@@ -1,5 +1,7 @@
 debug_mode: false
 display:
+  design_width: 480
+  design_height: 270
   fullscreen: false
   windowed_scale: 3
 # outcomment if you want to use ollama

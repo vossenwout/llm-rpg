@@ -4,16 +4,16 @@ from llm_rpg.utils.assets import asset_file
 
 
 class Theme:
-    def __init__(self, scale: int = 1):
-        self.unit = 8 * scale
-        self.scale = scale
-        with asset_file("fonts/PressStart2P-Regular.ttf") as font_path:
-            self.fonts = {
-                "title": pygame.font.Font(font_path, 48 * scale),
-                "large": pygame.font.Font(font_path, 16 * scale),
-                "medium": pygame.font.Font(font_path, 12 * scale),
-                "small": pygame.font.Font(font_path, 10 * scale),
-            }
+    def __init__(self):
+        self.unit = 4
+        with asset_file("fonts/earthbound.ttf") as earthbound_path:
+            with asset_file("fonts/PressStart2P-Regular.ttf") as press_start_path:
+                self.fonts = {
+                    "title": pygame.font.Font(press_start_path, 48),
+                    "large": pygame.font.Font(earthbound_path, 64),
+                    "medium": pygame.font.Font(earthbound_path, 32),
+                    "small": pygame.font.Font(earthbound_path, 16),
+                }
 
         self.colors = {
             "background": (0, 0, 0),

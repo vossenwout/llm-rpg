@@ -13,10 +13,6 @@ if TYPE_CHECKING:
 
 
 class Game:
-    DESIGN_WIDTH = 480
-    DESIGN_HEIGHT = 270
-    MAX_SCALE = 6
-
     def __init__(self, config: GameConfig):
         self.config = config
         self.llm = config.llm
@@ -29,37 +25,44 @@ class Game:
             base_stats=self.config.hero_base_stats,
             max_items=self.config.hero_max_items,
         )
+        # pygame initialization early so surfaces can convert properly
         pygame.init()
         pygame.display.set_caption("LLM RPG")
+        self.theme = Theme()
+        self.clock = pygame.time.Clock()
 
+        # display setup
+        self.design_surface = pygame.Surface(
+            (config.display_design_width, config.display_design_height)
+        )
         if config.display_fullscreen:
             self._setup_fullscreen()
         else:
             self._setup_windowed()
-
-        self.theme = Theme(scale=self.scale)
-        self.clock = pygame.time.Clock()
-
+        # scene setup
         self.scene_factory = SceneFactory(self)
         self.current_scene: Scene = self.scene_factory.get_initial_scene()
         self.battles_won = 0
 
     def _setup_fullscreen(self):
         display_info = pygame.display.Info()
-        scale_x = display_info.current_w // self.DESIGN_WIDTH
-        scale_y = display_info.current_h // self.DESIGN_HEIGHT
-        self.scale = min(scale_x, scale_y, self.MAX_SCALE)
+        scale_x = display_info.current_w // self.config.display_design_width
+        scale_y = display_info.current_h // self.config.display_design_height
+        scale = min(scale_x, scale_y, 6)
 
-        window_width = self.DESIGN_WIDTH * self.scale
-        window_height = self.DESIGN_HEIGHT * self.scale
+        window_width = self.config.display_design_width * scale
+        window_height = self.config.display_design_height * scale
         self.screen = pygame.display.set_mode(
             (window_width, window_height), pygame.FULLSCREEN
         )
 
     def _setup_windowed(self):
-        self.scale = self.config.display_windowed_scale
-        window_width = self.DESIGN_WIDTH * self.scale
-        window_height = self.DESIGN_HEIGHT * self.scale
+        window_width = (
+            self.config.display_design_width * self.config.display_windowed_scale
+        )
+        window_height = (
+            self.config.display_design_height * self.config.display_windowed_scale
+        )
         self.screen = pygame.display.set_mode((window_width, window_height))
 
     def change_scene(self, scene_type: SceneTypes):
@@ -85,7 +88,10 @@ class Game:
                 else:
                     self.current_scene.handle_input(event)
             self.current_scene.update(dt)
-            self.current_scene.render(self.screen)
+            self.current_scene.render(self.design_surface)
+
+            scaled = pygame.transform.scale(self.design_surface, self.screen.get_size())
+            self.screen.blit(scaled, (0, 0))
             pygame.display.flip()
 
         print(f"Total llm cost $: {self.llm.llm_cost_tracker.total_cost}")

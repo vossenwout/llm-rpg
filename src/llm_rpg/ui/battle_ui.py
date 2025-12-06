@@ -9,6 +9,7 @@ from llm_rpg.systems.battle.damage_calculator import BonusMultiplierDamage
 from llm_rpg.systems.hero.hero import Hero
 from llm_rpg.systems.battle.enemy import Enemy
 from llm_rpg.utils.theme import Theme
+from llm_rpg.ui.components import wrap_text_lines
 
 
 HP_BAR_WIDTH = 180
@@ -69,38 +70,6 @@ def draw_hp_bar(
             center=(x + bar_width // 2, y + bar_height + HP_LABEL_OFFSET)
         ),
     )
-
-
-def wrap_text_lines(
-    text: str,
-    font: pygame.font.Font,
-    max_width: int,
-    max_lines: int,
-) -> list[str]:
-    words = text.split()
-    lines: list[str] = []
-    current = ""
-    for word in words:
-        candidate = word if current == "" else f"{current} {word}"
-        if font.size(candidate)[0] <= max_width:
-            current = candidate
-        else:
-            if current:
-                lines.append(current)
-            current = word
-        if len(lines) == max_lines:
-            break
-    if len(lines) < max_lines and current:
-        lines.append(current)
-    if len(lines) > max_lines:
-        lines = lines[:max_lines]
-    if len(lines) == max_lines and words and " ".join(words) != " ".join(lines):
-        lines[-1] = (
-            lines[-1][: max(0, len(lines[-1]) - 3)] + "..."
-            if len(lines[-1]) > 3
-            else "..."
-        )
-    return lines
 
 
 def _format_proc_line(bonus: BonusMultiplierDamage) -> str:
