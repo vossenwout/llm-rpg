@@ -6,8 +6,8 @@ def draw_panel(
     screen: pygame.Surface, rect: pygame.Rect | Tuple[int, int, int, int], theme
 ):
     base_rect = pygame.Rect(rect)
-    outer_thickness = max(2, theme.scale)
-    inner_thickness = max(2, theme.scale - 1)
+    outer_thickness = 2
+    inner_thickness = 1
 
     pygame.draw.rect(screen, theme.colors["border_light"], base_rect, outer_thickness)
 

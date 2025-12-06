@@ -1,4 +1,7 @@
 debug_mode: false
+display:
+  fullscreen: false
+  windowed_scale: 3
 # outcomment if you want to use ollama
 #llm:
 #  model: "qwen3:4b"

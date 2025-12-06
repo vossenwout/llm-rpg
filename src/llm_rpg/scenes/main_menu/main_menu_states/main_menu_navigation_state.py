@@ -41,14 +41,16 @@ class MainMenuNavigationState(State):
             elif self.selected_index == 2:
                 self.scene.change_state(MainMenuStates.INFO)
 
-    def render(self, screen: pygame.Surface):
-        screen.fill(self.scene.game.theme.colors["background"])
+    def _render_logo(self, screen: pygame.Surface):
         margin = self.scene.game.theme.spacing(2)
-        logo_rect = self.scene.logo_sprite.get_rect(
-            center=(screen.get_width() // 2, margin * 2)
+        logo_surface = self.scene.game.theme.fonts["title"].render(
+            "LLM RPG", False, self.scene.game.theme.colors["primary"]
         )
-        screen.blit(self.scene.logo_sprite, logo_rect)
+        logo_rect = logo_surface.get_rect(center=(screen.get_width() // 2, margin * 2))
+        screen.blit(logo_surface, logo_rect)
 
+    def _render_menu_options(self, screen: pygame.Surface):
+        margin = self.scene.game.theme.spacing(2)
         panel_width = screen.get_width() - margin * 2
         panel_height = self.scene.game.theme.spacing(6)
         panel_rect = pygame.Rect(
@@ -58,7 +60,6 @@ class MainMenuNavigationState(State):
             panel_height,
         )
         draw_panel(screen, panel_rect, self.scene.game.theme)
-
         start_y = panel_rect.top + self.scene.game.theme.spacing(1)
         spacing = self.scene.game.theme.spacing(2)
         for index, option_text in self.menu_options.items():
@@ -71,9 +72,14 @@ class MainMenuNavigationState(State):
             prefix = "> " if is_selected else "  "
             full_text = f"{prefix}{option_text}"
             option_surface = self.scene.game.theme.fonts["medium"].render(
-                full_text, True, color
+                full_text, False, color
             )
             option_rect = option_surface.get_rect(
                 center=(screen.get_width() // 2, start_y + (index - 1) * spacing)
             )
             screen.blit(option_surface, option_rect)
+
+    def render(self, screen: pygame.Surface):
+        screen.fill(self.scene.game.theme.colors["background"])
+        self._render_logo(screen=screen)
+        self._render_menu_options(screen=screen)

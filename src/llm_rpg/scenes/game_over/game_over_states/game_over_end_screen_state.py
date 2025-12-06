@@ -42,7 +42,7 @@ class GameOverEndScreenState(State):
         spacing = self.scene.game.theme.spacing
 
         title_text = self.scene.game.theme.fonts["title"].render(
-            "Game Over", True, self.scene.game.theme.colors["primary"]
+            "Game Over", False, self.scene.game.theme.colors["primary"]
         )
         screen.blit(
             title_text,
@@ -51,7 +51,7 @@ class GameOverEndScreenState(State):
 
         # Placeholder graphic block
         placeholder_surface = self.scene.game.theme.fonts["large"].render(
-            "☠", True, self.scene.game.theme.colors["text"]
+            "☠", False, self.scene.game.theme.colors["text"]
         )
         screen.blit(
             placeholder_surface,
@@ -72,7 +72,7 @@ class GameOverEndScreenState(State):
             prefix = "> " if is_selected else "  "
             full_text = f"{prefix}{option_text}"
             option_surface = self.scene.game.theme.fonts["medium"].render(
-                full_text, True, color
+                full_text, False, color
             )
             option_rect = option_surface.get_rect(
                 center=(
@@ -84,7 +84,7 @@ class GameOverEndScreenState(State):
 
         hint_surface = self.scene.game.theme.fonts["small"].render(
             "Use ↑/↓ and press Enter",
-            True,
+            False,
             self.scene.game.theme.colors["text_hint"],
         )
         screen.blit(
