@@ -283,3 +283,102 @@ def draw_blinking_cursor(
         width = max(3, height // 8)
         cursor_rect = pygame.Rect(x, y, width, height)
         pygame.draw.rect(screen, theme.colors["text_selected"], cursor_rect)
+
+
+def draw_input_panel(
+    screen: pygame.Surface,
+    current_text: str,
+    font: pygame.font.Font,
+    theme: Theme,
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    width: Optional[int] = None,
+    padding: Optional[int] = None,
+    template: Optional[str] = None,
+    text_color: Optional[Tuple[int, int, int]] = None,
+    template_color: Optional[Tuple[int, int, int]] = None,
+    show_cursor: bool = True,
+    time_ms: Optional[int] = None,
+    cursor_interval_ms: int = 400,
+) -> pygame.Rect:
+    """
+    Draw a single-line input panel with optional placeholder template and cursor.
+
+    Args:
+        screen: Surface to draw on.
+        current_text: Text the player has entered so far.
+        font: Font for rendering text.
+        theme: Theme providing colors and spacing.
+        x: Left position of the panel (centered when None).
+        y: Top position of the panel (centered when None).
+        width: Desired width; grows to fit content when smaller.
+        padding: Inner padding in pixels.
+        template: Placeholder string that reveals characters as the user types.
+        text_color: Color for typed characters.
+        template_color: Color for remaining template characters.
+        show_cursor: Whether to render a blinking cursor.
+        time_ms: Current time in milliseconds for cursor animation.
+        cursor_interval_ms: Blink speed in milliseconds.
+
+    Returns:
+        Rect of the drawn panel.
+    """
+    if padding is None:
+        padding = theme.spacing(2)
+    if text_color is None:
+        text_color = theme.colors["text_selected"]
+    if template_color is None:
+        template_color = theme.colors["text_hint"]
+
+    visible_template = template or ""
+    template_chars = list(visible_template)
+    for idx, char in enumerate(current_text):
+        if idx < len(template_chars):
+            template_chars[idx] = char
+        else:
+            template_chars.append(char)
+    display_text = "".join(template_chars) if visible_template else current_text
+
+    base_surface = font.render(display_text, True, template_color)
+
+    measured_width = base_surface.get_width() + padding * 2
+    measured_height = base_surface.get_height() + padding * 2
+    resolved_width = max(width or 0, measured_width)
+    resolved_height = measured_height
+
+    if x is None:
+        x = (screen.get_width() - resolved_width) // 2
+    if y is None:
+        y = (screen.get_height() - resolved_height) // 2
+
+    panel_rect = pygame.Rect(x, y, resolved_width, resolved_height)
+    draw_panel(screen, panel_rect, theme)
+
+    text_x = x + padding
+    text_y = y + padding
+
+    if visible_template:
+        filled_text = "".join(template_chars[: len(current_text)])
+    else:
+        filled_text = current_text
+
+    filled_width = font.size(filled_text)[0]
+
+    screen.blit(base_surface, (text_x, text_y))
+    filled_surface = font.render(filled_text, True, text_color)
+    screen.blit(filled_surface, (text_x, text_y))
+
+    if show_cursor and time_ms is not None:
+        cursor_x = text_x + filled_width
+        cursor_y = text_y
+        draw_blinking_cursor(
+            screen,
+            cursor_x,
+            cursor_y,
+            filled_surface.get_height(),
+            theme,
+            time_ms,
+            interval_ms=cursor_interval_ms,
+        )
+
+    return panel_rect

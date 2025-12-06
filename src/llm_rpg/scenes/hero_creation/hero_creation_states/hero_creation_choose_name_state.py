@@ -5,7 +5,7 @@ from llm_rpg.scenes.hero_creation.hero_creation_states.hero_creation_states impo
     HeroCreationStates,
 )
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_panel, draw_blinking_cursor
+from llm_rpg.ui.components import draw_text_panel, draw_input_panel
 
 from typing import TYPE_CHECKING
 
@@ -82,60 +82,36 @@ class HeroCreationChooseNameState(State):
         screen.fill(self.scene.game.theme.colors["background"])
         spacing = self.scene.game.theme.spacing
 
-        title_text = self.scene.game.theme.fonts["title"].render(
+        title_text = self.scene.game.theme.fonts["large"].render(
             "Character Creation: Name", True, self.scene.game.theme.colors["primary"]
         )
         title_rect = title_text.get_rect(center=(screen.get_width() // 2, spacing(1.5)))
         screen.blit(title_text, title_rect)
 
-        panel_width = screen.get_width() - spacing(2)
-        panel_height = spacing(6)
-        panel_rect = pygame.Rect(
-            spacing(1),
-            spacing(3),
-            panel_width,
-            panel_height,
+        prompt_rect = draw_text_panel(
+            screen=screen,
+            lines="Enter a name for your hero (max 10 characters):",
+            font=self.scene.game.theme.fonts["small"],
+            theme=self.scene.game.theme,
+            x=spacing(2),
+            y=title_rect.bottom + spacing(1),
+            max_width=screen.get_width() - spacing(4),
+            align="left",
+            auto_wrap=True,
         )
-        draw_panel(screen, panel_rect, self.scene.game.theme)
 
-        prompt_text = self.scene.game.theme.fonts["medium"].render(
-            "Enter a name for your hero (max 10 characters):",
-            True,
-            self.scene.game.theme.colors["text"],
-        )
-        prompt_rect = prompt_text.get_rect(
-            center=(screen.get_width() // 2, panel_rect.top + spacing(1))
-        )
-        screen.blit(prompt_text, prompt_rect)
-
-        input_box_width = screen.get_width() - spacing(5)
-        input_box_height = spacing(2.5)
-        input_box_x = spacing(2)
-        input_box_y = panel_rect.top + spacing(2)
-        input_box_rect = pygame.Rect(
-            input_box_x, input_box_y, input_box_width, input_box_height
-        )
-        draw_panel(screen, input_box_rect, self.scene.game.theme)
-
-        name_text = self.scene.game.theme.fonts["medium"].render(
-            self.current_name,
-            True,
-            self.scene.game.theme.colors["text_selected"],
-        )
-        name_rect = name_text.get_rect(
-            center=(screen.get_width() // 2, input_box_y + 25)
-        )
-        screen.blit(name_text, name_rect)
-
-        cursor_x = name_rect.right + 6
-        cursor_y = name_rect.top
-        draw_blinking_cursor(
-            screen,
-            cursor_x,
-            cursor_y,
-            name_rect.height,
-            self.scene.game.theme,
-            pygame.time.get_ticks(),
+        input_y = prompt_rect.bottom + spacing(1)
+        input_box_rect = draw_input_panel(
+            screen=screen,
+            current_text=self.current_name,
+            font=self.scene.game.theme.fonts["small"],
+            theme=self.scene.game.theme,
+            x=prompt_rect.x,
+            y=input_y,
+            width=prompt_rect.width,
+            padding=spacing(1.5),
+            template="**********",
+            time_ms=pygame.time.get_ticks(),
         )
 
         if self.error_message:
@@ -145,7 +121,7 @@ class HeroCreationChooseNameState(State):
                 (255, 50, 50),
             )
             error_rect = error_text.get_rect(
-                center=(screen.get_width() // 2, panel_rect.bottom - spacing(0.5))
+                center=(screen.get_width() // 2, input_box_rect.bottom + spacing(1))
             )
             screen.blit(error_text, error_rect)
 
