@@ -4,19 +4,29 @@ from llm_rpg.utils.theme import Theme
 
 
 def draw_panel(
-    screen: pygame.Surface, rect: pygame.Rect | Tuple[int, int, int, int], theme
+    screen: pygame.Surface,
+    rect: pygame.Rect | Tuple[int, int, int, int],
+    theme: Theme,
+    draw_border: bool = True,
 ):
     base_rect = pygame.Rect(rect)
     outer_thickness = 2
     inner_thickness = 1
 
-    pygame.draw.rect(screen, theme.colors["border_light"], base_rect, outer_thickness)
+    if draw_border:
+        pygame.draw.rect(
+            screen, theme.colors["border_light"], base_rect, outer_thickness
+        )
 
-    inner_rect = base_rect.inflate(-outer_thickness * 2, -outer_thickness * 2)
-    pygame.draw.rect(screen, theme.colors["border_dark"], inner_rect, inner_thickness)
+        inner_rect = base_rect.inflate(-outer_thickness * 2, -outer_thickness * 2)
+        pygame.draw.rect(
+            screen, theme.colors["border_dark"], inner_rect, inner_thickness
+        )
 
-    fill_rect = inner_rect.inflate(-inner_thickness * 2, -inner_thickness * 2)
-    pygame.draw.rect(screen, theme.colors["panel_inner"], fill_rect)
+        fill_rect = inner_rect.inflate(-inner_thickness * 2, -inner_thickness * 2)
+        pygame.draw.rect(screen, theme.colors["panel_inner"], fill_rect)
+    else:
+        pygame.draw.rect(screen, theme.colors["panel_inner"], base_rect)
 
 
 def wrap_text_lines(
@@ -103,6 +113,7 @@ def draw_text_panel(
     align: str = "center",
     max_width: Optional[int] = None,
     auto_wrap: bool = False,
+    draw_border: bool = True,
 ) -> pygame.Rect:
     """
     Draw a panel that perfectly fits the given text with automatic sizing.
@@ -155,7 +166,7 @@ def draw_text_panel(
         y = (screen.get_height() - panel_height) // 2
 
     panel_rect = pygame.Rect(x, y, panel_width, panel_height)
-    draw_panel(screen, panel_rect, theme)
+    draw_panel(screen, panel_rect, theme, draw_border=draw_border)
 
     current_y = y + padding
     for line in lines:
@@ -187,6 +198,7 @@ def draw_selection_panel(
     panel_width: Optional[int] = None,
     align: str = "center",
     arrow_size: Optional[int] = None,
+    draw_border: bool = True,
 ) -> pygame.Rect:
     """
     Render a choice list inside a styled panel and highlight the selected option.
@@ -235,7 +247,7 @@ def draw_selection_panel(
         y = (screen.get_height() - resolved_height) // 2
 
     panel_rect = pygame.Rect(x, y, resolved_width, resolved_height)
-    draw_panel(screen, panel_rect, theme)
+    draw_panel(screen, panel_rect, theme, draw_border=draw_border)
 
     current_y = y + padding
     for index, option in enumerate(options):
@@ -300,6 +312,7 @@ def draw_input_panel(
     show_cursor: bool = True,
     time_ms: Optional[int] = None,
     cursor_interval_ms: int = 400,
+    draw_border: bool = True,
 ) -> pygame.Rect:
     """
     Draw a single-line input panel with optional placeholder template and cursor.
@@ -319,6 +332,7 @@ def draw_input_panel(
         show_cursor: Whether to render a blinking cursor.
         time_ms: Current time in milliseconds for cursor animation.
         cursor_interval_ms: Blink speed in milliseconds.
+        draw_border: Whether to render the decorative border.
 
     Returns:
         Rect of the drawn panel.
@@ -352,7 +366,7 @@ def draw_input_panel(
         y = (screen.get_height() - resolved_height) // 2
 
     panel_rect = pygame.Rect(x, y, resolved_width, resolved_height)
-    draw_panel(screen, panel_rect, theme)
+    draw_panel(screen, panel_rect, theme, draw_border=draw_border)
 
     text_x = x + padding
     text_y = y + padding

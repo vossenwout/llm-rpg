@@ -33,7 +33,7 @@ class HeroCreationChooseNameState(State):
                 self.backspace_held = True
                 self.backspace_timer = 0.0
             else:
-                if event.unicode.isprintable() and len(self.current_name) < 15:
+                if event.unicode.isprintable() and len(self.current_name) < 10:
                     self.current_name += event.unicode
                     self.error_message = ""
                     self.confirm_selected = False
@@ -82,36 +82,29 @@ class HeroCreationChooseNameState(State):
         screen.fill(self.scene.game.theme.colors["background"])
         spacing = self.scene.game.theme.spacing
 
-        title_text = self.scene.game.theme.fonts["large"].render(
-            "Character Creation: Name", True, self.scene.game.theme.colors["primary"]
-        )
-        title_rect = title_text.get_rect(center=(screen.get_width() // 2, spacing(1.5)))
-        screen.blit(title_text, title_rect)
-
         prompt_rect = draw_text_panel(
             screen=screen,
             lines="Enter a name for your hero (max 10 characters):",
             font=self.scene.game.theme.fonts["small"],
             theme=self.scene.game.theme,
-            x=spacing(2),
-            y=title_rect.bottom + spacing(1),
             max_width=screen.get_width() - spacing(4),
             align="left",
             auto_wrap=True,
+            draw_border=True,
         )
 
-        input_y = prompt_rect.bottom + spacing(1)
         input_box_rect = draw_input_panel(
             screen=screen,
             current_text=self.current_name,
             font=self.scene.game.theme.fonts["small"],
             theme=self.scene.game.theme,
-            x=prompt_rect.x,
-            y=input_y,
-            width=prompt_rect.width,
+            y=prompt_rect.bottom + spacing(1),
+            width=spacing(14),
             padding=spacing(1.5),
             template="**********",
             time_ms=pygame.time.get_ticks(),
+            show_cursor=False,
+            draw_border=False,
         )
 
         if self.error_message:
