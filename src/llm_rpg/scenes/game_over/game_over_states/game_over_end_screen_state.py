@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
+from llm_rpg.ui.components import draw_selection_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.game_over.game_over_scene import GameOverScene
@@ -60,27 +61,17 @@ class GameOverEndScreenState(State):
             ),
         )
 
-        start_y = spacing(5)
-        vertical_step = spacing(1.75)
-        for index, option_text in self.menu_options.items():
-            is_selected = index == self.selected_index
-            color = (
-                self.scene.game.theme.colors["text_selected"]
-                if is_selected
-                else self.scene.game.theme.colors["text"]
-            )
-            prefix = "> " if is_selected else "  "
-            full_text = f"{prefix}{option_text}"
-            option_surface = self.scene.game.theme.fonts["medium"].render(
-                full_text, False, color
-            )
-            option_rect = option_surface.get_rect(
-                center=(
-                    screen.get_width() // 2,
-                    start_y + (index - 1) * vertical_step,
-                )
-            )
-            screen.blit(option_surface, option_rect)
+        draw_selection_panel(
+            screen=screen,
+            options=list(self.menu_options.values()),
+            selected_index=self.selected_index - 1,
+            font=self.scene.game.theme.fonts["medium"],
+            theme=self.scene.game.theme,
+            y=spacing(5),
+            panel_width=screen.get_width() - spacing(4),
+            padding=spacing(1.5),
+            option_spacing=spacing(2),
+        )
 
         hint_surface = self.scene.game.theme.fonts["small"].render(
             "Use ↑/↓ and press Enter",

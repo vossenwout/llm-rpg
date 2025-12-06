@@ -5,7 +5,7 @@ from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
 from typing import TYPE_CHECKING
 from llm_rpg.scenes.main_menu.main_menu_states.main_menu_states import MainMenuStates
-from llm_rpg.ui.components import draw_panel
+from llm_rpg.ui.components import draw_selection_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.main_menu.main_menu_scene import MainMenuScene
@@ -46,50 +46,23 @@ class MainMenuNavigationState(State):
         logo_surface = self.scene.game.theme.fonts["title"].render(
             "LLM RPG", False, self.scene.game.theme.colors["primary"]
         )
-        logo_rect = logo_surface.get_rect(center=(screen.get_width() // 2, margin * 2))
+        logo_rect = logo_surface.get_rect(center=(screen.get_width() // 2, margin * 6))
         screen.blit(logo_surface, logo_rect)
 
     def _render_menu_options(self, screen: pygame.Surface):
         margin = self.scene.game.theme.spacing(2)
         panel_width = screen.get_width() - margin * 6
-        panel_height = self.scene.game.theme.spacing(11)
-        panel_rect = pygame.Rect(
-            margin * 3,
-            margin * 6,
-            panel_width,
-            panel_height,
+        draw_selection_panel(
+            screen=screen,
+            options=list(self.menu_options.values()),
+            selected_index=self.selected_index - 1,
+            font=self.scene.game.theme.fonts["medium"],
+            theme=self.scene.game.theme,
+            padding=self.scene.game.theme.spacing(2),
+            option_spacing=self.scene.game.theme.spacing(1),
+            panel_width=panel_width,
+            align="center",
         )
-        draw_panel(screen, panel_rect, self.scene.game.theme)
-        start_y = panel_rect.top + self.scene.game.theme.spacing(4)
-        spacing = self.scene.game.theme.spacing(3)
-        for index, option_text in self.menu_options.items():
-            is_selected = index == self.selected_index
-            color = (
-                self.scene.game.theme.colors["text_selected"]
-                if is_selected
-                else self.scene.game.theme.colors["text"]
-            )
-
-            option_surface = self.scene.game.theme.fonts["medium"].render(
-                option_text, False, color
-            )
-            y_pos = start_y + (index - 1) * spacing
-            option_rect = option_surface.get_rect(
-                center=(screen.get_width() // 2, y_pos)
-            )
-            screen.blit(option_surface, option_rect)
-
-            if is_selected:
-                arrow_size = self.scene.game.theme.spacing(1)
-                arrow_x = option_rect.left - self.scene.game.theme.spacing(2)
-                arrow_y = option_rect.centery
-
-                points = [
-                    (arrow_x, arrow_y),
-                    (arrow_x - arrow_size, arrow_y - arrow_size // 2),
-                    (arrow_x - arrow_size, arrow_y + arrow_size // 2),
-                ]
-                pygame.draw.polygon(screen, color, points)
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.scene.game.theme.colors["background"])

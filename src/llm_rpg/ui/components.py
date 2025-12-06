@@ -174,6 +174,98 @@ def draw_text_panel(
     return panel_rect
 
 
+def draw_selection_panel(
+    screen: pygame.Surface,
+    options: List[str],
+    selected_index: int,
+    font: pygame.font.Font,
+    theme: Theme,
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    padding: Optional[int] = None,
+    option_spacing: Optional[int] = None,
+    panel_width: Optional[int] = None,
+    align: str = "center",
+    arrow_size: Optional[int] = None,
+) -> pygame.Rect:
+    """
+    Render a choice list inside a styled panel and highlight the selected option.
+
+    Args:
+        screen: Surface to draw on.
+        options: Labels for each option.
+        selected_index: Zero-based index of the active option.
+        font: Font used for option labels.
+        theme: Theme providing colors and spacing.
+        x: Left position of the panel (centered when None).
+        y: Top position of the panel (centered when None).
+        padding: Inner padding in pixels.
+        option_spacing: Vertical spacing between options.
+        panel_width: Desired panel width; grows if content needs more space.
+        align: Horizontal alignment of text within the panel.
+        arrow_size: Size of the selection arrow.
+
+    Returns:
+        The rect of the drawn panel.
+    """
+    if padding is None:
+        padding = theme.spacing(2)
+    if option_spacing is None:
+        option_spacing = theme.spacing(3)
+    if arrow_size is None:
+        arrow_size = theme.spacing(1)
+
+    text_heights = [font.get_linesize() for _ in options]
+    text_widths = [font.size(option)[0] for option in options]
+    widest_text = max(text_widths) if text_widths else 0
+
+    arrow_space = theme.spacing(2) + arrow_size
+    min_panel_width = widest_text + padding * 2 + arrow_space
+    resolved_width = (
+        max(panel_width, min_panel_width) if panel_width else min_panel_width
+    )
+
+    total_height = sum(text_heights)
+    total_height += option_spacing * (len(options) - 1) if options else 0
+    resolved_height = total_height + padding * 2
+
+    if x is None:
+        x = (screen.get_width() - resolved_width) // 2
+    if y is None:
+        y = (screen.get_height() - resolved_height) // 2
+
+    panel_rect = pygame.Rect(x, y, resolved_width, resolved_height)
+    draw_panel(screen, panel_rect, theme)
+
+    current_y = y + padding
+    for index, option in enumerate(options):
+        is_selected = index == selected_index
+        color = theme.colors["text_selected"] if is_selected else theme.colors["text"]
+        text_surface = font.render(option, False, color)
+        if align == "left":
+            text_x = x + padding + arrow_space
+        elif align == "right":
+            text_x = x + resolved_width - padding - text_surface.get_width()
+        else:
+            text_x = x + (resolved_width - text_surface.get_width()) // 2
+
+        screen.blit(text_surface, (text_x, current_y))
+
+        if is_selected:
+            arrow_x = text_x - theme.spacing(1)
+            arrow_y = current_y + text_surface.get_height() // 2
+            points = [
+                (arrow_x, arrow_y),
+                (arrow_x - arrow_size, arrow_y - arrow_size // 2),
+                (arrow_x - arrow_size, arrow_y + arrow_size // 2),
+            ]
+            pygame.draw.polygon(screen, color, points)
+
+        current_y += text_surface.get_height() + option_spacing
+
+    return panel_rect
+
+
 def cursor_suffix(time_ms: int, interval_ms: int = 400) -> str:
     return "|" if (time_ms // interval_ms) % 2 == 0 else ""
 
