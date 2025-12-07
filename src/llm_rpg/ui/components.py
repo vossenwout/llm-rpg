@@ -149,8 +149,10 @@ def draw_text_panel(
     if text_color is None:
         text_color = theme.colors["text"]
 
-    if auto_wrap and max_width:
-        max_text_width = max_width - padding * 2
+    effective_max_width = max_width if max_width is not None else width
+
+    if auto_wrap and effective_max_width:
+        max_text_width = effective_max_width - padding * 2
         wrapped_lines = []
         for line in lines:
             if line == "":

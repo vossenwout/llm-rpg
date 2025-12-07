@@ -55,16 +55,15 @@ class HeroCreationChooseClassState(State):
         spacing = theme.spacing
         screen.fill(theme.colors["background"])
 
-        title_text = theme.fonts["medium"].render(
+        title_text = theme.fonts["large"].render(
             "Choose Your Class", True, theme.colors["primary"]
         )
-        title_rect = title_text.get_rect(center=(screen.get_width() // 2, spacing(1.5)))
+        title_rect = title_text.get_rect(center=(screen.get_width() // 2, spacing(8)))
         screen.blit(title_text, title_rect)
 
         options = [hero_class.class_name for hero_class in self.hero_classes]
 
         margin = spacing(2)
-        content_top = title_rect.bottom + spacing(2)
         available_width = screen.get_width() - margin * 2
         selector_width = int(available_width * 0.35)
         info_width = available_width - selector_width - spacing(2)
@@ -76,7 +75,6 @@ class HeroCreationChooseClassState(State):
             font=theme.fonts["small"],
             theme=theme,
             x=margin,
-            y=content_top,
             width=selector_width,
             align="left",
         )
@@ -89,7 +87,6 @@ class HeroCreationChooseClassState(State):
             font=theme.fonts["small"],
             theme=theme,
             x=margin + selector_width + spacing(2),
-            y=content_top,
             width=info_width,
             max_width=info_width,
             align="left",
