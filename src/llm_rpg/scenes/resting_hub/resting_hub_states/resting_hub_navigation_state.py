@@ -8,6 +8,7 @@ from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
 )
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
+from llm_rpg.ui.components import draw_selection_panel, draw_text_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -16,8 +17,8 @@ if TYPE_CHECKING:
 class RestingHubNavigationState(State):
     def __init__(self, resting_hub_scene: RestingHubScene):
         self.resting_hub_scene = resting_hub_scene
-        self.menu_options = {1: "View Character", 2: "Next Battle"}
-        self.selected_index = 1
+        self.menu_options: list[str] = ["Next Battle", "View Character"]
+        self.selected_index = 0
         self.option_selected = False
         self.error_message = ""
 
@@ -25,62 +26,69 @@ class RestingHubNavigationState(State):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_DOWN:
                 self.selected_index += 1
-                if self.selected_index > len(self.menu_options):
-                    self.selected_index = 1
+                if self.selected_index >= len(self.menu_options):
+                    self.selected_index = 0
             elif event.key == pygame.K_UP:
                 self.selected_index -= 1
-                if self.selected_index < 1:
-                    self.selected_index = len(self.menu_options)
+                if self.selected_index < 0:
+                    self.selected_index = len(self.menu_options) - 1
             elif event.key == pygame.K_RETURN:
                 self.option_selected = True
 
     def update(self, dt: float):
         if self.option_selected:
-            if self.selected_index == 1:
-                self.resting_hub_scene.change_state(RestingHubStates.VIEW_CHARACTER)
-            elif self.selected_index == 2:
+            if self.selected_index == 0:
                 self.resting_hub_scene.game.change_scene(SceneTypes.BATTLE)
+            elif self.selected_index == 1:
+                self.resting_hub_scene.change_state(RestingHubStates.VIEW_CHARACTER)
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.resting_hub_scene.game.theme.colors["background"])
-        spacing = self.resting_hub_scene.game.theme.spacing
+        theme = self.resting_hub_scene.game.theme
+        spacing = theme.spacing
+        screen.fill(theme.colors["background"])
 
-        title = self.resting_hub_scene.game.theme.fonts["title"].render(
-            "Resting Hub", True, self.resting_hub_scene.game.theme.colors["primary"]
+        title_surface = theme.fonts["large"].render(
+            "Resting Hub", True, theme.colors["primary"]
         )
-        screen.blit(
-            title, title.get_rect(center=(screen.get_width() // 2, spacing(1.5)))
+        title_rect = title_surface.get_rect(
+            center=(screen.get_width() // 2, spacing(8))
+        )
+        screen.blit(title_surface, title_rect)
+
+        margin = spacing(2)
+        panel_width = screen.get_width() - margin * 4
+
+        info_rect = draw_text_panel(
+            screen=screen,
+            lines=f"Battles won: {self.resting_hub_scene.game.battles_won}",
+            font=theme.fonts["small"],
+            theme=theme,
+            x=margin,
+            y=title_rect.bottom + spacing(2),
+            width=panel_width,
+            align="left",
+            auto_wrap=False,
+            draw_border=False,
         )
 
-        subtitle = self.resting_hub_scene.game.theme.fonts["small"].render(
-            f"Battles won: {self.resting_hub_scene.game.battles_won}",
-            True,
-            self.resting_hub_scene.game.theme.colors["text_hint"],
+        draw_selection_panel(
+            screen=screen,
+            options=self.menu_options,
+            selected_index=self.selected_index,
+            font=theme.fonts["small"],
+            theme=theme,
+            x=margin,
+            y=info_rect.bottom + spacing(1.5),
+            width=panel_width,
+            padding=spacing(2),
+            option_spacing=spacing(1.5),
+            align="left",
         )
-        screen.blit(subtitle, (spacing(0.5), spacing(2.5)))
 
-        start_y = spacing(3)
-        vertical_step = spacing(2)
-        for index, option in self.menu_options.items():
-            is_selected = index == self.selected_index
-            color = (
-                self.resting_hub_scene.game.theme.colors["text_selected"]
-                if is_selected
-                else self.resting_hub_scene.game.theme.colors["text"]
-            )
-            prefix = "> " if is_selected else "  "
-            text_surface = self.resting_hub_scene.game.theme.fonts["large"].render(
-                prefix + option, True, color
-            )
-            text_rect = text_surface.get_rect(
-                center=(screen.get_width() // 2, start_y + (index - 1) * vertical_step)
-            )
-            screen.blit(text_surface, text_rect)
-
-        hint = self.resting_hub_scene.game.theme.fonts["small"].render(
+        hint = theme.fonts["small"].render(
             "Use ↑/↓ and Enter",
             True,
-            self.resting_hub_scene.game.theme.colors["text_hint"],
+            theme.colors["text_hint"],
         )
         screen.blit(
             hint,
