@@ -117,6 +117,7 @@ def draw_text_panel(
     max_width: Optional[int] = None,
     auto_wrap: bool = False,
     draw_border: bool = True,
+    min_height: Optional[int] = None,
 ) -> pygame.Rect:
     """
     Draw a panel that perfectly fits the given text with automatic sizing.
@@ -135,6 +136,7 @@ def draw_text_panel(
         width: Fixed panel width (overrides measured width when set)
         max_width: Maximum width for the panel (for wrapping)
         auto_wrap: If True, automatically wrap long lines to fit max_width
+        min_height: Minimum height for the panel
 
     Returns:
         The rect of the panel that was drawn
@@ -163,7 +165,7 @@ def draw_text_panel(
 
     text_width, text_height = measure_text_block(lines, font, line_spacing)
 
-    computed_height = text_height + padding * 2
+    computed_height = max(text_height + padding * 2, min_height or 0)
 
     if width is not None:
         computed_width = width

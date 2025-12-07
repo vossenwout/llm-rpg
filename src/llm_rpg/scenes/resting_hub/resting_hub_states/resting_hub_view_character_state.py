@@ -7,7 +7,7 @@ from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
     RestingHubStates,
 )
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_text_panel
+from llm_rpg.ui.components import draw_text_panel, measure_text_block
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -34,53 +34,93 @@ class RestingHubViewCharacterState(State):
         hero = self.resting_hub_scene.game.hero
         screen.fill(theme.colors["background"])
 
-        title_surface = theme.fonts["large"].render(
-            "Character", True, theme.colors["primary"]
-        )
-        title_rect = title_surface.get_rect(
-            center=(screen.get_width() // 2, spacing(2))
-        )
-        screen.blit(title_surface, title_rect)
-
         margin = spacing(2)
-        panel_width = screen.get_width() - margin * 4
+        gap = spacing(2)
+        available_width = screen.get_width() - margin * 2
+        column_width = (available_width - gap) // 2
+        padding = spacing(2)
+        line_spacing = spacing(1)
 
-        stats = hero.get_current_stats()
-        item_lines = [
-            f"- {item.name} ({item.rarity.value}): {item.description}"
-            for item in hero.inventory.items
-        ] or ["No items equipped."]
-
-        info_lines = [
+        hero_lines = [
             f"Name: {hero.name}",
-            f"Level: {hero.level}",
             f"Class: {hero.class_name}",
             f"Description: {hero.description}",
-            "",
-            "Stats:",
+        ]
+        stats = hero.get_current_stats()
+        stats_lines = [
+            f"Level: {hero.level}",
             f"Attack: {stats.attack}",
             f"Defense: {stats.defense}",
             f"Focus: {stats.focus}",
             f"HP: {stats.max_hp}",
-            "",
-            "Items:",
-            *item_lines,
         ]
 
-        draw_text_panel(
+        item_lines = (
+            ["Items:"]
+            + [
+                f"- {item.name} ({item.rarity.value}) - {item.description}"
+                for item in hero.inventory.items
+            ]
+            if hero.inventory.items
+            else ["Items:", "- None equipped"]
+        )
+
+        hero_text_size = measure_text_block(
+            hero_lines, theme.fonts["small"], line_spacing
+        )
+        stats_text_size = measure_text_block(
+            stats_lines, theme.fonts["small"], line_spacing
+        )
+        target_height = max(
+            hero_text_size[1] + padding * 2,
+            stats_text_size[1] + padding * 2,
+        )
+
+        hero_rect = draw_text_panel(
             screen=screen,
-            lines=info_lines,
+            lines=hero_lines,
             font=theme.fonts["small"],
             theme=theme,
             x=margin,
-            y=title_rect.bottom + spacing(1.5),
-            width=panel_width,
+            y=spacing(8),
+            width=column_width,
+            padding=padding,
+            line_spacing=line_spacing,
+            align="left",
+            auto_wrap=True,
+            min_height=target_height,
+        )
+
+        stats_rect = draw_text_panel(
+            screen=screen,
+            lines=stats_lines,
+            font=theme.fonts["small"],
+            theme=theme,
+            x=hero_rect.right + gap,
+            y=spacing(8),
+            width=column_width,
+            padding=padding,
+            line_spacing=line_spacing,
+            align="left",
+            auto_wrap=True,
+            min_height=target_height,
+        )
+        draw_text_panel(
+            screen=screen,
+            lines=item_lines,
+            font=theme.fonts["small"],
+            theme=theme,
+            x=margin,
+            y=stats_rect.bottom + spacing(1.5),
+            width=available_width,
+            padding=padding,
+            line_spacing=line_spacing,
             align="left",
             auto_wrap=True,
         )
 
         hint = theme.fonts["small"].render(
-            "Press Enter/Esc to go back",
+            "Press Enter to go back",
             True,
             theme.colors["text_hint"],
         )

@@ -86,7 +86,7 @@ class RestingHubNavigationState(State):
         )
 
         hint = theme.fonts["small"].render(
-            "Use ↑/↓ and Enter",
+            "Use arrows to navigate, Enter to confirm",
             True,
             theme.colors["text_hint"],
         )
