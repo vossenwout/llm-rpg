@@ -60,7 +60,7 @@ class MainMenuNavigationState(State):
             theme=self.scene.game.theme,
             padding=self.scene.game.theme.spacing(2),
             option_spacing=self.scene.game.theme.spacing(1),
-            panel_width=panel_width,
+            width=panel_width,
             align="center",
         )
 

@@ -68,7 +68,7 @@ class GameOverEndScreenState(State):
             font=self.scene.game.theme.fonts["medium"],
             theme=self.scene.game.theme,
             y=spacing(5),
-            panel_width=screen.get_width() - spacing(4),
+            width=screen.get_width() - spacing(4),
             padding=spacing(1.5),
             option_spacing=spacing(2),
         )

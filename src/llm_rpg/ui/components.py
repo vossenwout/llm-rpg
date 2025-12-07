@@ -111,6 +111,7 @@ def draw_text_panel(
     line_spacing: Optional[int] = None,
     text_color: Optional[Tuple[int, int, int]] = None,
     align: str = "center",
+    width: Optional[int] = None,
     max_width: Optional[int] = None,
     auto_wrap: bool = False,
     draw_border: bool = True,
@@ -129,6 +130,7 @@ def draw_text_panel(
         line_spacing: Space between lines (defaults to theme.spacing(1))
         text_color: Color for text (defaults to theme.colors["text"])
         align: Text alignment within panel ("left", "center", "right")
+        width: Fixed panel width (overrides measured width when set)
         max_width: Maximum width for the panel (for wrapping)
         auto_wrap: If True, automatically wrap long lines to fit max_width
 
@@ -154,18 +156,21 @@ def draw_text_panel(
 
     text_width, text_height = measure_text_block(lines, font, line_spacing)
 
-    panel_width = text_width + padding * 2
-    panel_height = text_height + padding * 2
+    computed_height = text_height + padding * 2
 
-    if max_width:
-        panel_width = min(panel_width, max_width)
+    if width is not None:
+        computed_width = width
+    else:
+        computed_width = text_width + padding * 2
+        if max_width:
+            computed_width = min(computed_width, max_width)
 
     if x is None:
-        x = (screen.get_width() - panel_width) // 2
+        x = (screen.get_width() - computed_width) // 2
     if y is None:
-        y = (screen.get_height() - panel_height) // 2
+        y = (screen.get_height() - computed_height) // 2
 
-    panel_rect = pygame.Rect(x, y, panel_width, panel_height)
+    panel_rect = pygame.Rect(x, y, computed_width, computed_height)
     draw_panel(screen, panel_rect, theme, draw_border=draw_border)
 
     current_y = y + padding
@@ -173,11 +178,11 @@ def draw_text_panel(
         text_surface = font.render(line, True, text_color)
 
         if align == "center":
-            text_x = x + (panel_width - text_surface.get_width()) // 2
+            text_x = x + (computed_width - text_surface.get_width()) // 2
         elif align == "left":
             text_x = x + padding
         else:
-            text_x = x + panel_width - padding - text_surface.get_width()
+            text_x = x + computed_width - padding - text_surface.get_width()
 
         screen.blit(text_surface, (text_x, current_y))
         current_y += text_surface.get_height() + line_spacing
@@ -195,7 +200,7 @@ def draw_selection_panel(
     y: Optional[int] = None,
     padding: Optional[int] = None,
     option_spacing: Optional[int] = None,
-    panel_width: Optional[int] = None,
+    width: Optional[int] = None,
     align: str = "center",
     arrow_size: Optional[int] = None,
     draw_border: bool = True,
@@ -213,7 +218,7 @@ def draw_selection_panel(
         y: Top position of the panel (centered when None).
         padding: Inner padding in pixels.
         option_spacing: Vertical spacing between options.
-        panel_width: Desired panel width; grows if content needs more space.
+        width: Desired panel width; grows if content needs more space.
         align: Horizontal alignment of text within the panel.
         arrow_size: Size of the selection arrow.
 
@@ -233,9 +238,7 @@ def draw_selection_panel(
 
     arrow_space = theme.spacing(2) + arrow_size
     min_panel_width = widest_text + padding * 2 + arrow_space
-    resolved_width = (
-        max(panel_width, min_panel_width) if panel_width else min_panel_width
-    )
+    resolved_width = max(width, min_panel_width) if width else min_panel_width
 
     total_height = sum(text_heights)
     total_height += option_spacing * (len(options) - 1) if options else 0
