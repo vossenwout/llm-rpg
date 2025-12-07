@@ -1,9 +1,9 @@
 debug_mode: false
 display:
-  design_width: 480
-  design_height: 270
+  design_width: 960
+  design_height: 540
   fullscreen: false
-  windowed_scale: 3
+  windowed_scale: 1.5
 # outcomment if you want to use ollama
 #llm:
 #  model: "qwen3:4b"
