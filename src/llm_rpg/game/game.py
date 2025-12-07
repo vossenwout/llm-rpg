@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 
 class Game:
-    DESIGN_WIDTH = 480
-    DESIGN_HEIGHT = 270
+    DESIGN_WIDTH = 320
+    DESIGN_HEIGHT = 240
 
     def __init__(self, config: GameConfig):
         self.config = config

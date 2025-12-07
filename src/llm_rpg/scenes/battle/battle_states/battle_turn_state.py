@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.systems.hero.hero import ProposedHeroAction
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_panel, draw_blinking_cursor
+from llm_rpg.ui.components import draw_input_panel
 from llm_rpg.ui.battle_ui import render_stats_row
 
 if TYPE_CHECKING:
@@ -104,14 +104,6 @@ class BattleTurnState(State):
             self.input_timer = 0.0
             self.battle_scene.change_state(BattleStates.HERO_THINKING)
 
-    def _render_stats(self, screen: pygame.Surface):
-        render_stats_row(
-            screen=screen,
-            theme=self.battle_scene.game.theme,
-            hero=self.battle_scene.hero,
-            enemy=self.battle_scene.enemy,
-        )
-
     def _render_input_box(self, screen: pygame.Surface):
         focus_limit = self.battle_scene.hero.get_current_stats().focus
         remaining_chars = max(focus_limit - len(self.input_text.replace(" ", "")), 0)
@@ -120,34 +112,21 @@ class BattleTurnState(State):
             prompt, True, self.battle_scene.game.theme.colors["text_hint"]
         )
         spacing = self.battle_scene.game.theme.spacing
-        input_panel = pygame.Rect(
-            spacing(0.5),
-            screen.get_height() - spacing(3.5),
-            screen.get_width() - spacing(1),
-            spacing(3),
+        panel_rect = draw_input_panel(
+            screen=screen,
+            current_text=self.input_text,
+            font=self.battle_scene.game.theme.fonts["small"],
+            theme=self.battle_scene.game.theme,
+            x=spacing(0.5),
+            y=screen.get_height() - spacing(3.5),
+            width=screen.get_width() - spacing(1),
+            padding=spacing(1),
+            time_ms=pygame.time.get_ticks(),
         )
-        draw_panel(screen, input_panel, self.battle_scene.game.theme)
 
         screen.blit(
             prompt_surface,
-            (input_panel.x + spacing(0.5), input_panel.y - spacing(0.75)),
-        )
-
-        text_surface = self.battle_scene.game.theme.fonts["medium"].render(
-            self.input_text, True, self.battle_scene.game.theme.colors["text_selected"]
-        )
-        text_pos = (input_panel.x + spacing(0.5), input_panel.y + spacing(0.75))
-        screen.blit(text_surface, text_pos)
-
-        cursor_x = text_pos[0] + text_surface.get_width() + 4
-        cursor_y = text_pos[1]
-        draw_blinking_cursor(
-            screen,
-            cursor_x,
-            cursor_y,
-            text_surface.get_height(),
-            self.battle_scene.game.theme,
-            pygame.time.get_ticks(),
+            (panel_rect.x, panel_rect.y - spacing(0.75)),
         )
 
         if self.error_message:
@@ -156,7 +135,7 @@ class BattleTurnState(State):
             )
             screen.blit(
                 error_surface,
-                (input_panel.x + spacing(0.5), input_panel.y + spacing(2)),
+                (panel_rect.x, panel_rect.bottom + spacing(0.5)),
             )
 
         enter_surface = self.battle_scene.game.theme.fonts["small"].render(
@@ -171,5 +150,10 @@ class BattleTurnState(State):
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.battle_scene.game.theme.colors["background"])
-        self._render_stats(screen)
+        render_stats_row(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            enemy=self.battle_scene.enemy,
+        )
         self._render_input_box(screen)
