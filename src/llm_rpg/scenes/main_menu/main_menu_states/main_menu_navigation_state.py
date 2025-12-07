@@ -56,7 +56,7 @@ class MainMenuNavigationState(State):
             screen=screen,
             options=list(self.menu_options.values()),
             selected_index=self.selected_index - 1,
-            font=self.scene.game.theme.fonts["medium"],
+            font=self.scene.game.theme.fonts["small"],
             theme=self.scene.game.theme,
             padding=self.scene.game.theme.spacing(2),
             option_spacing=self.scene.game.theme.spacing(1),
