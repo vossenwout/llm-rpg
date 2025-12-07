@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 
 
 class Game:
+    DESIGN_WIDTH = 960
+    DESIGN_HEIGHT = 540
+
     def __init__(self, config: GameConfig):
         self.config = config
         self.llm = config.llm
@@ -32,9 +35,7 @@ class Game:
         self.clock = pygame.time.Clock()
 
         # display setup
-        self.design_surface = pygame.Surface(
-            (config.display_design_width, config.display_design_height)
-        )
+        self.design_surface = pygame.Surface((self.DESIGN_WIDTH, self.DESIGN_HEIGHT))
         if config.display_fullscreen:
             self._setup_fullscreen()
         else:
@@ -46,23 +47,19 @@ class Game:
 
     def _setup_fullscreen(self):
         display_info = pygame.display.Info()
-        scale_x = display_info.current_w // self.config.display_design_width
-        scale_y = display_info.current_h // self.config.display_design_height
+        scale_x = display_info.current_w // self.DESIGN_WIDTH
+        scale_y = display_info.current_h // self.DESIGN_HEIGHT
         scale = min(scale_x, scale_y, 6)
 
-        window_width = self.config.display_design_width * scale
-        window_height = self.config.display_design_height * scale
+        window_width = self.DESIGN_WIDTH * scale
+        window_height = self.DESIGN_HEIGHT * scale
         self.screen = pygame.display.set_mode(
             (window_width, window_height), pygame.FULLSCREEN
         )
 
     def _setup_windowed(self):
-        window_width = (
-            self.config.display_design_width * self.config.display_windowed_scale
-        )
-        window_height = (
-            self.config.display_design_height * self.config.display_windowed_scale
-        )
+        window_width = self.DESIGN_WIDTH * self.config.display_windowed_scale
+        window_height = self.DESIGN_HEIGHT * self.config.display_windowed_scale
         self.screen = pygame.display.set_mode((window_width, window_height))
 
     def change_scene(self, scene_type: SceneTypes):

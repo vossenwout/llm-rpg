@@ -190,14 +190,6 @@ class GameConfig:
         return self.game_config["prompts"]["enemy_next_action"]
 
     @cached_property
-    def display_design_width(self) -> int:
-        return self.game_config["display"]["design_width"]
-
-    @cached_property
-    def display_design_height(self) -> int:
-        return self.game_config["display"]["design_height"]
-
-    @cached_property
     def display_fullscreen(self) -> bool:
         return self.game_config["display"]["fullscreen"]
 
