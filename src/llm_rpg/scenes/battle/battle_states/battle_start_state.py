@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING
 
 from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.battle_ui import draw_hp_bar
-from llm_rpg.ui.components import draw_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -29,67 +27,40 @@ class BattleStartState(State):
         screen.fill(self.battle_scene.game.theme.colors["background"])
         spacing = self.battle_scene.game.theme.spacing
 
-        title = self.battle_scene.game.theme.fonts["title"].render(
+        title = self.battle_scene.game.theme.fonts["large"].render(
             "Battle Start", True, self.battle_scene.game.theme.colors["primary"]
         )
-        screen.blit(
-            title, title.get_rect(center=(screen.get_width() // 2, spacing(1.5)))
-        )
-
-        hero_panel = pygame.Rect(spacing(1), spacing(3), spacing(8), spacing(5))
-        enemy_panel = pygame.Rect(
-            screen.get_width() - spacing(1) - spacing(8),
-            spacing(3),
-            spacing(8),
-            spacing(5),
-        )
-        draw_panel(screen, hero_panel, self.battle_scene.game.theme)
-        draw_panel(screen, enemy_panel, self.battle_scene.game.theme)
+        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, spacing(8))))
 
         hero = self.battle_scene.hero
         enemy = self.battle_scene.enemy
 
-        hero_text = self.battle_scene.game.theme.fonts["large"].render(
-            hero.name or "Hero", True, self.battle_scene.game.theme.colors["text"]
+        hero_text = self.battle_scene.game.theme.fonts["small"].render(
+            hero.name, True, self.battle_scene.game.theme.colors["text"]
         )
         screen.blit(
             hero_text,
-            hero_text.get_rect(center=(hero_panel.centerx, hero_panel.y + spacing(1))),
-        )
-        draw_hp_bar(
-            screen=screen,
-            theme=self.battle_scene.game.theme,
-            x=hero_panel.x + spacing(1),
-            y=hero_panel.y + spacing(2.5),
-            hp=hero.hp,
-            max_hp=hero.get_current_stats().max_hp,
-            width=spacing(6),
+            hero_text.get_rect(center=(spacing(8), screen.get_height() // 2)),
         )
 
-        enemy_text = self.battle_scene.game.theme.fonts["large"].render(
+        enemy_text = self.battle_scene.game.theme.fonts["small"].render(
             enemy.name, True, self.battle_scene.game.theme.colors["text"]
         )
         screen.blit(
             enemy_text,
             enemy_text.get_rect(
-                center=(enemy_panel.centerx, enemy_panel.y + spacing(1))
+                center=(screen.get_width() - spacing(8), screen.get_height() // 2)
             ),
         )
-        draw_hp_bar(
-            screen=screen,
-            theme=self.battle_scene.game.theme,
-            x=enemy_panel.x + spacing(1),
-            y=enemy_panel.y + spacing(2.5),
-            hp=enemy.hp,
-            max_hp=enemy.get_current_stats().max_hp,
-            width=spacing(6),
-        )
 
-        vs_text = self.battle_scene.game.theme.fonts["large"].render(
+        vs_text = self.battle_scene.game.theme.fonts["medium"].render(
             "VS", True, self.battle_scene.game.theme.colors["primary"]
         )
         screen.blit(
-            vs_text, vs_text.get_rect(center=(screen.get_width() // 2, spacing(4)))
+            vs_text,
+            vs_text.get_rect(
+                center=(screen.get_width() // 2, screen.get_height() // 2)
+            ),
         )
 
         subtitle = self.battle_scene.game.theme.fonts["small"].render(
