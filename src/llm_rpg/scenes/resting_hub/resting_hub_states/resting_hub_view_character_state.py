@@ -7,6 +7,7 @@ from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
     RestingHubStates,
 )
 from llm_rpg.scenes.state import State
+from llm_rpg.ui.components import draw_text_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -28,80 +29,64 @@ class RestingHubViewCharacterState(State):
         pass
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.resting_hub_scene.game.theme.colors["background"])
+        theme = self.resting_hub_scene.game.theme
+        spacing = theme.spacing
         hero = self.resting_hub_scene.game.hero
-        spacing = self.resting_hub_scene.game.theme.spacing
+        screen.fill(theme.colors["background"])
 
-        title = self.resting_hub_scene.game.theme.fonts["title"].render(
-            "Character", True, self.resting_hub_scene.game.theme.colors["primary"]
+        title_surface = theme.fonts["large"].render(
+            "Character", True, theme.colors["primary"]
         )
-        screen.blit(
-            title, title.get_rect(center=(screen.get_width() // 2, spacing(1.25)))
+        title_rect = title_surface.get_rect(
+            center=(screen.get_width() // 2, spacing(2))
         )
+        screen.blit(title_surface, title_rect)
 
-        # Basic info
+        margin = spacing(2)
+        panel_width = screen.get_width() - margin * 4
+
+        stats = hero.get_current_stats()
+        item_lines = [
+            f"- {item.name} ({item.rarity.value}): {item.description}"
+            for item in hero.inventory.items
+        ] or ["No items equipped."]
+
         info_lines = [
             f"Name: {hero.name}",
             f"Level: {hero.level}",
             f"Class: {hero.class_name}",
             f"Description: {hero.description}",
-        ]
-        y = spacing(2.5)
-        for line in info_lines:
-            surf = self.resting_hub_scene.game.theme.fonts["medium"].render(
-                line, True, self.resting_hub_scene.game.theme.colors["text"]
-            )
-            screen.blit(surf, (spacing(0.5), y))
-            y += spacing(1)
-
-        # Stats
-        stats = hero.get_current_stats()
-        stat_lines = [
+            "",
+            "Stats:",
             f"Attack: {stats.attack}",
             f"Defense: {stats.defense}",
             f"Focus: {stats.focus}",
             f"HP: {stats.max_hp}",
+            "",
+            "Items:",
+            *item_lines,
         ]
-        y += spacing(0.5)
-        for line in stat_lines:
-            surf = self.resting_hub_scene.game.theme.fonts["small"].render(
-                line, True, self.resting_hub_scene.game.theme.colors["text"]
-            )
-            screen.blit(surf, (spacing(0.5), y))
-            y += spacing(0.75)
 
-        # Items
-        items_title = self.resting_hub_scene.game.theme.fonts["medium"].render(
-            "Items:", True, self.resting_hub_scene.game.theme.colors["text_selected"]
+        draw_text_panel(
+            screen=screen,
+            lines=info_lines,
+            font=theme.fonts["small"],
+            theme=theme,
+            x=margin,
+            y=title_rect.bottom + spacing(1.5),
+            width=panel_width,
+            align="left",
+            auto_wrap=True,
         )
-        screen.blit(items_title, (spacing(0.5), y + spacing(0.25)))
-        y += spacing(1.25)
 
-        if hero.inventory.items:
-            for item in hero.inventory.items:
-                line = f"- {item.name} ({item.rarity.value}): {item.description}"
-                surf = self.resting_hub_scene.game.theme.fonts["small"].render(
-                    line, True, self.resting_hub_scene.game.theme.colors["text"]
-                )
-                screen.blit(surf, (spacing(0.75), y))
-                y += spacing(0.75)
-        else:
-            surf = self.resting_hub_scene.game.theme.fonts["small"].render(
-                "No items equipped.",
-                True,
-                self.resting_hub_scene.game.theme.colors["text_hint"],
-            )
-            screen.blit(surf, (spacing(0.75), y))
-            y += spacing(0.75)
-
-        hint = self.resting_hub_scene.game.theme.fonts["small"].render(
+        hint = theme.fonts["small"].render(
             "Press Enter/Esc to go back",
             True,
-            self.resting_hub_scene.game.theme.colors["text_hint"],
+            theme.colors["text_hint"],
         )
         screen.blit(
             hint,
             hint.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(0.5))
+                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
             ),
         )

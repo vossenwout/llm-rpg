@@ -12,6 +12,7 @@ from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
     RestingHubStates,
 )
 from llm_rpg.scenes.state import State
+from llm_rpg.ui.components import draw_selection_panel, draw_text_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -111,53 +112,71 @@ class RestingHubGetItemState(State):
             screen.blit(surf, (60, start_y + i * 22))
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.resting_hub_scene.game.theme.colors["background"])
-        spacing = self.resting_hub_scene.game.theme.spacing
+        theme = self.resting_hub_scene.game.theme
+        spacing = theme.spacing
+        screen.fill(theme.colors["background"])
 
-        title = self.resting_hub_scene.game.theme.fonts["title"].render(
-            "Item Discovery", True, self.resting_hub_scene.game.theme.colors["primary"]
+        title_surface = theme.fonts["large"].render(
+            "Item Discovery", True, theme.colors["primary"]
         )
-        screen.blit(
-            title, title.get_rect(center=(screen.get_width() // 2, spacing(1.25)))
+        title_rect = title_surface.get_rect(
+            center=(screen.get_width() // 2, spacing(2))
         )
+        screen.blit(title_surface, title_rect)
 
-        subtitle = self.resting_hub_scene.game.theme.fonts["small"].render(
-            "Select an item to pick up (or skip)",
-            True,
-            self.resting_hub_scene.game.theme.colors["text_hint"],
-        )
-        screen.blit(
-            subtitle, subtitle.get_rect(center=(screen.get_width() // 2, spacing(2.25)))
+        margin = spacing(2)
+        panel_width = screen.get_width() - margin * 4
+
+        subtitle_rect = draw_text_panel(
+            screen=screen,
+            lines="Select an item to pick up (or skip)",
+            font=theme.fonts["small"],
+            theme=theme,
+            x=margin,
+            y=title_rect.bottom + spacing(1),
+            width=panel_width,
+            align="left",
+            auto_wrap=True,
+            draw_border=False,
         )
 
         options = self._current_options()
-        start_y = spacing(3)
-        vertical_step = spacing(2)
-        for idx, text in enumerate(options):
-            is_selected = idx == self.selected_index
-            color = (
-                self.resting_hub_scene.game.theme.colors["text_selected"]
-                if is_selected
-                else self.resting_hub_scene.game.theme.colors["text"]
-            )
-            prefix = "> " if is_selected else "  "
-            surf = self.resting_hub_scene.game.theme.fonts["medium"].render(
-                prefix + text, True, color
-            )
-            screen.blit(surf, (spacing(0.5), start_y + idx * vertical_step))
-
-        self._render_messages(
-            screen, start_y + len(options) * vertical_step + spacing(0.25)
+        options_rect = draw_selection_panel(
+            screen=screen,
+            options=options,
+            selected_index=self.selected_index,
+            font=theme.fonts["medium"],
+            theme=theme,
+            x=margin,
+            y=subtitle_rect.bottom + spacing(1.5),
+            width=panel_width,
+            padding=spacing(2),
+            option_spacing=spacing(1.5),
+            align="left",
         )
 
-        hint = self.resting_hub_scene.game.theme.fonts["small"].render(
+        if self.message_queue:
+            draw_text_panel(
+                screen=screen,
+                lines=self.message_queue[-3:],
+                font=theme.fonts["small"],
+                theme=theme,
+                x=margin,
+                y=options_rect.bottom + spacing(1),
+                width=panel_width,
+                align="left",
+                auto_wrap=True,
+                draw_border=False,
+            )
+
+        hint = theme.fonts["small"].render(
             "Use ↑/↓ and Enter",
             True,
-            self.resting_hub_scene.game.theme.colors["text_hint"],
+            theme.colors["text_hint"],
         )
         screen.blit(
             hint,
             hint.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(0.5))
+                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
             ),
         )
