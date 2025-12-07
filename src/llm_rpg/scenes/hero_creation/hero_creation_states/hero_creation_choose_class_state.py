@@ -97,7 +97,7 @@ class HeroCreationChooseClassState(State):
         )
 
         instruction_surface = theme.fonts["small"].render(
-            "Use ↑/↓ and press Enter to confirm",
+            "Press ENTER to confirm",
             True,
             theme.colors["text_hint"],
         )
@@ -107,13 +107,10 @@ class HeroCreationChooseClassState(State):
         screen.blit(instruction_surface, instruction_rect)
 
     def _build_info_lines(self, hero_class: HeroClass) -> list[str]:
-        stats = hero_class.base_stats
+        starting_item = hero_class.starting_item
         return [
-            hero_class.class_name,
-            f"HP {stats.max_hp}",
-            f"ATK {stats.attack}  DEF {stats.defense}",
-            f"FOC {stats.focus}",
-            f"Gear: {hero_class.starting_item.name}",
+            f"Description: {hero_class.description}",
             "",
-            hero_class.description,
+            f"Starting Item: {starting_item.name}",
+            f"{starting_item.description}",
         ]

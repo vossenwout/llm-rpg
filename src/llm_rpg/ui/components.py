@@ -36,6 +36,8 @@ def wrap_text_lines(
     max_lines: int | None = None,
 ) -> List[str]:
     words = text.split()
+    if not words:
+        return [""]
     lines: List[str] = []
     current = ""
     for word in words:
@@ -151,7 +153,10 @@ def draw_text_panel(
         max_text_width = max_width - padding * 2
         wrapped_lines = []
         for line in lines:
-            wrapped_lines.extend(wrap_text_lines(line, font, max_text_width))
+            if line == "":
+                wrapped_lines.append("")
+            else:
+                wrapped_lines.extend(wrap_text_lines(line, font, max_text_width))
         lines = wrapped_lines
 
     text_width, text_height = measure_text_block(lines, font, line_spacing)
