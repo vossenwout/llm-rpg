@@ -121,9 +121,9 @@ class HeroCreationChooseNameState(State):
         instruction_text = self.scene.game.theme.fonts["small"].render(
             "Press ENTER to confirm",
             True,
-            self.scene.game.theme.colors["text"],
+            self.scene.game.theme.colors["text_hint"],
         )
         instruction_rect = instruction_text.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - spacing(1))
+            center=(screen.get_width() // 2, screen.get_height() - spacing(2))
         )
         screen.blit(instruction_text, instruction_rect)

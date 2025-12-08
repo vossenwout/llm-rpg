@@ -62,3 +62,15 @@ class BattleStartState(State):
                 center=(screen.get_width() // 2, screen.get_height() // 2)
             ),
         )
+
+        prompt_text = self.battle_scene.game.theme.fonts["small"].render(
+            "Press Enter to start battle",
+            True,
+            self.battle_scene.game.theme.colors["text"],
+        )
+        screen.blit(
+            prompt_text,
+            prompt_text.get_rect(
+                center=(screen.get_width() // 2, screen.get_height() - spacing(6))
+            ),
+        )

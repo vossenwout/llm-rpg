@@ -84,15 +84,3 @@ class RestingHubNavigationState(State):
             option_spacing=spacing(1.5),
             align="left",
         )
-
-        hint = theme.fonts["small"].render(
-            "Use arrows to navigate, Enter to confirm",
-            True,
-            theme.colors["text_hint"],
-        )
-        screen.blit(
-            hint,
-            hint.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
-            ),
-        )

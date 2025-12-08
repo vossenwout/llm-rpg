@@ -99,7 +99,7 @@ class HeroCreationChooseClassState(State):
             theme.colors["text_hint"],
         )
         instruction_rect = instruction_surface.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - spacing(1))
+            center=(screen.get_width() // 2, screen.get_height() - spacing(2))
         )
         screen.blit(instruction_surface, instruction_rect)
 
