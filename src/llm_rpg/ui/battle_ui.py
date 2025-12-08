@@ -68,7 +68,7 @@ def render_event_card(
     event: BattleEvent,
     paged_state: PagedTextState,
     prompt_text: str | None = None,
-):
+) -> pygame.Rect:
     padding = theme.spacing(2)
     line_spacing = theme.spacing(1)
     small_font = theme.fonts["small"]
@@ -94,6 +94,40 @@ def render_event_card(
         line_spacing=line_spacing,
         prompt_text=prompt_to_draw,
     )
+    return panel_rect
+
+
+def render_event_ribbon(
+    screen: pygame.Surface,
+    theme: Theme,
+    event: BattleEvent,
+    card_rect: pygame.Rect,
+) -> pygame.Rect:
+    padding = theme.spacing(2)
+    line_spacing = theme.spacing(1)
+    small_font = theme.fonts["small"]
+    feasibility_pct = f"{event.damage_calculation_result.feasibility * 10}%"
+    potential_pct = f"{event.damage_calculation_result.potential_damage * 10}%"
+    total_damage = event.damage_calculation_result.total_dmg
+    line = f"Total DMG {total_damage}: Feasibility {feasibility_pct} Potential DMG {potential_pct}"
+    ribbon_width = card_rect.width
+    ribbon_x = card_rect.x
+    ribbon_text_color = theme.colors["text_hint"]
+    ribbon_rect = draw_text_panel(
+        screen=screen,
+        lines=[line],
+        font=small_font,
+        theme=theme,
+        x=ribbon_x,
+        y=card_rect.top - small_font.get_linesize() - padding * 2 - line_spacing,
+        padding=padding,
+        line_spacing=line_spacing,
+        align="center",
+        width=ribbon_width,
+        draw_border=True,
+        text_color=ribbon_text_color,
+    )
+    return ribbon_rect
 
 
 def render_stats_row(

@@ -7,6 +7,7 @@ from llm_rpg.scenes.state import State
 from llm_rpg.ui.components import PagedTextState
 from llm_rpg.ui.battle_ui import (
     render_event_card,
+    render_event_ribbon,
     render_stats_row,
     render_items_panel,
     prompt_for_battle_end,
@@ -68,10 +69,16 @@ class BattleHeroResultState(State):
             prompt = prompt_for_battle_end(
                 is_finishing=bool(self.event and self.battle_scene.enemy.is_dead())
             )
-            render_event_card(
+            card_rect = render_event_card(
                 screen=screen,
                 theme=self.battle_scene.game.theme,
                 event=self.event,
                 paged_state=self.paged_state,
                 prompt_text=prompt,
+            )
+            render_event_ribbon(
+                screen=screen,
+                theme=self.battle_scene.game.theme,
+                event=self.event,
+                card_rect=card_rect,
             )
