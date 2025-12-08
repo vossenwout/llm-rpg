@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING, Literal, TypedDict
 from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.scenes.state import State
 from llm_rpg.systems.battle.battle_log import BattleEvent
+from llm_rpg.ui.components import PagedTextState
 from llm_rpg.ui.battle_ui import (
+    render_event_card,
     render_stats_row,
     advance_dots,
-    render_processing_text,
     render_items_panel,
 )
 from llm_rpg.scenes.battle.battle_states.thinking_utils import (
@@ -43,6 +44,7 @@ class BattleEnemyThinkingState(State):
         self.processing_started = False
         self.processing_done = False
         self.pending_outcome: Outcome | None = None
+        self.paged_state = PagedTextState(lines=[])
         self.minimum_display = 0.25
         self.max_wait = 20.0
         self.result_queue: queue.Queue[Outcome] = queue.Queue(maxsize=1)
@@ -102,27 +104,19 @@ class BattleEnemyThinkingState(State):
             hero=self.battle_scene.hero,
             proc_impacts=None,
         )
-        render_processing_text(
+        thinking_text = (
+            f"{self.battle_scene.enemy.name.upper()} IS PLOTTING" + "." * self.dots
+        )
+        lines = [thinking_text]
+        if self.error_message:
+            lines.append(f"ERROR: {self.error_message}")
+        render_event_card(
             screen=screen,
             theme=self.battle_scene.game.theme,
-            text="Enemy is plotting",
-            dots=self.dots,
+            event=None,
+            paged_state=self.paged_state,
+            text_override=lines,
         )
-        if self.error_message:
-            error_surface = self.battle_scene.game.theme.fonts["small"].render(
-                self.error_message,
-                True,
-                (255, 60, 60),
-            )
-            screen.blit(
-                error_surface,
-                error_surface.get_rect(
-                    center=(
-                        screen.get_width() // 2,
-                        screen.get_height() - self.battle_scene.game.theme.spacing(1),
-                    )
-                ),
-            )
 
     def _process_action(self):
         try:

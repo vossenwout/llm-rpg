@@ -6,7 +6,7 @@ class StatTypes(Enum):
     ATTACK = "attack"
     DEFENSE = "defense"
     FOCUS = "focus"
-    MAX_HP = "max_hp"
+    MAX_HP = "max HP"
 
 
 @dataclass
