@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.battle_ui import draw_hp_bar
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -58,36 +57,4 @@ class BattleEndState(State):
         )
         screen.blit(
             outcome_text, outcome_text.get_rect(center=(screen.get_width() // 2, 130))
-        )
-
-        hero = self.battle_scene.hero
-        enemy = self.battle_scene.enemy
-
-        # Stats
-        hero_label = self.battle_scene.game.theme.fonts["medium"].render(
-            hero.name or "Hero", True, self.battle_scene.game.theme.colors["text"]
-        )
-        screen.blit(hero_label, (60, 280))
-        draw_hp_bar(
-            screen=screen,
-            theme=self.battle_scene.game.theme,
-            x=60,
-            y=310,
-            hp=hero.hp,
-            max_hp=hero.get_current_stats().max_hp,
-            width=200,
-        )
-
-        enemy_label = self.battle_scene.game.theme.fonts["medium"].render(
-            enemy.name, True, self.battle_scene.game.theme.colors["text"]
-        )
-        screen.blit(enemy_label, (60, 360))
-        draw_hp_bar(
-            screen=screen,
-            theme=self.battle_scene.game.theme,
-            x=60,
-            y=390,
-            hp=enemy.hp,
-            max_hp=enemy.get_current_stats().max_hp,
-            width=200,
         )
