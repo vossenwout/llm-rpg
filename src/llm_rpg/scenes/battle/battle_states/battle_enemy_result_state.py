@@ -7,6 +7,7 @@ from llm_rpg.scenes.state import State
 from llm_rpg.ui.battle_ui import (
     render_event_card,
     render_stats_row,
+    render_items_panel,
     prompt_for_battle_end,
 )
 
@@ -40,6 +41,12 @@ class BattleEnemyResultState(State):
             theme=self.battle_scene.game.theme,
             hero=self.battle_scene.hero,
             enemy=self.battle_scene.enemy,
+        )
+        render_items_panel(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            proc_impacts=None,
         )
         if self.event:
             prompt = prompt_for_battle_end(

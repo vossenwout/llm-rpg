@@ -11,6 +11,7 @@ from llm_rpg.ui.battle_ui import (
     render_stats_row,
     advance_dots,
     render_processing_text,
+    render_items_panel,
 )
 from llm_rpg.scenes.battle.battle_states.thinking_utils import (
     Outcome,
@@ -94,6 +95,12 @@ class BattleEnemyThinkingState(State):
             theme=self.battle_scene.game.theme,
             hero=self.battle_scene.hero,
             enemy=self.battle_scene.enemy,
+        )
+        render_items_panel(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            proc_impacts=None,
         )
         render_processing_text(
             screen=screen,

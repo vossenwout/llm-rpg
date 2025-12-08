@@ -21,6 +21,7 @@ class Theme:
             "text": (255, 255, 255),
             "text_selected": (255, 230, 92),
             "text_hint": (164, 188, 220),
+            "text_items": (120, 255, 180),
             "border_dark": (0, 0, 0),
             "border_light": (255, 255, 255),
         }

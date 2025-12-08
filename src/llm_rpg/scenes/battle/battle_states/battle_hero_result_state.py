@@ -7,6 +7,7 @@ from llm_rpg.scenes.state import State
 from llm_rpg.ui.battle_ui import (
     render_event_card,
     render_stats_row,
+    render_items_panel,
     prompt_for_battle_end,
 )
 
@@ -19,6 +20,17 @@ class BattleHeroResultState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
         self.event: BattleEvent | None = battle_scene.latest_event
+
+    def _build_proc_impacts(self) -> dict[str, int]:
+        if not self.event:
+            return {}
+        impacts: dict[str, int] = {}
+        for (
+            bonus
+        ) in self.event.damage_calculation_result.applied_bonus_multiplier_damages:
+            name = bonus.bonus_multiplier.item_name
+            impacts[name] = impacts.get(name, 0) + bonus.damage_impact
+        return impacts
 
     def handle_input(self, event: pygame.event.Event):
         if event.type == pygame.KEYDOWN and event.key in (
@@ -40,6 +52,12 @@ class BattleHeroResultState(State):
             theme=self.battle_scene.game.theme,
             hero=self.battle_scene.hero,
             enemy=self.battle_scene.enemy,
+        )
+        render_items_panel(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            proc_impacts=self._build_proc_impacts(),
         )
         if self.event:
             prompt = prompt_for_battle_end(

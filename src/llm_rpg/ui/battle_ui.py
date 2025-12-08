@@ -395,6 +395,65 @@ def render_stats_row(
     )
 
 
+def render_items_panel(
+    screen: pygame.Surface,
+    theme: Theme,
+    hero: Hero,
+    proc_impacts: dict[str, int] | None = None,
+):
+    padding = theme.spacing(2)
+    small_font = theme.fonts["small"]
+    line_spacing = theme.spacing(1)
+    items = getattr(hero.inventory, "items", [])
+    if not items:
+        return
+
+    hero_lines = [
+        hero.name or "Hero",
+        f"HP: {max(hero.hp, 0)}/{hero.get_current_stats().max_hp}",
+    ]
+    hero_text_width, hero_text_height = measure_text_block(
+        hero_lines, small_font, line_spacing
+    )
+    hero_panel_width = hero_text_width + padding * 2
+    hero_panel_height = hero_text_height + padding * 2
+
+    lines: list[str] = []
+    for item in items:
+        if proc_impacts is None:
+            lines.append(item.name)
+            continue
+        impact = proc_impacts.get(item.name)
+        if impact is None or impact == 0:
+            lines.append(item.name)
+        elif impact > 0:
+            lines.append(f"{item.name} (+{impact})")
+        else:
+            lines.append(f"{item.name} (-{abs(impact)})")
+
+    text_width, text_height = measure_text_block(lines, small_font, line_spacing)
+    panel_width = max(hero_panel_width, text_width + padding * 2)
+    panel_height = text_height + padding * 2
+    x = padding
+    y = padding + hero_panel_height + theme.spacing(1)
+
+    draw_text_panel(
+        screen=screen,
+        lines=lines,
+        font=small_font,
+        theme=theme,
+        x=x,
+        y=y,
+        padding=padding,
+        line_spacing=line_spacing,
+        align="left",
+        width=panel_width,
+        min_height=panel_height,
+        draw_border=False,
+        text_color=theme.colors["text_items"],
+    )
+
+
 def prompt_for_battle_end(is_finishing: bool):
     return "Press Enter to finish battle" if is_finishing else "Press Enter to continue"
 
