@@ -19,8 +19,8 @@ CARD_PADDING = 10
 CARD_BORDER = 2
 CARD_LINE_HEIGHT = 22
 CARD_BOTTOM_PADDING = 16
-STATS_LEFT_POS = (40, 60)
-STATS_BAR_Y = 110
+STATS_LEFT_POS = (0, 0)
+STATS_BAR_Y = 20
 DOTS_PERIOD = 0.25
 
 
@@ -352,7 +352,7 @@ def render_stats_row(
     hero: Hero,
     enemy: Enemy,
 ):
-    hero_name = theme.fonts["large"].render(
+    hero_name = theme.fonts["small"].render(
         hero.name or "Hero", True, theme.colors["text"]
     )
     screen.blit(hero_name, hero_name.get_rect(topleft=STATS_LEFT_POS))
@@ -366,7 +366,7 @@ def render_stats_row(
         width=HP_BAR_WIDTH,
     )
 
-    enemy_name = theme.fonts["large"].render(enemy.name, True, theme.colors["text"])
+    enemy_name = theme.fonts["small"].render(enemy.name, True, theme.colors["text"])
     enemy_name_rect = enemy_name.get_rect(
         topright=(screen.get_width() - STATS_LEFT_POS[0], STATS_LEFT_POS[1])
     )

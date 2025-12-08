@@ -105,12 +105,6 @@ class BattleTurnState(State):
             self.battle_scene.change_state(BattleStates.HERO_THINKING)
 
     def _render_input_box(self, screen: pygame.Surface):
-        focus_limit = self.battle_scene.hero.get_current_stats().focus
-        remaining_chars = max(focus_limit - len(self.input_text.replace(" ", "")), 0)
-        prompt = f"Focus: {remaining_chars}/{focus_limit} characters remaining."
-        prompt_surface = self.battle_scene.game.theme.fonts["small"].render(
-            prompt, True, self.battle_scene.game.theme.colors["text_hint"]
-        )
         spacing = self.battle_scene.game.theme.spacing
         panel_rect = draw_input_panel(
             screen=screen,
@@ -118,15 +112,22 @@ class BattleTurnState(State):
             font=self.battle_scene.game.theme.fonts["small"],
             theme=self.battle_scene.game.theme,
             x=spacing(0.5),
-            y=screen.get_height() - spacing(3.5),
+            y=screen.get_height() - spacing(5),
             width=screen.get_width() - spacing(1),
             padding=spacing(1),
             time_ms=pygame.time.get_ticks(),
         )
 
+        focus_limit = self.battle_scene.hero.get_current_stats().focus
+        remaining_chars = max(focus_limit - len(self.input_text.replace(" ", "")), 0)
+        focus_meter = f"Focus: {remaining_chars}/{focus_limit} characters remaining."
+        prompt_surface = self.battle_scene.game.theme.fonts["small"].render(
+            focus_meter, True, self.battle_scene.game.theme.colors["text_hint"]
+        )
+
         screen.blit(
             prompt_surface,
-            (panel_rect.x, panel_rect.y - spacing(0.75)),
+            (panel_rect.x, panel_rect.y - spacing(4)),
         )
 
         if self.error_message:
@@ -137,16 +138,6 @@ class BattleTurnState(State):
                 error_surface,
                 (panel_rect.x, panel_rect.bottom + spacing(0.5)),
             )
-
-        enter_surface = self.battle_scene.game.theme.fonts["small"].render(
-            "Press Enter to act", True, self.battle_scene.game.theme.colors["text_hint"]
-        )
-        screen.blit(
-            enter_surface,
-            enter_surface.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(0.75))
-            ),
-        )
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.battle_scene.game.theme.colors["background"])
