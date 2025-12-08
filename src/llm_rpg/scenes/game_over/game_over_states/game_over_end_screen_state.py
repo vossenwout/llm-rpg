@@ -72,15 +72,3 @@ class GameOverEndScreenState(State):
             padding=spacing(1.5),
             option_spacing=spacing(2),
         )
-
-        hint_surface = self.scene.game.theme.fonts["small"].render(
-            "Use ↑/↓ and press Enter",
-            False,
-            self.scene.game.theme.colors["text_hint"],
-        )
-        screen.blit(
-            hint_surface,
-            hint_surface.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
-            ),
-        )

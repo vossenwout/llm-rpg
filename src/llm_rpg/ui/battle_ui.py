@@ -106,8 +106,8 @@ def render_event_ribbon(
     padding = theme.spacing(0)
     line_spacing = theme.spacing(1)
     small_font = theme.fonts["small"]
-    feasibility_pct = f"{event.damage_calculation_result.feasibility * 100}%"
-    potential_pct = f"{event.damage_calculation_result.potential_damage * 100}%"
+    feasibility_pct = f"{int(event.damage_calculation_result.feasibility * 100)}%"
+    potential_pct = f"{int(event.damage_calculation_result.potential_damage * 100)}%"
     total_damage = event.damage_calculation_result.total_dmg
     ribbon_width = card_rect.width
     ribbon_height = small_font.get_linesize() + padding * 2
@@ -117,7 +117,7 @@ def render_event_ribbon(
     left_text = f"Feasibility {feasibility_pct}  Potential {potential_pct}"
     left_surf = small_font.render(left_text, True, theme.colors["text_hint"])
     value_surf = small_font.render(
-        f"  rDMG {total_damage}", True, theme.colors["text_selected"]
+        f"  DMG {total_damage}", True, theme.colors["text_selected"]
     )
     combined_width = left_surf.get_width() + value_surf.get_width()
     x_cursor = ribbon_rect.x + (ribbon_width - combined_width) // 2
