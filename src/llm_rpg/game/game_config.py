@@ -3,7 +3,7 @@ import yaml
 
 from llm_rpg.objects.character import Stats
 from llm_rpg.objects.item import (
-    AdrenalinePump,
+    AttackerStartingItem,
     DefenderStartingItem,
     FocusStartingItem,
 )
@@ -67,8 +67,8 @@ class GameConfig:
             base_stats=self._parse_stats(
                 self.game_config["hero"]["classes"]["attack"]["base_stats"]
             ),
-            # starting_item=AttackerStartingItem(),
-            starting_item=AdrenalinePump(),
+            starting_item=AttackerStartingItem(),
+            # starting_item=AdrenalinePump(),
         )
 
     @cached_property

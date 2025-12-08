@@ -51,9 +51,10 @@ class RestingHubGetItemState(State):
                 options.append(f"Replace {item.name}: {item.description}")
             return options
         else:
-            options = ["Don't pick up anything"]
+            options = []
             for item in self.items:
                 options.append(f"{item.name}: {item.description}")
+            options.append("Don't pick up anything")
             return options
 
     def handle_input(self, event: pygame.event.Event):
@@ -91,11 +92,12 @@ class RestingHubGetItemState(State):
             )
             hero.discovered_item = False
         else:
-            if self.selected_index == 0:
+            skip_index = len(self._current_options()) - 1
+            if self.selected_index == skip_index:
                 hero.dont_pick_up_item()
                 hero.discovered_item = False
             else:
-                self.chosen_item = self.items[self.selected_index - 1]
+                self.chosen_item = self.items[self.selected_index]
                 if hero.inventory.is_full():
                     self.is_replacing_item = True
                     self.selected_index = 0
@@ -110,7 +112,7 @@ class RestingHubGetItemState(State):
         screen.fill(theme.colors["background"])
 
         title_surface = theme.fonts["medium"].render(
-            "Item Discovery", True, theme.colors["primary"]
+            "You found an item!", True, theme.colors["primary"]
         )
         title_rect = title_surface.get_rect(
             center=(screen.get_width() // 2, spacing(6))
@@ -120,19 +122,6 @@ class RestingHubGetItemState(State):
         margin = spacing(2)
         panel_width = screen.get_width() - margin * 4
 
-        subtitle_rect = draw_text_panel(
-            screen=screen,
-            lines="Select an item to pick up (or skip)",
-            font=theme.fonts["small"],
-            theme=theme,
-            x=margin,
-            y=title_rect.bottom + spacing(1),
-            width=panel_width,
-            align="left",
-            auto_wrap=True,
-            draw_border=False,
-        )
-
         options = self._current_options()
         options_rect = draw_selection_panel(
             screen=screen,
@@ -141,11 +130,14 @@ class RestingHubGetItemState(State):
             font=theme.fonts["small"],
             theme=theme,
             x=margin,
-            y=subtitle_rect.bottom + spacing(1.5),
+            y=title_rect.bottom + spacing(1.5),
             width=panel_width,
             padding=spacing(2),
             option_spacing=spacing(1.5),
             align="left",
+            max_width=panel_width,
+            auto_wrap=True,
+            line_spacing=spacing(1),
         )
 
         if self.message_queue:
