@@ -258,7 +258,7 @@ def draw_paginated_panel(
         if index < len(visible_lines) - 1:
             text_y += line_height + line_spacing
 
-    cue = "" if paged_state.is_last_page else "*"
+    cue = "" if paged_state.is_last_page else "..."
     cue_surf = font.render(cue, True, theme.colors["text_hint"])
     cue_x = base_rect.right - padding - cue_surf.get_width()
     cue_y = base_rect.bottom - padding - cue_surf.get_height()

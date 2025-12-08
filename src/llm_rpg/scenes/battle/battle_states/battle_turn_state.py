@@ -106,15 +106,19 @@ class BattleTurnState(State):
 
     def _render_input_box(self, screen: pygame.Surface):
         spacing = self.battle_scene.game.theme.spacing
+        margin = spacing(1)
+        padding = spacing(2)
+        font = self.battle_scene.game.theme.fonts["small"]
+        input_height = font.get_height() + padding * 2
         panel_rect = draw_input_panel(
             screen=screen,
             current_text=self.input_text,
-            font=self.battle_scene.game.theme.fonts["small"],
+            font=font,
             theme=self.battle_scene.game.theme,
-            x=spacing(0.5),
-            y=screen.get_height() - spacing(7),
-            width=screen.get_width() - spacing(1),
-            padding=spacing(2),
+            x=margin,
+            y=screen.get_height() - input_height - margin,
+            width=screen.get_width() - margin * 2,
+            padding=padding,
             time_ms=pygame.time.get_ticks(),
         )
 

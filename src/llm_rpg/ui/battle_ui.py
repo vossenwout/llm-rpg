@@ -72,7 +72,7 @@ def render_event_card(
     padding = theme.spacing(2)
     line_spacing = theme.spacing(1)
     small_font = theme.fonts["small"]
-    margin = theme.spacing(4)
+    margin = theme.spacing(1)
     panel_width = screen.get_width() - margin * 2
     lines = build_event_lines(event, panel_width, small_font, padding)
     if paged_state.lines != lines:
@@ -103,30 +103,28 @@ def render_event_ribbon(
     event: BattleEvent,
     card_rect: pygame.Rect,
 ) -> pygame.Rect:
-    padding = theme.spacing(2)
+    padding = theme.spacing(0)
     line_spacing = theme.spacing(1)
     small_font = theme.fonts["small"]
-    feasibility_pct = f"{event.damage_calculation_result.feasibility * 10}%"
-    potential_pct = f"{event.damage_calculation_result.potential_damage * 10}%"
+    feasibility_pct = f"{event.damage_calculation_result.feasibility * 100}%"
+    potential_pct = f"{event.damage_calculation_result.potential_damage * 100}%"
     total_damage = event.damage_calculation_result.total_dmg
-    line = f"Total DMG {total_damage}: Feasibility {feasibility_pct} Potential DMG {potential_pct}"
     ribbon_width = card_rect.width
+    ribbon_height = small_font.get_linesize() + padding * 2
     ribbon_x = card_rect.x
-    ribbon_text_color = theme.colors["text_hint"]
-    ribbon_rect = draw_text_panel(
-        screen=screen,
-        lines=[line],
-        font=small_font,
-        theme=theme,
-        x=ribbon_x,
-        y=card_rect.top - small_font.get_linesize() - padding * 2 - line_spacing,
-        padding=padding,
-        line_spacing=line_spacing,
-        align="center",
-        width=ribbon_width,
-        draw_border=True,
-        text_color=ribbon_text_color,
+    ribbon_y = card_rect.top - ribbon_height - line_spacing
+    ribbon_rect = pygame.Rect(ribbon_x, ribbon_y, ribbon_width, ribbon_height)
+    left_text = f"Feasibility {feasibility_pct}  Potential {potential_pct}"
+    left_surf = small_font.render(left_text, True, theme.colors["text_hint"])
+    value_surf = small_font.render(
+        f"  rDMG {total_damage}", True, theme.colors["text_selected"]
     )
+    combined_width = left_surf.get_width() + value_surf.get_width()
+    x_cursor = ribbon_rect.x + (ribbon_width - combined_width) // 2
+    y_cursor = ribbon_rect.y + padding
+    screen.blit(left_surf, (x_cursor, y_cursor))
+    x_cursor += left_surf.get_width()
+    screen.blit(value_surf, (x_cursor, y_cursor))
     return ribbon_rect
 
 
