@@ -434,7 +434,7 @@ def render_items_panel(
     text_width, text_height = measure_text_block(lines, small_font, line_spacing)
     panel_width = max(hero_panel_width, text_width + padding * 2)
     panel_height = text_height + padding * 2
-    x = padding
+    x = theme.spacing(0)
     y = padding + hero_panel_height + theme.spacing(1)
 
     draw_text_panel(

@@ -125,9 +125,10 @@ class BattleTurnState(State):
             focus_meter, True, self.battle_scene.game.theme.colors["text_hint"]
         )
 
+        prompt_x = panel_rect.x + (panel_rect.width - prompt_surface.get_width()) // 2
         screen.blit(
             prompt_surface,
-            (panel_rect.x, panel_rect.y - spacing(4)),
+            (prompt_x, panel_rect.y - spacing(4)),
         )
 
         if self.error_message:
