@@ -8,7 +8,7 @@ from llm_rpg.utils.theme import Theme
 class PagedTextState:
     lines: List[str]
     page_index: int = 0
-    lines_per_page: int = 3
+    lines_per_page: int = 2
 
     @property
     def total_pages(self) -> int:
