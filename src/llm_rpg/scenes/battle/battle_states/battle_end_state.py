@@ -41,7 +41,7 @@ class BattleEndState(State):
     def render(self, screen: pygame.Surface):
         screen.fill(self.battle_scene.game.theme.colors["background"])
 
-        title_text = self.battle_scene.game.theme.fonts["title"].render(
+        title_text = self.battle_scene.game.theme.fonts["medium"].render(
             "Battle Ended", True, self.battle_scene.game.theme.colors["primary"]
         )
         screen.blit(
@@ -90,14 +90,4 @@ class BattleEndState(State):
             hp=enemy.hp,
             max_hp=enemy.get_current_stats().max_hp,
             width=200,
-        )
-
-        hint = self.battle_scene.game.theme.fonts["small"].render(
-            "Press Enter to continue",
-            True,
-            self.battle_scene.game.theme.colors["text_hint"],
-        )
-        screen.blit(
-            hint,
-            hint.get_rect(center=(screen.get_width() // 2, screen.get_height() - 40)),
         )

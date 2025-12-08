@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.scenes.state import State
+from llm_rpg.ui.components import PagedTextState
 from llm_rpg.ui.battle_ui import (
     render_event_card,
     render_stats_row,
@@ -20,6 +21,7 @@ class BattleHeroResultState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
         self.event: BattleEvent | None = battle_scene.latest_event
+        self.paged_state = PagedTextState(lines=[])
 
     def _build_proc_impacts(self) -> dict[str, int]:
         if not self.event:
@@ -37,6 +39,9 @@ class BattleHeroResultState(State):
             pygame.K_RETURN,
             pygame.K_SPACE,
         ):
+            if self.event and not self.paged_state.is_last_page:
+                self.paged_state.next_page()
+                return
             if self.event and not self.battle_scene.enemy.is_dead():
                 self.battle_scene.change_state(BattleStates.ENEMY_THINKING)
             else:
@@ -67,9 +72,6 @@ class BattleHeroResultState(State):
                 screen=screen,
                 theme=self.battle_scene.game.theme,
                 event=self.event,
-                panel_x=40,
-                panel_y=screen.get_height() - 180,
-                panel_width=screen.get_width() - 80,
-                debug_mode=self.battle_scene.game.config.debug_mode,
+                paged_state=self.paged_state,
                 prompt_text=prompt,
             )

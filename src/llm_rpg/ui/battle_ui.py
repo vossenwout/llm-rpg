@@ -1,49 +1,26 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from enum import Enum
 import pygame
 
-from llm_rpg.objects.item import LLMScalingBoost, ProcCondition
 from llm_rpg.systems.battle.battle_log import BattleEvent
-from llm_rpg.systems.battle.damage_calculator import BonusMultiplierDamage
 from llm_rpg.systems.hero.hero import Hero
 from llm_rpg.systems.battle.enemy import Enemy
 from llm_rpg.utils.theme import Theme
-from llm_rpg.ui.components import wrap_text_lines, draw_text_panel, measure_text_block
+from llm_rpg.ui.components import (
+    wrap_text_lines,
+    draw_text_panel,
+    measure_text_block,
+    draw_paginated_panel,
+    PagedTextState,
+)
 
 
 HP_BAR_WIDTH = 180
 HP_BAR_HEIGHT = 16
 HP_LABEL_OFFSET = 12
 CARD_PADDING = 10
-CARD_BORDER = 2
 CARD_LINE_HEIGHT = 22
-CARD_BOTTOM_PADDING = 16
-STATS_LEFT_POS = (0, 0)
-STATS_BAR_Y = 20
+CARD_BORDER = 2
 DOTS_PERIOD = 0.25
-
-
-class DetailLevel(Enum):
-    BASIC = "basic"
-    DEBUG = "debug"
-
-
-@dataclass
-class IconSet:
-    damage: pygame.Surface | None = None
-    proc: pygame.Surface | None = None
-    feasibility: pygame.Surface | None = None
-    potential: pygame.Surface | None = None
-    speed: pygame.Surface | None = None
-    new_word: pygame.Surface | None = None
-    overused: pygame.Surface | None = None
-
-
-@dataclass
-class ScrollableTextState:
-    offset: int = 0
-    visible_rows: int | None = None
 
 
 def draw_hp_bar(
@@ -72,278 +49,51 @@ def draw_hp_bar(
     )
 
 
-def _format_proc_line(bonus: BonusMultiplierDamage) -> str:
-    trigger = (
-        f"{bonus.bonus_multiplier.proc_reason.proc_condition.value}="
-        f"{bonus.bonus_multiplier.proc_reason.condition_value}"
-    )
-    multiplier = bonus.bonus_multiplier.multiplier
-    impact = bonus.damage_impact
-    sign = "+" if impact >= 0 else "-"
-    return (
-        f"{bonus.bonus_multiplier.item_name} ({bonus.bonus_multiplier.boost_name}) — "
-        f"{trigger} ⇒ x{multiplier:.2f} ⇒ {sign}{abs(impact)}"
-    )
-
-
-def _format_scaling_boosts(
-    feasibility_boosts: list[LLMScalingBoost],
-    potential_boosts: list[LLMScalingBoost],
-) -> list[str]:
-    lines: list[str] = []
-    for boost in feasibility_boosts:
-        lines.append(
-            f"Feasibility boost: {boost.item_name} {boost.boost_name} "
-            f"{boost.base_scaling:.2f}→{boost.boosted_scaling:.2f}"
-        )
-    for boost in potential_boosts:
-        lines.append(
-            f"Potential boost: {boost.item_name} {boost.boost_name} "
-            f"{boost.base_scaling:.2f}→{boost.boosted_scaling:.2f}"
-        )
-    return lines
-
-
-def _aggregate_proc_multiplier(
-    procs: list[BonusMultiplierDamage],
-    condition: ProcCondition,
-) -> float:
-    total = 0.0
-    for proc in procs:
-        if proc.bonus_multiplier.proc_reason.proc_condition == condition:
-            total += proc.bonus_multiplier.multiplier
-    return total
-
-
-def build_hero_event_lines(
+def build_event_lines(
     event: BattleEvent,
     panel_width: int,
     font: pygame.font.Font,
-    detail_level: DetailLevel,
-) -> tuple[list[str], list[str]]:
-    result = event.damage_calculation_result
-    main_lines: list[str] = []
-    debug_lines: list[str] = []
-
-    max_width = panel_width - 2 * CARD_PADDING
-
-    def add_wrapped(text: str, max_lines: int = 2):
-        main_lines.extend(wrap_text_lines(text, font, max_width, max_lines))
-
-    def add_wrapped_indented(text: str, indent: str = "  ", max_lines: int = 2):
-        wrapped = wrap_text_lines(text, font, max_width, max_lines)
-        main_lines.extend([f"{indent}{line}" for line in wrapped])
-
-    header = f"{event.character_name} acts!"
-    action_line = f"Action: {event.proposed_action}"
-    effect_line = f"Effect: {event.effect_description}"
-    dmg_line = f"Damage: {result.total_dmg}"
-
-    main_lines += wrap_text_lines(header, font, max_width, 1)
-    main_lines += wrap_text_lines(action_line, font, max_width, 4)
-    main_lines += wrap_text_lines(effect_line, font, max_width, 4)
-    add_wrapped(dmg_line, 1)
-    add_wrapped("Damage breakdown:", 1)
-
-    feasibility_pct = result.feasibility * 100
-    potential_pct = result.potential_damage * 100
-    add_wrapped_indented(f"Feasibility: {feasibility_pct:.1f}%", max_lines=1)
-    add_wrapped_indented(f"Potential damage: {potential_pct:.1f}%", max_lines=1)
-
-    speed_multiplier = _aggregate_proc_multiplier(
-        result.applied_bonus_multiplier_damages, ProcCondition.ANSWER_SPEED_S
-    )
-    new_word_multiplier = _aggregate_proc_multiplier(
-        result.applied_bonus_multiplier_damages, ProcCondition.N_NEW_WORDS_IN_ACTION
-    )
-    overused_multiplier = _aggregate_proc_multiplier(
-        result.applied_bonus_multiplier_damages,
-        ProcCondition.N_OVERUSED_WORDS_IN_ACTION,
-    )
-
-    add_wrapped_indented(
-        f"Answer speed: {result.answer_speed_s:.1f}s ⇒ {speed_multiplier * 100:+.0f}%",
-        max_lines=2,
-    )
-    add_wrapped_indented(
-        f"New words: {result.n_new_words_in_action} ⇒ {new_word_multiplier * 100:+.0f}%",
-        max_lines=2,
-    )
-    add_wrapped_indented(
-        f"Overused words: {result.n_overused_words_in_action} ⇒ {overused_multiplier * 100:+.0f}%",
-        max_lines=2,
-    )
-
-    for boost_line in _format_scaling_boosts(
-        result.applied_feasibility_boosts, result.applied_potential_damage_boosts
-    ):
-        add_wrapped_indented(boost_line, max_lines=2)
-
-    if result.applied_bonus_multiplier_damages:
-        add_wrapped_indented("Item procs:", indent="  ", max_lines=1)
-        for proc in result.applied_bonus_multiplier_damages:
-            add_wrapped_indented(_format_proc_line(proc), indent="    ", max_lines=3)
-
-    if detail_level is DetailLevel.DEBUG:
-        debug_lines.append(f"Base damage: {result.base_dmg}")
-        debug_lines.append(f"Random factor: {result.random_factor}")
-        debug_lines.append(f"LLM scaling: {result.llm_dmg_scaling}")
-        debug_lines.append(f"LLM scaled base dmg: {result.llm_scaled_base_dmg}")
-        bonus_sum = sum(
-            p.damage_impact for p in result.applied_bonus_multiplier_damages
-        )
-        debug_lines.append(f"Bonus sum: {bonus_sum}")
-        debug_lines.append(f"Total damage: {result.total_dmg}")
-
-    return main_lines, debug_lines
-
-
-def build_enemy_event_lines(
-    event: BattleEvent,
-    panel_width: int,
-    font: pygame.font.Font,
+    padding: int,
 ) -> list[str]:
+    max_width = panel_width - 2 * padding
     lines: list[str] = []
-    header = f"{event.character_name} acts!"
-    action_line = f"Action: {event.proposed_action}"
-    effect_line = f"Effect: {event.effect_description}"
-    dmg_line = f"Damage: {event.damage_calculation_result.total_dmg}"
-    lines += wrap_text_lines(header, font, panel_width - 2 * CARD_PADDING, 1)
-    lines += wrap_text_lines(action_line, font, panel_width - 2 * CARD_PADDING, 4)
-    lines += wrap_text_lines(effect_line, font, panel_width - 2 * CARD_PADDING, 4)
-    lines.append(dmg_line)
+    effect_line = f"{event.effect_description}"
+    lines += wrap_text_lines(effect_line, font, max_width)
     return lines
-
-
-def _render_lines(
-    screen: pygame.Surface,
-    theme: Theme,
-    lines: list[str],
-    panel_x: int,
-    panel_y: int,
-    panel_width: int,
-    prompt_text: str | None,
-    scroll_state: ScrollableTextState,
-):
-    small_font = theme.fonts["small"]
-    visible_lines = lines
-    if scroll_state.visible_rows is not None:
-        start = max(0, scroll_state.offset)
-        end = min(len(lines), start + scroll_state.visible_rows)
-        visible_lines = lines[start:end]
-    card_height = CARD_LINE_HEIGHT * len(visible_lines) + CARD_BOTTOM_PADDING
-    max_y = screen.get_height() - card_height - CARD_BOTTOM_PADDING
-    adjusted_panel_y = min(panel_y, max_y)
-    card_rect = pygame.Rect(panel_x, adjusted_panel_y, panel_width, card_height)
-    pygame.draw.rect(screen, theme.colors["text"], card_rect, CARD_BORDER)
-    text_y = adjusted_panel_y + CARD_PADDING
-    for line in visible_lines:
-        surf = small_font.render(line, True, theme.colors["text"])
-        screen.blit(surf, (panel_x + CARD_PADDING, text_y))
-        text_y += CARD_LINE_HEIGHT
-    if prompt_text:
-        prompt_surf = small_font.render(prompt_text, True, theme.colors["text_hint"])
-        screen.blit(
-            prompt_surf,
-            prompt_surf.get_rect(
-                center=(screen.get_width() // 2, card_rect.bottom + 24)
-            ),
-        )
-
-
-def render_event_hero(
-    screen: pygame.Surface,
-    theme: Theme,
-    event: BattleEvent,
-    panel_x: int,
-    panel_y: int,
-    panel_width: int,
-    detail_level: DetailLevel,
-    prompt_text: str | None = None,
-    scroll_state: ScrollableTextState | None = None,
-):
-    small_font = theme.fonts["small"]
-    main_lines, debug_lines = build_hero_event_lines(
-        event=event,
-        panel_width=panel_width,
-        font=small_font,
-        detail_level=detail_level,
-    )
-    lines = main_lines + debug_lines
-    state = scroll_state or ScrollableTextState()
-    _render_lines(
-        screen=screen,
-        theme=theme,
-        lines=lines,
-        panel_x=panel_x,
-        panel_y=panel_y,
-        panel_width=panel_width,
-        prompt_text=prompt_text,
-        scroll_state=state,
-    )
-
-
-def render_event_enemy(
-    screen: pygame.Surface,
-    theme: Theme,
-    event: BattleEvent,
-    panel_x: int,
-    panel_y: int,
-    panel_width: int,
-    prompt_text: str | None = None,
-):
-    small_font = theme.fonts["small"]
-    lines = build_enemy_event_lines(
-        event=event,
-        panel_width=panel_width,
-        font=small_font,
-    )
-    _render_lines(
-        screen=screen,
-        theme=theme,
-        lines=lines,
-        panel_x=panel_x,
-        panel_y=panel_y,
-        panel_width=panel_width,
-        prompt_text=prompt_text,
-        scroll_state=ScrollableTextState(),
-    )
 
 
 def render_event_card(
     screen: pygame.Surface,
     theme: Theme,
     event: BattleEvent,
-    panel_x: int,
-    panel_y: int,
-    panel_width: int,
-    debug_mode: bool,
+    paged_state: PagedTextState,
     prompt_text: str | None = None,
-    scroll_state: ScrollableTextState | None = None,
 ):
-    if event.is_hero_turn:
-        detail_level = DetailLevel.DEBUG if debug_mode else DetailLevel.BASIC
-        render_event_hero(
-            screen=screen,
-            theme=theme,
-            event=event,
-            panel_x=panel_x,
-            panel_y=panel_y,
-            panel_width=panel_width,
-            detail_level=detail_level,
-            prompt_text=prompt_text,
-            scroll_state=scroll_state,
-        )
-    else:
-        render_event_enemy(
-            screen=screen,
-            theme=theme,
-            event=event,
-            panel_x=panel_x,
-            panel_y=panel_y,
-            panel_width=panel_width,
-            prompt_text=prompt_text,
-        )
+    padding = theme.spacing(2)
+    line_spacing = theme.spacing(1)
+    small_font = theme.fonts["small"]
+    margin = theme.spacing(4)
+    panel_width = screen.get_width() - margin * 2
+    lines = build_event_lines(event, panel_width, small_font, padding)
+    if paged_state.lines != lines:
+        paged_state.lines = lines
+        paged_state.reset()
+    line_height = small_font.get_linesize() + line_spacing
+    text_height = line_height * paged_state.lines_per_page - line_spacing
+    panel_height = text_height + padding * 2
+    panel_y = screen.get_height() - panel_height - margin
+    panel_rect = pygame.Rect(margin, panel_y, panel_width, panel_height)
+    prompt_to_draw = prompt_text if paged_state.is_last_page else None
+    draw_paginated_panel(
+        screen=screen,
+        rect=panel_rect,
+        theme=theme,
+        font=small_font,
+        paged_state=paged_state,
+        padding=padding,
+        line_spacing=line_spacing,
+        prompt_text=prompt_to_draw,
+    )
 
 
 def render_stats_row(
@@ -454,8 +204,8 @@ def render_items_panel(
     )
 
 
-def prompt_for_battle_end(is_finishing: bool):
-    return "Press Enter to finish battle" if is_finishing else "Press Enter to continue"
+def prompt_for_battle_end(is_finishing: bool) -> str | None:
+    return None
 
 
 def advance_dots(dots: int, dot_timer: float, dt: float):

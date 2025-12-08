@@ -1,6 +1,36 @@
+from dataclasses import dataclass
 import pygame
 from typing import Tuple, List, Optional
 from llm_rpg.utils.theme import Theme
+
+
+@dataclass
+class PagedTextState:
+    lines: List[str]
+    page_index: int = 0
+    lines_per_page: int = 3
+
+    @property
+    def total_pages(self) -> int:
+        if not self.lines:
+            return 1
+        return (len(self.lines) + self.lines_per_page - 1) // self.lines_per_page
+
+    @property
+    def is_last_page(self) -> bool:
+        return self.page_index >= self.total_pages - 1
+
+    def current_page_lines(self) -> List[str]:
+        start = self.page_index * self.lines_per_page
+        end = start + self.lines_per_page
+        return self.lines[start:end]
+
+    def next_page(self) -> None:
+        if not self.is_last_page:
+            self.page_index += 1
+
+    def reset(self) -> None:
+        self.page_index = 0
 
 
 def draw_panel(
@@ -199,6 +229,51 @@ def draw_text_panel(
     return panel_rect
 
 
+def draw_paginated_panel(
+    screen: pygame.Surface,
+    rect: pygame.Rect | Tuple[int, int, int, int],
+    theme: Theme,
+    font: pygame.font.Font,
+    paged_state: PagedTextState,
+    padding: Optional[int] = None,
+    line_spacing: Optional[int] = None,
+    prompt_text: Optional[str] = None,
+) -> pygame.Rect:
+    if padding is None:
+        padding = theme.spacing(2)
+    if line_spacing is None:
+        line_spacing = theme.spacing(1)
+
+    base_rect = pygame.Rect(rect)
+    draw_panel(screen, base_rect, theme, draw_border=True)
+
+    visible_lines = paged_state.current_page_lines()
+    text_y = base_rect.y + padding
+    line_height = font.get_linesize()
+
+    for index, line in enumerate(visible_lines):
+        surf = font.render(line, True, theme.colors["text"])
+        text_x = base_rect.x + padding
+        screen.blit(surf, (text_x, text_y))
+        if index < len(visible_lines) - 1:
+            text_y += line_height + line_spacing
+
+    cue = "" if paged_state.is_last_page else "*"
+    cue_surf = font.render(cue, True, theme.colors["text_hint"])
+    cue_x = base_rect.right - padding - cue_surf.get_width()
+    cue_y = base_rect.bottom - padding - cue_surf.get_height()
+    screen.blit(cue_surf, (cue_x, cue_y))
+
+    if prompt_text:
+        prompt_surf = font.render(prompt_text, True, theme.colors["text_hint"])
+        prompt_pos = prompt_surf.get_rect(
+            center=(screen.get_width() // 2, base_rect.bottom + padding)
+        )
+        screen.blit(prompt_surf, prompt_pos)
+
+    return base_rect
+
+
 def draw_selection_panel(
     screen: pygame.Surface,
     options: List[str],
@@ -369,7 +444,7 @@ def draw_input_panel(
 
     measured_width = base_surface.get_width() + padding * 2
     measured_height = base_surface.get_height() + padding * 2
-    resolved_width = max(width or 0, measured_width)
+    resolved_width = width or measured_width
     resolved_height = measured_height
 
     if x is None:
@@ -390,12 +465,22 @@ def draw_input_panel(
 
     filled_width = font.size(filled_text)[0]
 
-    screen.blit(base_surface, (text_x, text_y))
+    available_text_width = resolved_width - padding * 2
     filled_surface = font.render(filled_text, True, text_color)
-    screen.blit(filled_surface, (text_x, text_y))
+    scroll_offset = max(filled_surface.get_width() - available_text_width, 0)
+
+    base_area = pygame.Rect(
+        scroll_offset, 0, available_text_width, base_surface.get_height()
+    )
+    filled_area = pygame.Rect(
+        scroll_offset, 0, available_text_width, filled_surface.get_height()
+    )
+
+    screen.blit(base_surface, (text_x, text_y), area=base_area)
+    screen.blit(filled_surface, (text_x, text_y), area=filled_area)
 
     if show_cursor and time_ms is not None:
-        cursor_x = text_x + filled_width
+        cursor_x = text_x + min(filled_width, available_text_width)
         cursor_y = text_y
         draw_blinking_cursor(
             screen,

@@ -42,7 +42,7 @@ class GameOverEndScreenState(State):
         screen.fill(self.scene.game.theme.colors["background"])
         spacing = self.scene.game.theme.spacing
 
-        title_text = self.scene.game.theme.fonts["title"].render(
+        title_text = self.scene.game.theme.fonts["medium"].render(
             "Game Over", False, self.scene.game.theme.colors["primary"]
         )
         screen.blit(

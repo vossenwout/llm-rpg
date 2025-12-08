@@ -112,9 +112,9 @@ class BattleTurnState(State):
             font=self.battle_scene.game.theme.fonts["small"],
             theme=self.battle_scene.game.theme,
             x=spacing(0.5),
-            y=screen.get_height() - spacing(5),
+            y=screen.get_height() - spacing(7),
             width=screen.get_width() - spacing(1),
-            padding=spacing(1),
+            padding=spacing(2),
             time_ms=pygame.time.get_ticks(),
         )
 

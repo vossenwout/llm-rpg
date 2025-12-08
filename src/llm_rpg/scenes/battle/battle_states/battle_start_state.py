@@ -62,15 +62,3 @@ class BattleStartState(State):
                 center=(screen.get_width() // 2, screen.get_height() // 2)
             ),
         )
-
-        subtitle = self.battle_scene.game.theme.fonts["small"].render(
-            "Press Enter to start",
-            True,
-            self.battle_scene.game.theme.colors["text_hint"],
-        )
-        screen.blit(
-            subtitle,
-            subtitle.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(1.5))
-            ),
-        )
