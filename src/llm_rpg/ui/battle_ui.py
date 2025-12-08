@@ -252,16 +252,3 @@ def advance_dots(dots: int, dot_timer: float, dt: float):
         dot_timer -= DOTS_PERIOD
         dots = (dots + 1) % 4
     return dots, dot_timer
-
-
-def render_processing_text(screen: pygame.Surface, theme: Theme, text: str, dots: int):
-    dotted_text = f"{text}{'.' * dots}"
-    prompt_surface = theme.fonts["medium"].render(
-        dotted_text, True, theme.colors["text_selected"]
-    )
-    screen.blit(
-        prompt_surface,
-        prompt_surface.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - 100)
-        ),
-    )
