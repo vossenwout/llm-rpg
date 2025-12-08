@@ -43,8 +43,8 @@ class MainMenuNavigationState(State):
 
     def _render_logo(self, screen: pygame.Surface):
         margin = self.scene.game.theme.spacing(2)
-        logo_surface = self.scene.game.theme.fonts["title"].render(
-            "LLM RPG", False, self.scene.game.theme.colors["primary"]
+        logo_surface = self.scene.game.theme.fonts["large"].render(
+            "AI RPG", False, self.scene.game.theme.colors["primary"]
         )
         logo_rect = logo_surface.get_rect(center=(screen.get_width() // 2, margin * 6))
         screen.blit(logo_surface, logo_rect)

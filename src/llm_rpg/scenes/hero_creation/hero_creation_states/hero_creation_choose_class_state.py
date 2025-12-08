@@ -55,7 +55,7 @@ class HeroCreationChooseClassState(State):
         spacing = theme.spacing
         screen.fill(theme.colors["background"])
 
-        title_text = theme.fonts["large"].render(
+        title_text = theme.fonts["medium"].render(
             "Choose Your Class", True, theme.colors["primary"]
         )
         title_rect = title_text.get_rect(center=(screen.get_width() // 2, spacing(8)))

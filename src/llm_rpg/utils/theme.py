@@ -7,13 +7,11 @@ class Theme:
     def __init__(self):
         self.unit = 4
         with asset_file("fonts/earthbound.ttf") as earthbound_path:
-            with asset_file("fonts/PressStart2P-Regular.ttf") as press_start_path:
-                self.fonts = {
-                    "title": pygame.font.Font(press_start_path, 48),
-                    "large": pygame.font.Font(earthbound_path, 64),
-                    "medium": pygame.font.Font(earthbound_path, 32),
-                    "small": pygame.font.Font(earthbound_path, 16),
-                }
+            self.fonts = {
+                "large": pygame.font.Font(earthbound_path, 64),
+                "medium": pygame.font.Font(earthbound_path, 32),
+                "small": pygame.font.Font(earthbound_path, 16),
+            }
 
         self.colors = {
             "background": (0, 0, 0),

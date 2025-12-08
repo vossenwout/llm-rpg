@@ -29,12 +29,6 @@ class MainMenuInfoState(State):
         screen.fill(self.scene.game.theme.colors["background"])
         margin = self.scene.game.theme.spacing(2)
 
-        title_text = self.scene.game.theme.fonts["large"].render(
-            "Game Info", True, self.scene.game.theme.colors["primary"]
-        )
-        title_rect = title_text.get_rect(center=(screen.get_width() // 2, margin * 4))
-        screen.blit(title_text, title_rect)
-
         info_lines = [
             "Create a character and fight against increasingly difficult enemies.",
             "You can freely type your actions and an LLM will judge the consequences.",

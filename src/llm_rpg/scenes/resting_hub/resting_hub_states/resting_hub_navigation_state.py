@@ -47,7 +47,7 @@ class RestingHubNavigationState(State):
         spacing = theme.spacing
         screen.fill(theme.colors["background"])
 
-        title_surface = theme.fonts["large"].render(
+        title_surface = theme.fonts["medium"].render(
             "Resting Hub", True, theme.colors["primary"]
         )
         title_rect = title_surface.get_rect(
