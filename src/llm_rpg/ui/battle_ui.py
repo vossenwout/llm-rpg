@@ -9,7 +9,7 @@ from llm_rpg.systems.battle.damage_calculator import BonusMultiplierDamage
 from llm_rpg.systems.hero.hero import Hero
 from llm_rpg.systems.battle.enemy import Enemy
 from llm_rpg.utils.theme import Theme
-from llm_rpg.ui.components import wrap_text_lines
+from llm_rpg.ui.components import wrap_text_lines, draw_text_panel, measure_text_block
 
 
 HP_BAR_WIDTH = 180
@@ -352,33 +352,46 @@ def render_stats_row(
     hero: Hero,
     enemy: Enemy,
 ):
-    hero_name = theme.fonts["small"].render(
-        hero.name or "Hero", True, theme.colors["text"]
-    )
-    screen.blit(hero_name, hero_name.get_rect(topleft=STATS_LEFT_POS))
-    draw_hp_bar(
+    padding = theme.spacing(2)
+    small_font = theme.fonts["small"]
+    line_spacing = theme.spacing(1)
+
+    hero_lines = [
+        hero.name or "Hero",
+        f"HP: {max(hero.hp, 0)}/{hero.get_current_stats().max_hp}",
+    ]
+    draw_text_panel(
         screen=screen,
+        lines=hero_lines,
+        font=small_font,
         theme=theme,
-        x=STATS_LEFT_POS[0],
-        y=STATS_BAR_Y,
-        hp=hero.hp,
-        max_hp=hero.get_current_stats().max_hp,
-        width=HP_BAR_WIDTH,
+        x=padding,
+        y=padding,
+        padding=padding,
+        line_spacing=line_spacing,
+        align="left",
+        draw_border=True,
     )
 
-    enemy_name = theme.fonts["small"].render(enemy.name, True, theme.colors["text"])
-    enemy_name_rect = enemy_name.get_rect(
-        topright=(screen.get_width() - STATS_LEFT_POS[0], STATS_LEFT_POS[1])
-    )
-    screen.blit(enemy_name, enemy_name_rect)
-    draw_hp_bar(
+    enemy_lines = [
+        enemy.name,
+        f"HP: {max(enemy.hp, 0)}/{enemy.get_current_stats().max_hp}",
+    ]
+    text_width, text_height = measure_text_block(enemy_lines, small_font, line_spacing)
+    enemy_panel_width = text_width + padding * 2
+    enemy_x = screen.get_width() - padding - enemy_panel_width
+    draw_text_panel(
         screen=screen,
+        lines=enemy_lines,
+        font=small_font,
         theme=theme,
-        x=screen.get_width() - STATS_LEFT_POS[0] - HP_BAR_WIDTH,
-        y=STATS_BAR_Y,
-        hp=enemy.hp,
-        max_hp=enemy.get_current_stats().max_hp,
-        width=HP_BAR_WIDTH,
+        x=enemy_x,
+        y=padding,
+        padding=padding,
+        line_spacing=line_spacing,
+        align="right",
+        width=enemy_panel_width,
+        draw_border=True,
     )
 
 
