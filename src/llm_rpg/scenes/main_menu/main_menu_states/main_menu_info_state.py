@@ -27,7 +27,7 @@ class MainMenuInfoState(State):
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.scene.game.theme.colors["background"])
-        margin = self.scene.game.theme.spacing(2)
+        spacing = self.scene.game.theme.spacing
 
         info_lines = [
             "Create a character and fight against increasingly difficult enemies.",
@@ -39,7 +39,7 @@ class MainMenuInfoState(State):
             "  - Focus: How many characters you can type in each turn",
         ]
 
-        panel_width = screen.get_width() - margin * 10
+        panel_width = screen.get_width() - spacing(4)
 
         draw_text_panel(
             screen,
@@ -53,11 +53,11 @@ class MainMenuInfoState(State):
         )
 
         back_text = self.scene.game.theme.fonts["small"].render(
-            "Press ENTER or ESC to go back",
+            "Press ENTER to go back",
             True,
-            self.scene.game.theme.colors["text_selected"],
+            self.scene.game.theme.colors["text_hint"],
         )
         back_rect = back_text.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - margin)
+            center=(screen.get_width() // 2, screen.get_height() - spacing(2))
         )
         screen.blit(back_text, back_rect)

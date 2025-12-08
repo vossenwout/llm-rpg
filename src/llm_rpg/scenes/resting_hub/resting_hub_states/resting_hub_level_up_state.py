@@ -57,11 +57,11 @@ class RestingHubLevelUpState(State):
         spacing = theme.spacing
         screen.fill(theme.colors["background"])
 
-        title_surface = theme.fonts["large"].render(
+        title_surface = theme.fonts["medium"].render(
             "Level Up!", True, theme.colors["primary"]
         )
         title_rect = title_surface.get_rect(
-            center=(screen.get_width() // 2, spacing(2))
+            center=(screen.get_width() // 2, spacing(6))
         )
         screen.blit(title_surface, title_rect)
 
@@ -70,11 +70,11 @@ class RestingHubLevelUpState(State):
 
         prompt_rect = draw_text_panel(
             screen=screen,
-            lines=f"Choose a stat to increase (+{self.stat_increase_per_level})",
+            lines="Choose a stat to increase",
             font=theme.fonts["small"],
             theme=theme,
             x=margin,
-            y=title_rect.bottom + spacing(1),
+            y=title_rect.bottom + spacing(2),
             width=panel_width,
             align="left",
             auto_wrap=True,
@@ -90,10 +90,10 @@ class RestingHubLevelUpState(State):
             screen=screen,
             options=stat_labels,
             selected_index=self.selected_index,
-            font=theme.fonts["medium"],
+            font=theme.fonts["small"],
             theme=theme,
             x=margin,
-            y=prompt_rect.bottom + spacing(1.5),
+            y=prompt_rect.bottom + spacing(2),
             width=panel_width,
             padding=spacing(2),
             option_spacing=spacing(1.5),
@@ -101,13 +101,13 @@ class RestingHubLevelUpState(State):
         )
 
         hint = theme.fonts["small"].render(
-            "Use arrows to navigate, Enter to confirm",
+            "Press ENTER to confirm",
             True,
             theme.colors["text_hint"],
         )
         screen.blit(
             hint,
             hint.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
+                center=(screen.get_width() // 2, screen.get_height() - spacing(2))
             ),
         )

@@ -65,16 +65,27 @@ def build_event_lines(
 def render_event_card(
     screen: pygame.Surface,
     theme: Theme,
-    event: BattleEvent,
+    event: BattleEvent | None,
     paged_state: PagedTextState,
-    prompt_text: str | None = None,
+    text_override: str | list[str] | None = None,
 ) -> pygame.Rect:
     padding = theme.spacing(2)
     line_spacing = theme.spacing(1)
     small_font = theme.fonts["small"]
     margin = theme.spacing(1)
     panel_width = screen.get_width() - margin * 2
-    lines = build_event_lines(event, panel_width, small_font, padding)
+    if text_override is None:
+        if event is None:
+            lines = [""]
+        else:
+            lines = build_event_lines(event, panel_width, small_font, padding)
+    else:
+        if isinstance(text_override, str):
+            lines = wrap_text_lines(
+                text_override, small_font, panel_width - 2 * padding
+            )
+        else:
+            lines = text_override
     if paged_state.lines != lines:
         paged_state.lines = lines
         paged_state.reset()
@@ -83,7 +94,6 @@ def render_event_card(
     panel_height = text_height + padding * 2
     panel_y = screen.get_height() - panel_height - margin
     panel_rect = pygame.Rect(margin, panel_y, panel_width, panel_height)
-    prompt_to_draw = prompt_text if paged_state.is_last_page else None
     draw_paginated_panel(
         screen=screen,
         rect=panel_rect,
@@ -92,7 +102,7 @@ def render_event_card(
         paged_state=paged_state,
         padding=padding,
         line_spacing=line_spacing,
-        prompt_text=prompt_to_draw,
+        prompt_text=None,
     )
     return panel_rect
 
@@ -234,10 +244,6 @@ def render_items_panel(
         draw_border=False,
         text_color=theme.colors["text_items"],
     )
-
-
-def prompt_for_battle_end(is_finishing: bool) -> str | None:
-    return None
 
 
 def advance_dots(dots: int, dot_timer: float, dt: float):

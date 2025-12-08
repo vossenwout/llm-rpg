@@ -30,7 +30,7 @@ class RestingHubGetItemState(State):
         self.chosen_item: Optional[Item] = None
         self.choice_made = False
 
-    def _initialize_items(self):
+    def _initialize_items(self) -> List[Item]:
         all_possible_items = ALL_ITEMS
         items_to_choose_from = []
         for item in all_possible_items:
@@ -104,23 +104,16 @@ class RestingHubGetItemState(State):
                 self.message_queue.append(f"Picked up {self.chosen_item.name}.")
                 hero.discovered_item = False
 
-    def _render_messages(self, screen: pygame.Surface, start_y: int):
-        for i, message in enumerate(self.message_queue[-3:]):
-            surf = self.resting_hub_scene.game.theme.fonts["small"].render(
-                message, True, self.resting_hub_scene.game.theme.colors["text_selected"]
-            )
-            screen.blit(surf, (60, start_y + i * 22))
-
     def render(self, screen: pygame.Surface):
         theme = self.resting_hub_scene.game.theme
         spacing = theme.spacing
         screen.fill(theme.colors["background"])
 
-        title_surface = theme.fonts["large"].render(
+        title_surface = theme.fonts["medium"].render(
             "Item Discovery", True, theme.colors["primary"]
         )
         title_rect = title_surface.get_rect(
-            center=(screen.get_width() // 2, spacing(2))
+            center=(screen.get_width() // 2, spacing(6))
         )
         screen.blit(title_surface, title_rect)
 
@@ -145,7 +138,7 @@ class RestingHubGetItemState(State):
             screen=screen,
             options=options,
             selected_index=self.selected_index,
-            font=theme.fonts["medium"],
+            font=theme.fonts["small"],
             theme=theme,
             x=margin,
             y=subtitle_rect.bottom + spacing(1.5),
@@ -177,6 +170,6 @@ class RestingHubGetItemState(State):
         screen.blit(
             hint,
             hint.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
+                center=(screen.get_width() // 2, screen.get_height() - spacing(2))
             ),
         )

@@ -115,14 +115,14 @@ class RestingHubViewCharacterState(State):
         )
 
         hint = theme.fonts["small"].render(
-            "Press Enter to view items",
+            "Press ENTER to view items",
             True,
             theme.colors["text_hint"],
         )
         screen.blit(
             hint,
             hint.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
+                center=(screen.get_width() // 2, screen.get_height() - spacing(2))
             ),
         )
 
@@ -165,13 +165,13 @@ class RestingHubViewCharacterState(State):
         )
 
         hint = theme.fonts["small"].render(
-            "Press Enter to return",
+            "Press ENTER to return",
             True,
             theme.colors["text_hint"],
         )
         screen.blit(
             hint,
             hint.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(1))
+                center=(screen.get_width() // 2, screen.get_height() - spacing(2))
             ),
         )

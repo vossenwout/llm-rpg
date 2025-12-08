@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
+from llm_rpg.ui.components import PagedTextState
+from llm_rpg.ui.battle_ui import render_event_card, render_items_panel, render_stats_row
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -14,6 +16,7 @@ class BattleEndState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
         self.ready_to_exit = False
+        self.paged_state = PagedTextState(lines=[])
 
     def handle_input(self, event: pygame.event.Event):
         if event.type == pygame.KEYDOWN and event.key in (
@@ -40,21 +43,30 @@ class BattleEndState(State):
     def render(self, screen: pygame.Surface):
         screen.fill(self.battle_scene.game.theme.colors["background"])
 
-        title_text = self.battle_scene.game.theme.fonts["medium"].render(
-            "Battle Ended", True, self.battle_scene.game.theme.colors["primary"]
+        render_stats_row(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            enemy=self.battle_scene.enemy,
         )
-        screen.blit(
-            title_text, title_text.get_rect(center=(screen.get_width() // 2, 70))
+        render_items_panel(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            proc_impacts=None,
         )
 
-        winner = (
-            self.battle_scene.hero.name
-            if not self.battle_scene.hero.is_dead()
-            else self.battle_scene.enemy.name
+        defeated_name = (
+            self.battle_scene.enemy.name
+            if self.battle_scene.enemy.is_dead()
+            else self.battle_scene.hero.name
         )
-        outcome_text = self.battle_scene.game.theme.fonts["large"].render(
-            f"{winner} won!", True, self.battle_scene.game.theme.colors["text"]
-        )
-        screen.blit(
-            outcome_text, outcome_text.get_rect(center=(screen.get_width() // 2, 130))
+        message = f"{defeated_name.upper()} WAS DEFEATED!"
+
+        render_event_card(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            event=self.battle_scene.latest_event,
+            paged_state=self.paged_state,
+            text_override=message,
         )

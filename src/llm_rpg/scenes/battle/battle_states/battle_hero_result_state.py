@@ -10,7 +10,6 @@ from llm_rpg.ui.battle_ui import (
     render_event_ribbon,
     render_stats_row,
     render_items_panel,
-    prompt_for_battle_end,
 )
 
 if TYPE_CHECKING:
@@ -66,15 +65,11 @@ class BattleHeroResultState(State):
             proc_impacts=self._build_proc_impacts(),
         )
         if self.event:
-            prompt = prompt_for_battle_end(
-                is_finishing=bool(self.event and self.battle_scene.enemy.is_dead())
-            )
             card_rect = render_event_card(
                 screen=screen,
                 theme=self.battle_scene.game.theme,
                 event=self.event,
                 paged_state=self.paged_state,
-                prompt_text=prompt,
             )
             render_event_ribbon(
                 screen=screen,
