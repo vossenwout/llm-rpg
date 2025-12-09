@@ -21,6 +21,33 @@ CARD_PADDING = 10
 CARD_LINE_HEIGHT = 22
 CARD_BORDER = 2
 DOTS_PERIOD = 0.25
+SPRITE_SCALE = 2.0
+SPRITE_STAGE_Y = 90
+MAX_SPRITE_SIZE = 64
+
+
+def render_enemy_sprite(
+    screen: pygame.Surface,
+    theme: Theme,
+    sprite: pygame.Surface | None,
+):
+    stage_y = SPRITE_STAGE_Y
+    if sprite is None:
+        placeholder_size = 32
+        rect = pygame.Rect(0, 0, placeholder_size, placeholder_size)
+        rect.center = (screen.get_width() // 2, stage_y)
+        pygame.draw.rect(screen, theme.colors["text_hint"], rect, 2)
+        return
+
+    width, height = sprite.get_size()
+    scale_factor = min(MAX_SPRITE_SIZE / max(width, height), 1.0)
+    scaled = (
+        pygame.transform.scale_by(sprite, scale_factor)
+        if scale_factor != 1.0
+        else sprite
+    )
+    rect = scaled.get_rect(center=(screen.get_width() // 2, stage_y))
+    screen.blit(scaled, rect)
 
 
 def draw_hp_bar(

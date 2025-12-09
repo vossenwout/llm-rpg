@@ -7,6 +7,7 @@ from llm_rpg.systems.hero.hero import Hero
 from typing import TYPE_CHECKING
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.utils.theme import Theme
+from llm_rpg.sprite_generator.sprite_generator import DummySpriteGenerator
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.scene import Scene
@@ -28,6 +29,7 @@ class Game:
             base_stats=self.config.hero_base_stats,
             max_items=self.config.hero_max_items,
         )
+        self.sprite_generator = DummySpriteGenerator(latency_seconds=1.0)
         # pygame initialization early so surfaces can convert properly
         pygame.init()
         pygame.display.set_caption("LLM RPG")

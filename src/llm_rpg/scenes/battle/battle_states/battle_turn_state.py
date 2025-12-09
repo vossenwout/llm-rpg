@@ -6,7 +6,11 @@ from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.systems.hero.hero import ProposedHeroAction
 from llm_rpg.scenes.state import State
 from llm_rpg.ui.components import draw_input_panel
-from llm_rpg.ui.battle_ui import render_stats_row, render_items_panel
+from llm_rpg.ui.battle_ui import (
+    render_stats_row,
+    render_items_panel,
+    render_enemy_sprite,
+)
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -146,6 +150,11 @@ class BattleTurnState(State):
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.battle_scene.game.theme.colors["background"])
+        render_enemy_sprite(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            sprite=self.battle_scene.enemy_sprite,
+        )
         render_stats_row(
             screen=screen,
             theme=self.battle_scene.game.theme,

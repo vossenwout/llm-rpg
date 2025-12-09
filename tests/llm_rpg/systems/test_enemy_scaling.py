@@ -39,7 +39,6 @@ def test_scale_enemy_levels_and_applies_stat_growth(monkeypatch):
         base_stats=Stats(attack=2, defense=2, focus=0, max_hp=5),
         llm=_LLMStub(),
         archetype=EnemyArchetypes.ATTACKER,
-        ascii_render="",
         enemy_next_action_prompt="",
     )
 

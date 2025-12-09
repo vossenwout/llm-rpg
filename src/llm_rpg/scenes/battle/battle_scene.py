@@ -29,6 +29,7 @@ from llm_rpg.systems.battle.damage_calculator import (
 )
 from llm_rpg.scenes.scene import Scene
 from llm_rpg.systems.battle.enemy import Enemy
+import pygame
 
 if TYPE_CHECKING:
     from llm_rpg.game.game import Game
@@ -44,6 +45,7 @@ class BattleScene(Scene):
         super().__init__(game=game, current_state=BattleStartState(self))
         self.hero = self.game.hero
         self.enemy = enemy
+        self.enemy_sprite: pygame.Surface | None = None
         self.battle_ai = BattleAI(
             llm=self.game.llm,
             effect_determination_prompt=self.game.config.battle_ai_effect_determination_prompt,

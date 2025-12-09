@@ -93,5 +93,4 @@ def generate_enemy(game: Game) -> Enemy:
         llm=game.llm,
         enemy_next_action_prompt=game.config.enemy_next_action_prompt,
         archetype=enemy_info.archetype,
-        ascii_render=enemy_info.ascii_render,
     )

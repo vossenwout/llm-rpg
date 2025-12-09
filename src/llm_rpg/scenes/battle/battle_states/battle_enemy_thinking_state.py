@@ -13,6 +13,7 @@ from llm_rpg.ui.battle_ui import (
     render_stats_row,
     advance_dots,
     render_items_panel,
+    render_enemy_sprite,
 )
 from llm_rpg.scenes.battle.battle_states.thinking_utils import (
     Outcome,
@@ -92,6 +93,11 @@ class BattleEnemyThinkingState(State):
 
     def render(self, screen: pygame.Surface):
         screen.fill(self.battle_scene.game.theme.colors["background"])
+        render_enemy_sprite(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            sprite=self.battle_scene.enemy_sprite,
+        )
         render_stats_row(
             screen=screen,
             theme=self.battle_scene.game.theme,
