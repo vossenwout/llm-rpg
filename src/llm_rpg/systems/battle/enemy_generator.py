@@ -12,186 +12,73 @@ class BaseEnemyInfo:
     name: str
     description: str
     archetype: EnemyArchetypes
-    ascii_render: str
 
+
+devil_dog = BaseEnemyInfo(
+    name="Devil Dog",
+    description="The pet of Lucifer, seems hungry.",
+    archetype=EnemyArchetypes.ATTACKER,
+)
+
+golden_trophy = BaseEnemyInfo(
+    name="Golden Trophy",
+    description="Suddenly became alive after being thrown in the trash.",
+    archetype=EnemyArchetypes.TANK,
+)
+
+hippy = BaseEnemyInfo(
+    name="Hippy",
+    description="Annoyed after the cops took his weed.",
+    archetype=EnemyArchetypes.TANK,
+)
+
+mushroom_head = BaseEnemyInfo(
+    name="Mushroom Head",
+    description="Somehow became conscious.",
+    archetype=EnemyArchetypes.TANK,
+)
+
+pile_of_goo = BaseEnemyInfo(
+    name="Pile of Goo",
+    description="Seems cute, but very poisonous.",
+    archetype=EnemyArchetypes.TANK,
+)
 
 rat = BaseEnemyInfo(
     name="Rat",
-    description="A small, scurrying rodent with sharp teeth and a quick bite",
+    description="Found in the trash, with sharp teeth and a quick bite",
     archetype=EnemyArchetypes.ATTACKER,
-    ascii_render="""
-(\__/)
-(o'.'o)
-(")_(")
-""",
 )
-
-mall_cop = BaseEnemyInfo(
-    name="Mall Cop",
-    description="Overweight mall cop on a segway, looking for trouble.",
-    archetype=EnemyArchetypes.TANK,
-    ascii_render="""
-      (o_o)
-     ⎛( - )⎞
-     /(---)\
-      || ||
-    _/     \_
-   (_______)
-    O     O
-""",
-)
-
-angry_bus = BaseEnemyInfo(
-    name="Angry Bus",
-    description="A bus which gained sentience and is now angry",
-    archetype=EnemyArchetypes.TANK,
-    ascii_render="""
-        __
- ______|_|_____
-||  [__]  [__]  |
-||__[__]__[__]__|
-  o-o       o-o
-    """,
-)
-
-
-bear = BaseEnemyInfo(
-    name="Bear",
-    description="A large, lumbering bear with sharp claws and a powerful roar",
-    archetype=EnemyArchetypes.DEFENDER,
-    ascii_render="""
-    (()__(())
-    /       \   
-( /    \  \  
-    \ o o    /  
-    (_()_)__/ \  
-/  _.-' /    
-/_/     /  
-""",
-)
-
 
 robert = BaseEnemyInfo(
     name="Robert",
-    description="A robot which can shoot laser from it's eyes",
-    archetype=EnemyArchetypes.DEFENDER,
-    ascii_render="""
-        ,     ,
-       (\____/)
-        (_oo_)
-          (O)
-       __||__||__
-   []/          \[]
-   / \          / \
-    /   \________/   \
-    (____)        (____)
-    """,
+    description="Robot that can shoot lasers from his eyes.",
+    archetype=EnemyArchetypes.ATTACKER,
 )
 
-wellfed_zombie = BaseEnemyInfo(
-    name="Wellfed Zombie",
-    description="Zombie with an insatiable appetite",
+taxi = BaseEnemyInfo(
+    name="Taxi",
+    description="From the streets of New York, known for his aggresive driving style.",
     archetype=EnemyArchetypes.TANK,
-    ascii_render="""
-         ______
-       /      \
-      |         | 
-      |  ()  () | 
-      |    ∩    | 
-       \  ---  /  
-      /|  |  | |\
-     / |       | \
-    /  |  ᕕ( ᐛ )ᕗ  | \
-   |   |       |   |
-   |   |       |   |
-   |   \_______/   |
-   |               |
-   \_____/ \_____/
-    (_/       \_)
-""",
 )
 
-mailbox = BaseEnemyInfo(
-    name="Mailbox",
-    description="A strong metal mailbox which can attack by shooting letters",
-    archetype=EnemyArchetypes.DEFENDER,
-    ascii_render="""
-      _______
-     |       |
-     |  ___  |
-     | [___] |
-     |_______|
-    //     \\
-   //       \\
-  ||         ||
-  ||_________||
-    | |   | |
-    | |   | |
-
-""",
+tree = BaseEnemyInfo(
+    name="Tree",
+    description="Grew an appetite for human flesh.",
+    archetype=EnemyArchetypes.TANK,
 )
 
-conspiracy_theorist = BaseEnemyInfo(
-    name="Conspiracy Theorist",
-    description="Doesn't believe in anything, even in his own mortality",
-    archetype=EnemyArchetypes.ATTACKER,
-    ascii_render="""
-        .-"      "-.
-       /            \
-      |              |
-      |,  .-.  .-.  ,|
-      | )(_o/  \o_)( |
-      |/     /\     \|
-      (_     ^^     _)
-       \__|IIIIII|__/
-        | \IIIIII/ |
-        \          /
-         `--------`
-       / ~~~~~~~~ \
-      / | | | | | | \
-     /  | | | | | |  \
-     \  | | | | | |  /
-      `~~~~~~~~~~~~`
-
-     "They're watching us..."
-""",
-)
-
-
-zephyros = BaseEnemyInfo(
-    name="Zephyros",
-    description="A cunning and ancient dragon with scales that shimmer like the night sky",
-    archetype=EnemyArchetypes.ATTACKER,
-    ascii_render="""
-                      ___====-_  _-====___
-                _--^^^#####//      \\#####^^^--_
-             _-^##########// (    ) \\##########^-_
-            -############//  |\^^/|  \\############-
-          _/############//   (@::@)   \\############\_
-         /#############((     \\//     ))#############
-        -###############\\    (oo)    //###############-
-       -#################\\  / "" \  //#################-
-      -###################\\/  .  \//###################-
-     _#/|##########/\######(   )######/\##########|\#_
-    |/ |#/\#/\#/\/  \#/\#|/\#|/\#  /\#/\#/\#/\| \|/|/
-    / / _/ /_/ |   |_/_/__/___/_/ | /_/ /_/ // //\ 
-    \/\/\/_/ |_/  _/ /_/ \__/  | /_/ /_/ /_/ /_/
-            /_/ |_/ /_/  /_/ | /_/ /_/ /_/ /_/ /
-           (_/   /_/ |_/(_/  /_/ /_/  /_/ /_/
-           (_/   (_/ (_/   (_/  (_/ (_/
-""",
-)
 
 battles_won_to_enemies_mapping: Dict[int, BaseEnemyInfo] = {
     0: rat,
-    1: mall_cop,
-    2: angry_bus,
-    3: bear,
-    4: robert,
-    5: wellfed_zombie,
-    6: mailbox,
-    7: conspiracy_theorist,
-    8: zephyros,
+    1: hippy,
+    2: taxi,
+    3: golden_trophy,
+    4: tree,
+    5: pile_of_goo,
+    6: mushroom_head,
+    7: robert,
+    8: devil_dog,
 }
 
 
