@@ -70,7 +70,7 @@ tree = BaseEnemyInfo(
 
 
 battles_won_to_enemies_mapping: Dict[int, BaseEnemyInfo] = {
-    0: rat,
+    0: devil_dog,
     1: hippy,
     2: taxi,
     3: golden_trophy,
