@@ -62,10 +62,10 @@ enemy:
       max_hp: 0.7
   stats_level_up_amount: 5
   base_stats:
-    attack: 2
+    attack: 100
     defense: 2
     focus: 10
-    max_hp: 5
+    max_hp: 500
 damage_calculator:
   ad_diff_scaling: 0.5
   ad_parity_dmg: 1.25

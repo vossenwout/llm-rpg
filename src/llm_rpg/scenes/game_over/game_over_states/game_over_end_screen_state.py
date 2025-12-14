@@ -42,33 +42,27 @@ class GameOverEndScreenState(State):
         screen.fill(self.scene.game.theme.colors["background"])
         spacing = self.scene.game.theme.spacing
 
-        title_text = self.scene.game.theme.fonts["medium"].render(
+        title_surface = self.scene.game.theme.fonts["medium"].render(
             "Game Over", False, self.scene.game.theme.colors["primary"]
         )
-        screen.blit(
-            title_text,
-            title_text.get_rect(center=(screen.get_width() // 2, spacing(2))),
+        title_rect = title_surface.get_rect(
+            center=(screen.get_width() // 2, spacing(4))
         )
+        screen.blit(title_surface, title_rect)
 
-        # Placeholder graphic block
-        placeholder_surface = self.scene.game.theme.fonts["large"].render(
-            "☠", False, self.scene.game.theme.colors["text"]
-        )
-        screen.blit(
-            placeholder_surface,
-            placeholder_surface.get_rect(
-                center=(screen.get_width() // 2, spacing(3.5))
-            ),
-        )
+        margin = spacing(2)
+        panel_width = screen.get_width() - margin * 6
+        panel_y = title_rect.bottom + margin
 
         draw_selection_panel(
             screen=screen,
             options=list(self.menu_options.values()),
             selected_index=self.selected_index - 1,
-            font=self.scene.game.theme.fonts["medium"],
+            font=self.scene.game.theme.fonts["small"],
             theme=self.scene.game.theme,
-            y=spacing(5),
-            width=screen.get_width() - spacing(4),
-            padding=spacing(1.5),
-            option_spacing=spacing(2),
+            y=panel_y,
+            width=panel_width,
+            padding=spacing(2),
+            option_spacing=spacing(1),
+            align="center",
         )
