@@ -1,13 +1,16 @@
 from __future__ import annotations
-from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
-from llm_rpg.systems.battle.damage_calculator import DamageCalculationResult
-from llm_rpg.systems.hero.hero import ProposedHeroAction
-from llm_rpg.systems.battle.battle_log import BattleEvent
-
+import pygame
 from typing import TYPE_CHECKING
 
+from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
+from llm_rpg.systems.hero.hero import ProposedHeroAction
 from llm_rpg.scenes.state import State
-from llm_rpg.utils.rendering import render_state_transition_header
+from llm_rpg.ui.components import draw_input_panel
+from llm_rpg.ui.battle_ui import (
+    render_stats_row,
+    render_items_panel,
+    render_enemy_sprite,
+)
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -16,144 +19,152 @@ if TYPE_CHECKING:
 class BattleTurnState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
-        self.is_hero_input_valid = True
-        self.proposed_hero_action: ProposedHeroAction = None
-        self.display_state_transition_header = True
+        self.input_text = ""
+        self.error_message = ""
+        self.submit_requested = False
+        self.input_timer = 0.0
 
-    def handle_input(self):
-        self.proposed_hero_action = self.battle_scene.hero.get_next_action()
+        self.backspace_held = False
+        self.backspace_timer = 0.0
+        self.backspace_initial_delay = 0.5
+        self.backspace_repeat_rate = 0.05
 
-    def _update_hero_turn(self):
-        action_effect = self.battle_scene.battle_ai.determine_action_effect(
-            proposed_action_attacker=self.proposed_hero_action.action,
-            hero=self.battle_scene.hero,
-            enemy=self.battle_scene.enemy,
-            is_hero_attacker=True,
-            battle_log_string=self.battle_scene.battle_log.to_string_for_battle_ai(),
-        )
+    def handle_input(self, event: pygame.event.Event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN:
+                self.submit_requested = True
+            elif event.key == pygame.K_BACKSPACE:
+                self.backspace_held = True
+                self.backspace_timer = 0.0
+            else:
+                if event.unicode.isprintable():
+                    max_chars = self.battle_scene.hero.get_current_stats().focus
+                    if len(self.input_text.replace(" ", "")) < max_chars:
+                        self.input_text += event.unicode
+                        self.error_message = ""
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_BACKSPACE:
+                self.backspace_held = False
+                self.backspace_timer = 0.0
 
-        n_new_words_in_action = (
-            self.battle_scene.creativity_tracker.count_new_words_in_action(
-                action=self.proposed_hero_action.action
+    def _delete_character(self):
+        if len(self.input_text) > 0:
+            self.input_text = self.input_text[:-1]
+            self.error_message = ""
+
+    def _build_proposed_action(self) -> ProposedHeroAction:
+        if len(self.input_text.strip()) == 0:
+            return ProposedHeroAction(
+                action="Decided to do nothing this turn.",
+                is_valid=True,
+                time_to_answer_seconds=100.0,
             )
-        )
-        n_overused_words_in_action = (
-            self.battle_scene.creativity_tracker.count_overused_words_in_action(
-                action=self.proposed_hero_action.action
+
+        n_chars = len(self.input_text.replace(" ", ""))
+        focus_limit = self.battle_scene.hero.get_current_stats().focus
+        if n_chars > focus_limit:
+            return ProposedHeroAction(
+                action="",
+                is_valid=False,
+                time_to_answer_seconds=self.input_timer,
+                invalid_reason=(
+                    f"Your focus is {focus_limit}; you typed {n_chars} non-space characters."
+                ),
             )
-        )
-        damage_calculation_result: DamageCalculationResult = (
-            self.battle_scene.damage_calculator.calculate_damage(
-                attack=self.battle_scene.hero.get_current_stats().attack,
-                defense=self.battle_scene.enemy.get_current_stats().defense,
-                feasibility=action_effect.feasibility,
-                potential_damage=action_effect.potential_damage,
-                n_new_words_in_action=n_new_words_in_action,
-                n_overused_words_in_action=n_overused_words_in_action,
-                answer_speed_s=self.proposed_hero_action.time_to_answer_seconds,
-                equiped_items=self.battle_scene.hero.inventory.items,
-            )
-        )
-        self.battle_scene.enemy.inflict_damage(damage_calculation_result.total_dmg)
-        self.battle_scene.creativity_tracker.add_action(
-            self.proposed_hero_action.action
-        )
-        self.battle_scene.battle_log.add_event(
-            BattleEvent(
-                is_hero_turn=True,
-                character_name=self.battle_scene.hero.name,
-                proposed_action=self.proposed_hero_action.action,
-                effect_description=action_effect.effect_description,
-                damage_calculation_result=damage_calculation_result,
-            )
+
+        return ProposedHeroAction(
+            action=self.input_text,
+            is_valid=True,
+            time_to_answer_seconds=self.input_timer,
         )
 
-    def _update_enemy_turn(self):
-        proposed_enemy_action = self.battle_scene.enemy.get_next_action(
-            self.battle_scene.battle_log, self.battle_scene.hero
-        )
-        action_effect = self.battle_scene.battle_ai.determine_action_effect(
-            proposed_action_attacker=proposed_enemy_action,
-            hero=self.battle_scene.hero,
-            enemy=self.battle_scene.enemy,
-            is_hero_attacker=False,
-            battle_log_string=self.battle_scene.battle_log.to_string_for_battle_ai(),
-        )
-        damage_calculation_result = (
-            self.battle_scene.damage_calculator.calculate_damage(
-                attack=self.battle_scene.enemy.get_current_stats().attack,
-                defense=self.battle_scene.hero.get_current_stats().defense,
-                feasibility=action_effect.feasibility,
-                potential_damage=action_effect.potential_damage,
-                n_new_words_in_action=0,
-                n_overused_words_in_action=0,
-                answer_speed_s=1000,
-                equiped_items=[],
-            )
-        )
+    def update(self, dt: float):
+        self.input_timer += dt
 
-        self.battle_scene.hero.inflict_damage(damage_calculation_result.total_dmg)
+        if self.backspace_held:
+            if self.backspace_timer == 0.0:
+                self._delete_character()
+            self.backspace_timer += dt
+            if self.backspace_timer >= self.backspace_initial_delay:
+                time_since_delay = self.backspace_timer - self.backspace_initial_delay
+                deletes_due = int(time_since_delay / self.backspace_repeat_rate)
+                if deletes_due > 0:
+                    self._delete_character()
+                    self.backspace_timer = self.backspace_initial_delay + (
+                        time_since_delay % self.backspace_repeat_rate
+                    )
 
-        self.battle_scene.battle_log.add_event(
-            BattleEvent(
-                is_hero_turn=False,
-                character_name=self.battle_scene.enemy.name,
-                proposed_action=proposed_enemy_action,
-                effect_description=action_effect.effect_description,
-                damage_calculation_result=damage_calculation_result,
-            )
-        )
-
-    def update(self):
-        self.display_state_transition_header = False
-        if self.proposed_hero_action.is_valid:
-            self._update_hero_turn()
-            if self.battle_scene.enemy.is_dead():
-                self.battle_scene.change_state(BattleStates.END)
-                return
-            self._update_enemy_turn()
-            if self.battle_scene.hero.is_dead():
-                self.battle_scene.change_state(BattleStates.END)
+        if self.submit_requested:
+            self.submit_requested = False
+            proposed_action = self._build_proposed_action()
+            if not proposed_action.is_valid:
+                self.error_message = proposed_action.invalid_reason or "Invalid action."
+                self.input_timer = 0.0
                 return
 
-    def _render_character_stats(self):
-        print("- Stats - \n")
-        print(
-            f"{self.battle_scene.hero.name} HP: {self.battle_scene.hero.hp}/{self.battle_scene.hero.get_current_stats().max_hp}"
-        )
-        print(
-            f"{self.battle_scene.enemy.name} HP: {self.battle_scene.enemy.hp}/{self.battle_scene.enemy.get_current_stats().max_hp}"
+            self.error_message = ""
+            self.battle_scene.pending_hero_action = proposed_action
+            self.input_text = ""
+            self.input_timer = 0.0
+            self.battle_scene.change_state(BattleStates.HERO_THINKING)
+
+    def _render_input_box(self, screen: pygame.Surface):
+        spacing = self.battle_scene.game.theme.spacing
+        margin = spacing(1)
+        padding = spacing(2)
+        font = self.battle_scene.game.theme.fonts["small"]
+        input_height = font.get_height() + padding * 2
+        panel_rect = draw_input_panel(
+            screen=screen,
+            current_text=self.input_text,
+            font=font,
+            theme=self.battle_scene.game.theme,
+            x=margin,
+            y=screen.get_height() - input_height - margin,
+            width=screen.get_width() - margin * 2,
+            padding=padding,
+            time_ms=pygame.time.get_ticks(),
         )
 
-    def _render_ask_for_hero_action(self):
-        chars_can_type = self.battle_scene.hero.get_current_stats().focus
-        print(
-            f"What do you want to do? Your focus allows you to type {chars_can_type} characters."
+        focus_limit = self.battle_scene.hero.get_current_stats().focus
+        remaining_chars = max(focus_limit - len(self.input_text.replace(" ", "")), 0)
+        focus_meter = f"Focus: {remaining_chars}/{focus_limit} characters remaining."
+        prompt_surface = self.battle_scene.game.theme.fonts["small"].render(
+            focus_meter, True, self.battle_scene.game.theme.colors["text_hint"]
         )
 
-    def _render_invalid_hero_action(self):
-        print("")
-        print("Action invalid because:")
-        print(self.proposed_hero_action.invalid_reason)
+        prompt_x = panel_rect.x + (panel_rect.width - prompt_surface.get_width()) // 2
+        screen.blit(
+            prompt_surface,
+            (prompt_x, panel_rect.y - spacing(4)),
+        )
 
-    def _render_battle_log(self):
-        if self.battle_scene.battle_log.events:
-            print("")
-            print("--- The following events took place... --- \n")
-            string_of_last_2_events = (
-                self.battle_scene.battle_log.get_string_of_last_events(
-                    n_events=2, debug_mode=self.battle_scene.game.config.debug_mode
-                )
+        if self.error_message:
+            error_surface = self.battle_scene.game.theme.fonts["small"].render(
+                self.error_message, True, (255, 60, 60)
             )
-            print(string_of_last_2_events)
+            screen.blit(
+                error_surface,
+                (panel_rect.x, panel_rect.bottom + spacing(0.5)),
+            )
 
-    def render(self):
-        if self.display_state_transition_header:
-            render_state_transition_header("Battle has started")
-        if self.proposed_hero_action and (not self.proposed_hero_action.is_valid):
-            self._render_invalid_hero_action()
-        else:
-            self._render_battle_log()
-            self._render_character_stats()
-        print("")
-        self._render_ask_for_hero_action()
+    def render(self, screen: pygame.Surface):
+        screen.fill(self.battle_scene.game.theme.colors["background"])
+        render_enemy_sprite(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            sprite=self.battle_scene.enemy_sprite,
+        )
+        render_stats_row(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            enemy=self.battle_scene.enemy,
+        )
+        render_items_panel(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            proc_impacts=None,
+        )
+        self._render_input_box(screen)

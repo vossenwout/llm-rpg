@@ -21,7 +21,6 @@ class Enemy(Character):
         base_stats: Stats,
         llm: LLM,
         archetype: EnemyArchetypes,
-        ascii_render: str,
         enemy_next_action_prompt: str,
     ):
         super().__init__(
@@ -29,7 +28,6 @@ class Enemy(Character):
         )
         self.llm = llm
         self.archetype = archetype
-        self.ascii_render = ascii_render
         self.enemy_next_action_prompt = enemy_next_action_prompt
 
     def get_current_stats(self) -> Stats:
@@ -49,14 +47,3 @@ class Enemy(Character):
         )
 
         return self.llm.generate_completion(prompt)
-
-    def render(self):
-        print(f"👾 {self.name} lvl {self.level}")
-        print(self.description)
-        print("")
-        print(self.ascii_render)
-        print("")
-        print(f"HP: {self.get_current_stats().max_hp}")
-        print(f"Attack: {self.get_current_stats().attack}")
-        print(f"Defense: {self.get_current_stats().defense}")
-        print("")

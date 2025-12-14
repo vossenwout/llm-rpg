@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-
-from llm_rpg.scenes.main_menu.main_menu_states.main_menu_states import MainMenuStates
+import pygame
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
-
 from typing import TYPE_CHECKING
-
-from llm_rpg.utils.user_navigation_input import (
-    UserNavigationInput,
-    get_user_navigation_input,
-)
+from llm_rpg.scenes.main_menu.main_menu_states.main_menu_states import MainMenuStates
+from llm_rpg.ui.components import draw_selection_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.main_menu.main_menu_scene import MainMenuScene
@@ -19,50 +14,57 @@ if TYPE_CHECKING:
 class MainMenuNavigationState(State):
     def __init__(self, scene: MainMenuScene):
         self.scene = scene
-        self.display_state_transition_header = True
-        self.display_title_screen = True
-        self.last_user_navigation_input: UserNavigationInput | None = None
+        self.menu_options = {
+            1: "Start New Game",
+            2: "Info",
+        }
+        self.selected_index = 1
+        self.option_selected = False
 
-    def handle_input(self):
-        self.last_user_navigation_input = get_user_navigation_input([1, 2])
+    def handle_input(self, event: pygame.event.Event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                self.selected_index += 1
+                if self.selected_index > len(self.menu_options):
+                    self.selected_index = 1
+            elif event.key == pygame.K_UP:
+                self.selected_index -= 1
+                if self.selected_index < 1:
+                    self.selected_index = len(self.menu_options)
+            elif event.key == pygame.K_RETURN:
+                self.option_selected = True
 
-    def update(self):
-        self.display_info = False
-        self.display_state_transition_header = False
-        if self.last_user_navigation_input.is_valid:
-            if self.last_user_navigation_input.choice == 1:
+    def update(self, dt: float):
+        if self.option_selected:
+            if self.selected_index == 1:
                 self.scene.game.change_scene(SceneTypes.HERO_CREATION)
-            elif self.last_user_navigation_input.choice == 2:
+            elif self.selected_index == 2:
                 self.scene.change_state(MainMenuStates.INFO)
 
-    def _render_title_screen(self):
-        print(
-            """
-
-
- ▄█        ▄█         ▄▄▄▄███▄▄▄▄           ▄████████    ▄███████▄    ▄██████▄  
-███       ███       ▄██▀▀▀███▀▀▀██▄        ███    ███   ███    ███   ███    ███ 
-███       ███       ███   ███   ███        ███    ███   ███    ███   ███    █▀  
-███       ███       ███   ███   ███       ▄███▄▄▄▄██▀   ███    ███  ▄███        
-███       ███       ███   ███   ███      ▀▀███▀▀▀▀▀   ▀█████████▀  ▀▀███ ████▄  
-███       ███       ███   ███   ███      ▀███████████   ███          ███    ███ 
-███▌    ▄ ███▌    ▄ ███   ███   ███        ███    ███   ███          ███    ███ 
-█████▄▄██ █████▄▄██  ▀█   ███   █▀         ███    ███  ▄████▀        ████████▀  
-▀         ▀                                ███    ███                           
-"""
+    def _render_logo(self, screen: pygame.Surface):
+        margin = self.scene.game.theme.spacing(2)
+        logo_surface = self.scene.game.theme.fonts["large"].render(
+            "AI RPG", False, self.scene.game.theme.colors["primary"]
         )
-        print("Choose an option:")
-        print("[1] Start New Game")
-        print("[2] Info")
+        logo_rect = logo_surface.get_rect(center=(screen.get_width() // 2, margin * 6))
+        screen.blit(logo_surface, logo_rect)
 
-    def _render_invalid_choice(self):
-        print("Invalid choice. Choose [1] or [2]")
+    def _render_menu_options(self, screen: pygame.Surface):
+        margin = self.scene.game.theme.spacing(2)
+        panel_width = screen.get_width() - margin * 6
+        draw_selection_panel(
+            screen=screen,
+            options=list(self.menu_options.values()),
+            selected_index=self.selected_index - 1,
+            font=self.scene.game.theme.fonts["small"],
+            theme=self.scene.game.theme,
+            padding=self.scene.game.theme.spacing(2),
+            option_spacing=self.scene.game.theme.spacing(1),
+            width=panel_width,
+            align="center",
+        )
 
-    def render(self):
-        if self.display_title_screen:
-            self._render_title_screen()
-        if (
-            self.last_user_navigation_input
-            and not self.last_user_navigation_input.is_valid
-        ):
-            self._render_invalid_choice()
+    def render(self, screen: pygame.Surface):
+        screen.fill(self.scene.game.theme.colors["background"])
+        self._render_logo(screen=screen)
+        self._render_menu_options(screen=screen)

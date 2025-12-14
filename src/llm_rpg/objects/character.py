@@ -6,7 +6,7 @@ class StatTypes(Enum):
     ATTACK = "attack"
     DEFENSE = "defense"
     FOCUS = "focus"
-    MAX_HP = "max_hp"
+    MAX_HP = "max HP"
 
 
 @dataclass
@@ -19,17 +19,11 @@ class Stats:
 
 class Character:
     def __init__(self, name: str, description: str, level: int, base_stats: Stats):
-        # name of the character
         self.name = name
-        # description of the character, also includes the items they have equipped
         self.description = description
-        # level of the character
         self.level = level
-        # stats of the character before any items are equipped
         self.base_stats = base_stats
-        # current hp of the character
         self.hp = base_stats.max_hp
-        # flag to check if the character should level up (only used by the hero though)
         self.should_level_up = False
 
     def inflict_damage(self, damage: int):

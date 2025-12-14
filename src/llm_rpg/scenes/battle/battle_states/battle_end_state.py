@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import pygame
 from typing import TYPE_CHECKING
 
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
-from llm_rpg.utils.rendering import render_state_transition_header
+from llm_rpg.ui.components import PagedTextState
+from llm_rpg.ui.battle_ui import render_event_card, render_items_panel, render_stats_row
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -13,13 +15,19 @@ if TYPE_CHECKING:
 class BattleEndState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
-        self.display_state_transition_header = True
+        self.ready_to_exit = False
+        self.paged_state = PagedTextState(lines=[])
 
-    def handle_input(self):
-        pass
+    def handle_input(self, event: pygame.event.Event):
+        if event.type == pygame.KEYDOWN and event.key in (
+            pygame.K_RETURN,
+            pygame.K_SPACE,
+        ):
+            self.ready_to_exit = True
 
-    def update(self):
-        self.display_state_transition_header = False
+    def update(self, dt: float):
+        if not self.ready_to_exit:
+            return
 
         if not self.battle_scene.hero.is_dead():
             self.battle_scene.game.battles_won += 1
@@ -32,41 +40,33 @@ class BattleEndState(State):
         else:
             self.battle_scene.game.change_scene(SceneTypes.GAME_OVER)
 
-    def _render_character_stats(self):
-        print(
-            f"{self.battle_scene.hero.name} HP: {self.battle_scene.hero.hp}/{self.battle_scene.hero.get_current_stats().max_hp}"
+    def render(self, screen: pygame.Surface):
+        screen.fill(self.battle_scene.game.theme.colors["background"])
+
+        render_stats_row(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            enemy=self.battle_scene.enemy,
         )
-        print(
-            f"{self.battle_scene.enemy.name} HP: {self.battle_scene.enemy.hp}/{self.battle_scene.enemy.get_current_stats().max_hp}"
+        render_items_panel(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            hero=self.battle_scene.hero,
+            proc_impacts=None,
         )
 
-    def render(self):
-        if not self.battle_scene.hero.is_dead():
-            if self.battle_scene.battle_log.events:
-                print("")
-                print("--- The following events took place... --- \n")
-                string_of_last_2_events = (
-                    self.battle_scene.battle_log.get_string_of_last_events(
-                        n_events=2, debug_mode=self.battle_scene.game.config.debug_mode
-                    )
-                )
-                print(string_of_last_2_events)
-            if self.display_state_transition_header:
-                render_state_transition_header("Battle Ended")
-            print("--- Current Stats --- \n")
-            self._render_character_stats()
-            print(f"{self.battle_scene.hero.name} won!")
-        else:
-            print("")
-            print("--- The following events took place... --- \n")
-            string_of_last_event = (
-                self.battle_scene.battle_log.get_string_of_last_events(
-                    n_events=1, debug_mode=self.battle_scene.game.config.debug_mode
-                )
-            )
-            print(string_of_last_event)
-            if self.display_state_transition_header:
-                render_state_transition_header("Battle Ended")
-            print("--- Current Stats --- \n")
-            self._render_character_stats()
-            print(f"{self.battle_scene.enemy.name} won!")
+        defeated_name = (
+            self.battle_scene.enemy.name
+            if self.battle_scene.enemy.is_dead()
+            else self.battle_scene.hero.name
+        )
+        message = f"{defeated_name.upper()} WAS DEFEATED!"
+
+        render_event_card(
+            screen=screen,
+            theme=self.battle_scene.game.theme,
+            event=self.battle_scene.latest_event,
+            paged_state=self.paged_state,
+            text_override=message,
+        )

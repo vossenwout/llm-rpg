@@ -1,8 +1,9 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-
 from enum import Enum
 from typing import TYPE_CHECKING
+
+import pygame
 
 
 if TYPE_CHECKING:
@@ -27,11 +28,11 @@ class Scene(ABC):
     def change_state(self, new_state: Enum):
         pass
 
-    def handle_input(self):
-        self.current_state.handle_input()
+    def handle_input(self, event: pygame.event.Event):
+        self.current_state.handle_input(event)
 
-    def update(self):
-        self.current_state.update()
+    def update(self, dt: float):
+        self.current_state.update(dt)
 
-    def render(self):
-        self.current_state.render()
+    def render(self, screen: pygame.Surface):
+        self.current_state.render(screen)

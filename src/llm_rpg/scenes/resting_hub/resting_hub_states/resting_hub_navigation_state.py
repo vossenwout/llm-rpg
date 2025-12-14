@@ -1,16 +1,14 @@
 from __future__ import annotations
-from textwrap import dedent
+
+import pygame
 from typing import TYPE_CHECKING
+
 from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
     RestingHubStates,
 )
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
-from llm_rpg.utils.rendering import render_state_transition_header
-from llm_rpg.utils.user_navigation_input import (
-    UserNavigationInput,
-    get_user_navigation_input,
-)
+from llm_rpg.ui.components import draw_selection_panel, draw_text_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -19,57 +17,70 @@ if TYPE_CHECKING:
 class RestingHubNavigationState(State):
     def __init__(self, resting_hub_scene: RestingHubScene):
         self.resting_hub_scene = resting_hub_scene
-        self.last_user_navigation_input = UserNavigationInput(-1, False)
-        self.massage_queue = []
+        self.menu_options: list[str] = ["Next Battle", "View Character"]
+        self.selected_index = 0
+        self.option_selected = False
+        self.error_message = ""
 
-        self.render_welcome_message = True
-        self.display_state_transition_header = True
+    def handle_input(self, event: pygame.event.Event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                self.selected_index += 1
+                if self.selected_index >= len(self.menu_options):
+                    self.selected_index = 0
+            elif event.key == pygame.K_UP:
+                self.selected_index -= 1
+                if self.selected_index < 0:
+                    self.selected_index = len(self.menu_options) - 1
+            elif event.key == pygame.K_RETURN:
+                self.option_selected = True
 
-    def handle_input(self):
-        self.last_user_navigation_input = get_user_navigation_input([1, 2])
-
-    def update(self):
-        self.render_welcome_message = False
-        self.display_state_transition_header = False
-        if self.last_user_navigation_input.is_valid:
-            if self.last_user_navigation_input.choice == 1:
-                self.resting_hub_scene.change_state(RestingHubStates.VIEW_CHARACTER)
-            elif self.last_user_navigation_input.choice == 2:
+    def update(self, dt: float):
+        if self.option_selected:
+            if self.selected_index == 0:
                 self.resting_hub_scene.game.change_scene(SceneTypes.BATTLE)
-        else:
-            self.massage_queue.append("Invalid input. Please enter [1] or [2].")
+            elif self.selected_index == 1:
+                self.resting_hub_scene.change_state(RestingHubStates.VIEW_CHARACTER)
 
-    def _render_message_queue(self):
-        for message in self.massage_queue:
-            print(message)
-        self.massage_queue = []
+    def render(self, screen: pygame.Surface):
+        theme = self.resting_hub_scene.game.theme
+        spacing = theme.spacing
+        screen.fill(theme.colors["background"])
 
-    def render(self):
-        if self.display_state_transition_header:
-            render_state_transition_header("Resting Hub")
-        if self.render_welcome_message:
-            print("Welcome to the resting hub!")
-            print(f"Battles won: {self.resting_hub_scene.game.battles_won}")
-            print(
-                dedent(
-                    """
-            (                 ,&&&.
-             )                .,.&&
-            (  (              \=__/
-                )             ,'-'.
-          (    (  ,,      _.__|/ /|
-           ) /\ -         _|___/  |
-         (  // | (`'      ((  `'--|
-       _ -.;_/ \\--._      \\ \-._/.
-      (_;-// | \ \-'.\    <_,\_\`--'|
-      ( `.__ _  ___,')      <_,-'__,'
-      `'(_ )_)(_)_)'
-                """
-                )
-            )
-            print("")
-            print("What would you like to do?")
-            print("[1] View Character")
-            print("[2] Next Battle")
-            print("Enter the number of your choice: ", end="")
-        self._render_message_queue()
+        title_surface = theme.fonts["medium"].render(
+            "Resting Hub", True, theme.colors["primary"]
+        )
+        title_rect = title_surface.get_rect(
+            center=(screen.get_width() // 2, spacing(8))
+        )
+        screen.blit(title_surface, title_rect)
+
+        margin = spacing(2)
+        panel_width = screen.get_width() - margin * 4
+
+        info_rect = draw_text_panel(
+            screen=screen,
+            lines=f"Battles won: {self.resting_hub_scene.game.battles_won}",
+            font=theme.fonts["small"],
+            theme=theme,
+            x=margin,
+            y=title_rect.bottom + spacing(2),
+            width=panel_width,
+            align="left",
+            auto_wrap=False,
+            draw_border=False,
+        )
+
+        draw_selection_panel(
+            screen=screen,
+            options=self.menu_options,
+            selected_index=self.selected_index,
+            font=theme.fonts["small"],
+            theme=theme,
+            x=margin,
+            y=info_rect.bottom + spacing(1.5),
+            width=panel_width,
+            padding=spacing(2),
+            option_spacing=spacing(1.5),
+            align="left",
+        )

@@ -68,6 +68,7 @@ class GameConfig:
                 self.game_config["hero"]["classes"]["attack"]["base_stats"]
             ),
             starting_item=AttackerStartingItem(),
+            # starting_item=AdrenalinePump(),
         )
 
     @cached_property
@@ -187,3 +188,11 @@ class GameConfig:
     @cached_property
     def enemy_next_action_prompt(self) -> str:
         return self.game_config["prompts"]["enemy_next_action"]
+
+    @cached_property
+    def display_fullscreen(self) -> bool:
+        return self.game_config["display"]["fullscreen"]
+
+    @cached_property
+    def display_windowed_scale(self) -> int:
+        return self.game_config["display"]["windowed_scale"]

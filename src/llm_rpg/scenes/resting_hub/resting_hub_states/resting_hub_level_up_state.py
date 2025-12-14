@@ -1,19 +1,14 @@
 from __future__ import annotations
 
-
+import pygame
 from typing import TYPE_CHECKING
-
 
 from llm_rpg.objects.character import StatTypes
 from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
     RestingHubStates,
 )
 from llm_rpg.scenes.state import State
-from llm_rpg.utils.rendering import render_state_transition_header
-from llm_rpg.utils.user_navigation_input import (
-    UserNavigationInput,
-    get_user_navigation_input,
-)
+from llm_rpg.ui.components import draw_selection_panel, draw_text_panel
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -22,61 +17,97 @@ if TYPE_CHECKING:
 class RestingHubLevelUpState(State):
     def __init__(self, resting_hub_scene: RestingHubScene):
         self.resting_hub_scene = resting_hub_scene
-        self.message_queue = []
-        self.last_user_navigation_input = UserNavigationInput(-1, False)
-        self.render_level_up_message = True
-        self.display_state_transition_header = True
-        self.input_choice_stat_mapping = {
-            1: StatTypes.ATTACK,
-            2: StatTypes.DEFENSE,
-            3: StatTypes.FOCUS,
-            4: StatTypes.MAX_HP,
-        }
+        self.stat_options: list[StatTypes] = [
+            StatTypes.ATTACK,
+            StatTypes.DEFENSE,
+            StatTypes.FOCUS,
+            StatTypes.MAX_HP,
+        ]
+        self.selected_index = 0
+        self.option_selected = False
         self.stat_increase_per_level = 5
 
-    def handle_input(self):
-        if self.resting_hub_scene.game.hero.should_level_up:
-            self.last_user_navigation_input = get_user_navigation_input(
-                list(self.input_choice_stat_mapping.keys())
-            )
+    def handle_input(self, event: pygame.event.Event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                self.selected_index += 1
+                if self.selected_index >= len(self.stat_options):
+                    self.selected_index = 0
+            elif event.key == pygame.K_UP:
+                self.selected_index -= 1
+                if self.selected_index < 0:
+                    self.selected_index = len(self.stat_options) - 1
+            elif event.key == pygame.K_RETURN:
+                self.option_selected = True
 
-    def update(self):
-        self.render_level_up_message = False
-        self.display_state_transition_header = False
-        if not self.resting_hub_scene.game.hero.should_level_up:
+    def update(self, dt: float):
+        hero = self.resting_hub_scene.game.hero
+        if not hero.should_level_up:
             self.resting_hub_scene.change_state(RestingHubStates.NAVIGATION)
-        else:
-            if self.last_user_navigation_input.is_valid:
-                stat_type = self.input_choice_stat_mapping[
-                    self.last_user_navigation_input.choice
-                ]
-                self.resting_hub_scene.game.hero.level_up(
-                    stat_type, self.stat_increase_per_level
-                )
-                self.message_queue.append(
-                    f"{stat_type.value} increased by {self.stat_increase_per_level}."
-                )
-            else:
-                self.message_queue.append(
-                    "Invalid input. Please enter [1] or [2] or [3] or [4]."
-                )
+            return
 
-    def _render_level_up_message(self):
-        print("You have leveled up!")
-        print("What would you like to increase?")
-        print("[1] Attack")
-        print("[2] Defense")
-        print("[3] Focus")
-        print("[4] HP")
+        if self.option_selected:
+            self.option_selected = False
+            stat_type = self.stat_options[self.selected_index]
+            hero.level_up(stat_type, self.stat_increase_per_level)
+            self.resting_hub_scene.change_state(RestingHubStates.NAVIGATION)
 
-    def _render_message_queue(self):
-        for message in self.message_queue:
-            print(message)
-        self.message_queue = []
+    def render(self, screen: pygame.Surface):
+        theme = self.resting_hub_scene.game.theme
+        spacing = theme.spacing
+        screen.fill(theme.colors["background"])
 
-    def render(self):
-        if self.display_state_transition_header:
-            render_state_transition_header("Level Up")
-        if self.render_level_up_message:
-            self._render_level_up_message()
-        self._render_message_queue()
+        title_surface = theme.fonts["medium"].render(
+            "Level Up!", True, theme.colors["primary"]
+        )
+        title_rect = title_surface.get_rect(
+            center=(screen.get_width() // 2, spacing(6))
+        )
+        screen.blit(title_surface, title_rect)
+
+        margin = spacing(2)
+        panel_width = screen.get_width() - margin * 4
+
+        prompt_rect = draw_text_panel(
+            screen=screen,
+            lines="Choose a stat to increase",
+            font=theme.fonts["small"],
+            theme=theme,
+            x=margin,
+            y=title_rect.bottom + spacing(2),
+            width=panel_width,
+            align="left",
+            auto_wrap=True,
+            draw_border=False,
+        )
+
+        stat_labels = [
+            f"{stat.value.capitalize()} (+{self.stat_increase_per_level})"
+            for stat in self.stat_options
+        ]
+
+        draw_selection_panel(
+            screen=screen,
+            options=stat_labels,
+            selected_index=self.selected_index,
+            font=theme.fonts["small"],
+            theme=theme,
+            x=margin,
+            y=prompt_rect.bottom + spacing(2),
+            width=panel_width,
+            padding=spacing(2),
+            option_spacing=spacing(1.5),
+            align="left",
+        )
+
+        hint = theme.fonts["small"].render(
+            "Press ENTER to confirm",
+            True,
+            theme.colors["text_hint"],
+        )
+        screen.blit(
+            hint,
+            hint.get_rect(
+                center=(screen.get_width() // 2, screen.get_height() - spacing(2))
+            ),
+        )
