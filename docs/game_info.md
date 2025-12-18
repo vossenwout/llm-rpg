@@ -17,6 +17,7 @@ AI RPG is a roguelike where each battle is driven by player-written actions. An 
 | Combat / Damage | Calculate total damage from stats + LLM judgement + bonuses | `docs/systems/combat.md` |
 | Stats & Classes | Define hero/enemy stats and starting classes | `docs/systems/stats_and_classes.md` |
 | Progression | Hero leveling and enemy scaling | `docs/systems/progression.md` |
+| LLM Judgments | Define LLM action evaluations and prompt sources | `docs/systems/llm_judgments.md` |
 
 ## Visual / UI Style
 UI is inspired by SNES RPGs such as Dragon Quest and Earthbound, in pixel art style.
