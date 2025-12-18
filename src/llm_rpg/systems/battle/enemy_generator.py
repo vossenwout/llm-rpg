@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+import random
 from typing import TYPE_CHECKING, Dict
 from llm_rpg.systems.battle.enemy import Enemy, EnemyArchetypes
 
@@ -70,7 +71,7 @@ tree = BaseEnemyInfo(
 
 
 battles_won_to_enemies_mapping: Dict[int, BaseEnemyInfo] = {
-    0: devil_dog,
+    0: rat,
     1: hippy,
     2: taxi,
     3: golden_trophy,
@@ -83,9 +84,10 @@ battles_won_to_enemies_mapping: Dict[int, BaseEnemyInfo] = {
 
 
 def generate_enemy(game: Game) -> Enemy:
-    battles_won = game.battles_won
-    enemy_info = battles_won_to_enemies_mapping[battles_won]
-    return Enemy(
+    enemy_info = random.choice(
+        list[BaseEnemyInfo](battles_won_to_enemies_mapping.values())
+    )
+    enemy = Enemy(
         name=enemy_info.name,
         description=enemy_info.description,
         level=1,
@@ -94,3 +96,4 @@ def generate_enemy(game: Game) -> Enemy:
         enemy_next_action_prompt=game.config.enemy_next_action_prompt,
         archetype=enemy_info.archetype,
     )
+    return enemy

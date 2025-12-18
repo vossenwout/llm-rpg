@@ -26,7 +26,10 @@ class SceneFactory:
         enemy = generate_enemy(game=self.game)
 
         scale_enemy(
-            enemy=enemy, battles_won=self.game.battles_won, game_config=self.game.config
+            enemy=enemy,
+            battles_won=self.game.battles_won,
+            game_config=self.game.config,
+            debug=self.game.config.debug_mode,
         )
 
         return enemy
