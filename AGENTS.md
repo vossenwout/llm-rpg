@@ -1,10 +1,11 @@
-# Rules:
+## Game Info:
+
+If you need more info about the actual game go to the `docs` folder. `docs/game_info.md` is the entry point.
+
+## Coding Rules:
 
 ### Comments:
 - Don't write inline comments to explain your code, just write code and explain in chat.
-
-### UI:
-- UI should be inspired by Dragon Quest games on the SNES. It should be in pixel art style.
 
 ### Tests:
 - Only add tests for core game logic calculations, nothing else.

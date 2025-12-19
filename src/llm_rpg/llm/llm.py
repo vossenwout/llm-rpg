@@ -44,6 +44,10 @@ class GroqLLM(LLM):
                 "input_token_price": 0.075 / 1000000,
                 "output_token_price": 0.30 / 1000000,
             },
+            "openai/gpt-oss-120b": {
+                "input_token_price": 0.15 / 1000000,
+                "output_token_price": 0.60 / 1000000,
+            },
         }
         self.llm_cost_tracker = llm_cost_tracker
 
