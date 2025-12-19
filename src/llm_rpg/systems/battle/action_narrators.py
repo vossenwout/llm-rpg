@@ -29,6 +29,46 @@ class LLMActionNarrator(ActionNarrator):
         self.llm = llm
         self.prompt = prompt
         self.debug = debug
+        self._snap_steps = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+        self._feasibility_labels = {
+            0.0: "impossible",
+            0.2: "low",
+            0.4: "medium",
+            0.6: "high",
+            0.8: "very high",
+            1.0: "certain",
+        }
+        self._damage_labels = {
+            0.0: "no damage",
+            0.2: "low",
+            0.4: "medium",
+            0.6: "high",
+            0.8: "very high",
+            1.0: "maximum",
+        }
+
+    def _sanitize_text(self, text: str) -> str:
+        text = text.replace("’", "'")
+        allowed = {"'", ".", "?", "!"}
+        filtered = "".join(
+            [
+                char if char.isalpha() or char.isspace() or char in allowed else " "
+                for char in text
+            ]
+        )
+        return " ".join(filtered.split())
+
+    def _snap_score(self, value: float) -> float:
+        clamped = max(0.0, min(1.0, value))
+        return min(self._snap_steps, key=lambda step: abs(step - clamped))
+
+    def _label_feasibility(self, value: float) -> str:
+        snapped = self._snap_score(value)
+        return self._feasibility_labels[snapped]
+
+    def _label_damage(self, value: float) -> str:
+        snapped = self._snap_score(value)
+        return self._damage_labels[snapped]
 
     def _format_items(self, items: list[Item]) -> str:
         return "\n".join([f"  - {item.name}: {item.description}" for item in items])
@@ -64,8 +104,8 @@ class LLMActionNarrator(ActionNarrator):
             items_hero=items_hero,
             battle_log_string=battle_log_string,
             proposed_action_attacker=proposed_action_attacker,
-            feasibility=judgment.feasibility,
-            potential_damage=judgment.potential_damage,
+            feasibility=self._label_feasibility(judgment.feasibility),
+            potential_damage=self._label_damage(judgment.potential_damage),
             total_damage=total_damage,
         )
 
@@ -92,4 +132,9 @@ class LLMActionNarrator(ActionNarrator):
             print("////////////DEBUG ActionNarrator prompt////////////")
             print(prompt)
             print("////////////DEBUG ActionNarrator prompt////////////")
-        return self.llm.generate_completion(prompt=prompt)
+        output = self.llm.generate_completion(prompt=prompt)
+        if self.debug:
+            print("////////////DEBUG ActionNarrator output////////////")
+            print(output)
+            print("////////////DEBUG ActionNarrator output////////////")
+        return self._sanitize_text(output)
