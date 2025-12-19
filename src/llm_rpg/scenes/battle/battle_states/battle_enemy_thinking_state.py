@@ -129,7 +129,7 @@ class BattleEnemyThinkingState(State):
             proposed_enemy_action = self.battle_scene.enemy.get_next_action(
                 self.battle_scene.battle_log, self.battle_scene.hero
             )
-            action_effect = self.battle_scene.battle_ai.determine_action_effect(
+            action_judgment = self.battle_scene.battle_ai.determine_action_judgment(
                 proposed_action_attacker=proposed_enemy_action,
                 hero=self.battle_scene.hero,
                 enemy=self.battle_scene.enemy,
@@ -140,13 +140,22 @@ class BattleEnemyThinkingState(State):
                 self.battle_scene.damage_calculator.calculate_damage(
                     attack=self.battle_scene.enemy.get_current_stats().attack,
                     defense=self.battle_scene.hero.get_current_stats().defense,
-                    feasibility=action_effect.feasibility,
-                    potential_damage=action_effect.potential_damage,
+                    feasibility=action_judgment.feasibility,
+                    potential_damage=action_judgment.potential_damage,
                     n_new_words_in_action=0,
                     n_overused_words_in_action=0,
                     answer_speed_s=1000,
                     equiped_items=[],
                 )
+            )
+            action_effect = self.battle_scene.battle_ai.describe_action(
+                proposed_action_attacker=proposed_enemy_action,
+                hero=self.battle_scene.hero,
+                enemy=self.battle_scene.enemy,
+                is_hero_attacker=False,
+                battle_log_string=self.battle_scene.battle_log.to_string_for_battle_ai(),
+                judgment=action_judgment,
+                total_damage=damage_calculation_result.total_dmg,
             )
             outcome: EnemyProcessingOutcome = {
                 "target": "hero",

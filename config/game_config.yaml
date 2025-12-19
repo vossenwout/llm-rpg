@@ -2,19 +2,19 @@ debug_mode: true
 display:
   fullscreen: False
   windowed_scale: 3
-# outcomment if you want to use ollama
-#llm:
-#  model: "qwen3:4b"
-#  type: "ollama"
-#llm:
-#  model: "llama-3.3-70b-versatile"
-#  type: "groq"
-#llm:
-#  model: "openai/gpt-oss-120b"
-#  type: "groq"
-llm:
-  model: "ministral-3:3b" 
-  type: "ollama"
+action_judge:
+  backend: "llm"
+  llm:
+    model: "llama-3.3-70b-versatile" 
+    type: "groq"
+narrator:
+  llm:
+    model: "ministral-3:3b"
+    type: "ollama"
+enemy_action:
+  llm:
+    model: "llama-3.3-70b-versatile"
+    type: "groq"
 hero:
   base_hero_stats:
     attack: 5
@@ -81,8 +81,8 @@ damage_calculator:
 creativity_tracker:
   word_overuse_threshold: 2
 prompts:
-  battle_ai_effect_determination: |
-    You are a video game ai that determines the effect of proposed actions in a battle
+  action_judge: |
+    You are a video game ai that determines the feasibility and potential damage of proposed actions in a battle
     between two characters.
 
     The characters are:
@@ -106,7 +106,7 @@ prompts:
     Proposed action of {attacker_name}:
     {proposed_action_attacker}
 
-    You should determine what happens next. Actions should have different effects depending on the history.
+    You should score feasibility and potential damage. Actions should have different effects depending on the history.
 
     It is infeasible for {hero_name} to use items not in his inventory.
     Supernatural moves by {hero_name} are impossible unless the items or description of {hero_name} hints at it.
@@ -114,7 +114,37 @@ prompts:
     Important: repeated actions by {attacker_name} should have reduced potential damage, look in the battle history for past actions.
     Vaguely worded actions should also have reduced potential damage as I want to promote precise or verbose actions.
 
-    I need you to output the effect of the proposed action in the following JSON format:
+    I need you to output the feasibility and potential damage of the proposed action in the following JSON format:
+
+  action_narration: |
+    You are a video game narrator that describes the result of a proposed action in a battle.
+
+    The characters are:
+    - {attacker_name}
+    - {defender_name}
+
+    {attacker_name} is attacking {defender_name}.
+
+    {attacker_name} description:
+    {attacker_description}
+
+    {defender_name} description:
+    {defender_description}
+
+    {hero_name} items in inventory:
+    {items_hero}
+
+    Battle history:
+    {battle_log_string}
+
+    Proposed action of {attacker_name}:
+    {proposed_action_attacker}
+
+    Feasibility score: {feasibility}
+    Potential damage score: {potential_damage}
+    Total damage dealt: {total_damage}
+
+    Describe the effect of the action in a single sentence. If the action was infeasible, explain why.
 
   enemy_next_action: |
     You are a video game character called {self_name} that is in a battle against an enemy called {hero_name}.

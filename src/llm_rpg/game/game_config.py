@@ -8,6 +8,16 @@ from llm_rpg.objects.item import (
     FocusStartingItem,
 )
 from llm_rpg.systems.battle.damage_calculator import DamageCalculationConfig
+from llm_rpg.systems.battle.action_judges import (
+    ActionJudge,
+    LLMActionJudge,
+    TransformersActionJudge,
+)
+from llm_rpg.systems.battle.action_narrators import ActionNarrator, LLMActionNarrator
+from llm_rpg.systems.battle.enemy_action_generators import (
+    EnemyActionGenerator,
+    LLMEnemyActionGenerator,
+)
 from llm_rpg.systems.battle.enemy_scaling import (
     EnemyArchetypesLevelingAttributeProbs,
     LevelScaling,
@@ -23,24 +33,92 @@ class GameConfig:
         with open(config_path, "r") as file:
             self.game_config = yaml.safe_load(file)
 
+    def _build_llm(self, llm_config: dict) -> LLM:
+        if llm_config["type"] == "ollama":
+            return OllamaLLM(
+                llm_cost_tracker=LLMCostTracker(),
+                model=llm_config["model"],
+            )
+        if llm_config["type"] == "groq":
+            return GroqLLM(
+                llm_cost_tracker=LLMCostTracker(),
+                model=llm_config["model"],
+            )
+        raise ValueError(f"Unsupported LLM type: {llm_config['type']}")
+
+    def _is_llm_block(self, block: dict) -> bool:
+        return (
+            "type" in block
+            and "model" in block
+            and block["type"]
+            in [
+                "ollama",
+                "groq",
+            ]
+        )
+
+    def _extract_llm_block(self, block: dict) -> dict:
+        if "llm" in block:
+            return block["llm"]
+        return block
+
+    def _get_llm_config(self, section_key: str) -> dict:
+        if section_key not in self.game_config:
+            raise ValueError(f"Missing required config section '{section_key}'")
+        section = self.game_config[section_key]
+        llm_block = self._extract_llm_block(section)
+        if not self._is_llm_block(llm_block):
+            raise ValueError(
+                f"Invalid LLM config under '{section_key}'. Expected type/model."
+            )
+        return llm_block
+
     @cached_property
     def debug_mode(self) -> bool:
         return self.game_config["debug_mode"]
 
     @cached_property
-    def llm(self) -> LLM:
-        if self.game_config["llm"]["type"] == "ollama":
-            return OllamaLLM(
-                llm_cost_tracker=LLMCostTracker(),
-                model=self.game_config["llm"]["model"],
+    def action_judge(self) -> ActionJudge:
+        section = self.game_config.get("action_judge")
+        if section is None:
+            raise ValueError("Missing required config section 'action_judge'")
+        backend = section.get("backend")
+        if backend is None:
+            if self._is_llm_block(section) or "llm" in section:
+                backend = "llm"
+            else:
+                backend = section.get("type")
+        if backend == "llm":
+            llm_config = self._extract_llm_block(section)
+            if not self._is_llm_block(llm_config):
+                raise ValueError("action_judge.llm must include type/model")
+            llm = self._build_llm(llm_config)
+            return LLMActionJudge(
+                llm=llm, prompt=self.action_judge_prompt, debug=self.debug_mode
             )
-        elif self.game_config["llm"]["type"] == "groq":
-            return GroqLLM(
-                llm_cost_tracker=LLMCostTracker(),
-                model=self.game_config["llm"]["model"],
-            )
-        else:
-            raise ValueError(f"Unsupported LLM type: {self.game_config['llm']['type']}")
+        if backend == "transformers":
+            model_name = section.get("model")
+            if model_name is None:
+                raise ValueError("action_judge.model is required for transformers")
+            device = section.get("device", "cpu")
+            return TransformersActionJudge(model_name=model_name, device=device)
+        raise ValueError(f"Unsupported action_judge backend: {backend}")
+
+    @cached_property
+    def action_narrator(self) -> ActionNarrator:
+        llm_config = self._get_llm_config("narrator")
+        llm = self._build_llm(llm_config)
+        return LLMActionNarrator(
+            llm=llm, prompt=self.action_narration_prompt, debug=self.debug_mode
+        )
+
+    @cached_property
+    def enemy_action_generator(self) -> EnemyActionGenerator:
+        llm_config = self._get_llm_config("enemy_action")
+        llm = self._build_llm(llm_config)
+        return LLMEnemyActionGenerator(
+            llm=llm, prompt=self.enemy_next_action_prompt, debug=self.debug_mode
+        )
 
     @cached_property
     def hero_base_stats(self) -> Stats:
@@ -182,12 +260,22 @@ class GameConfig:
         return self.game_config["hero"]["max_items"]
 
     @cached_property
-    def battle_ai_effect_determination_prompt(self) -> str:
-        return self.game_config["prompts"]["battle_ai_effect_determination"]
-
-    @cached_property
     def enemy_next_action_prompt(self) -> str:
         return self.game_config["prompts"]["enemy_next_action"]
+
+    @cached_property
+    def action_judge_prompt(self) -> str:
+        prompts = self.game_config["prompts"]
+        if "action_judge" in prompts:
+            return prompts["action_judge"]
+        return prompts["battle_ai_effect_determination"]
+
+    @cached_property
+    def action_narration_prompt(self) -> str:
+        prompts = self.game_config["prompts"]
+        if "action_narration" in prompts:
+            return prompts["action_narration"]
+        raise ValueError("prompts.action_narration is required in config")
 
     @cached_property
     def display_fullscreen(self) -> bool:

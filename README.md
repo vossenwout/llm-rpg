@@ -60,15 +60,22 @@ Using local llms with ollama:
 
 3. Start ollama
 
-4. In game_config.yaml, uncomment the ollama model section and comment the groq model. Remember to select the correct model name you installed.
+4. In game_config.yaml, set the models under `action_judge`, `narrator`, and `enemy_action` to the ollama model you installed.
 
 ```bash
-llm:
-  model: "qwen3:4b"
-  type: "ollama"
-#llm:
-#  model: "llama-3.3-70b-versatile"
-#  type: "groq"
+action_judge:
+  backend: "llm"
+  llm:
+    model: "qwen3:4b"
+    type: "ollama"
+narrator:
+  llm:
+    model: "qwen3:4b"
+    type: "ollama"
+enemy_action:
+  llm:
+    model: "qwen3:4b"
+    type: "ollama"
 ```
 
 5. Run the game

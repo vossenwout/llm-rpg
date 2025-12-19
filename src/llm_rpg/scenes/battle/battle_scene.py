@@ -47,8 +47,8 @@ class BattleScene(Scene):
         self.enemy = enemy
         self.enemy_sprite: pygame.Surface | None = None
         self.battle_ai = BattleAI(
-            llm=self.game.llm,
-            effect_determination_prompt=self.game.config.battle_ai_effect_determination_prompt,
+            action_judge=self.game.action_judge,
+            action_narrator=self.game.action_narrator,
             debug=self.game.config.debug_mode,
         )
         self.battle_log = BattleLog()
