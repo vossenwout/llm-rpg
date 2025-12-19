@@ -9,9 +9,12 @@ display:
 #llm:
 #  model: "llama-3.3-70b-versatile"
 #  type: "groq"
+#llm:
+#  model: "openai/gpt-oss-120b"
+#  type: "groq"
 llm:
-  model: "openai/gpt-oss-120b"
-  type: "groq"
+  model: "ministral-3:3b" 
+  type: "ollama"
 hero:
   base_hero_stats:
     attack: 5

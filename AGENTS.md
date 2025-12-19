@@ -1,6 +1,8 @@
 ## Game Info:
 
-If you need more info about the actual game go to the `docs` folder. `docs/game_info.md` is the entry point.
+Info about the actual game can be found in the `docs` folder. `docs/game_info.md` is the entry point.
+
+Keep this documentation up to date when you make changes to the game.
 
 ## Coding Rules:
 
