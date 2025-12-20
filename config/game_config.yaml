@@ -78,6 +78,9 @@ damage_calculator:
   random_factor_max: 1.05
   random_factor_min: 0.95
   llm_dmg_impact: 2
+  creativity_bonus_per_new_word: 0.1
+  creativity_penalty_per_overused_word: 0.1
+  creativity_min_new_words_for_bonus: 2
 creativity_tracker:
   word_overuse_threshold: 2
 prompts:

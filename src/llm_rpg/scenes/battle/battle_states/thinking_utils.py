@@ -29,6 +29,8 @@ def make_error_outcome(
         llm_dmg_impact=0,
         llm_dmg_scaling=0,
         llm_scaled_base_dmg=0,
+        creativity_multiplier=0,
+        creativity_bonus_damage=0,
         answer_speed_s=0,
         n_new_words_in_action=0,
         n_overused_words_in_action=0,

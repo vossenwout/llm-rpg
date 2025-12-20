@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from llm_rpg.objects.character import Character, Stats
+from llm_rpg.objects.character import StatTypes
 from llm_rpg.objects.item import (
     Item,
 )
@@ -66,3 +67,10 @@ class Hero(Character):
             base_stats.focus = item.boost_focus(base_stats.focus)
             base_stats.max_hp = item.boost_max_hp(base_stats.max_hp)
         return base_stats
+
+    def level_up(self, stat_type: StatTypes, amount: int):
+        super().level_up(stat_type, amount)
+        self.full_heal()
+
+    def full_heal(self):
+        self.hp = self.get_current_stats().max_hp

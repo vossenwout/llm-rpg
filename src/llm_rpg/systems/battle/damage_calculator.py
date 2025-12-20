@@ -22,6 +22,9 @@ class DamageCalculationConfig:
     random_factor_max: float
     random_factor_min: float
     llm_dmg_impact: int
+    creativity_bonus_per_new_word: float
+    creativity_penalty_per_overused_word: float
+    creativity_min_new_words_for_bonus: int
 
 
 @dataclass
@@ -42,6 +45,8 @@ class DamageCalculationResult:
         llm_dmg_impact: float,
         llm_dmg_scaling: float,
         llm_scaled_base_dmg: float,
+        creativity_multiplier: float,
+        creativity_bonus_damage: int,
         answer_speed_s: float,
         n_new_words_in_action: int,
         n_overused_words_in_action: int,
@@ -57,6 +62,8 @@ class DamageCalculationResult:
         self.llm_dmg_impact = llm_dmg_impact
         self.llm_dmg_scaling = llm_dmg_scaling
         self.llm_scaled_base_dmg = llm_scaled_base_dmg
+        self.creativity_multiplier = creativity_multiplier
+        self.creativity_bonus_damage = creativity_bonus_damage
         self.answer_speed_s = answer_speed_s
         self.n_new_words_in_action = n_new_words_in_action
         self.n_overused_words_in_action = n_overused_words_in_action
@@ -110,6 +117,8 @@ class DamageCalculationResult:
         base_string += f"\n  - llm dmg impact: {self.llm_dmg_impact}"
         base_string += f"\n  - llm dmg scaling: {self.llm_dmg_scaling}"
         base_string += f"\n  - llm scaled base dmg: {self.llm_scaled_base_dmg}"
+        base_string += f"\n  - creativity multiplier: {self.creativity_multiplier}"
+        base_string += f"\n  - creativity bonus damage: {self.creativity_bonus_damage}"
         if is_hero_turn:
             base_string += f"\n  - answer speed s: {self.answer_speed_s}"
             base_string += f"\n  - n new words in action: {self.n_new_words_in_action}"
@@ -137,6 +146,7 @@ class DamageCalculationResult:
         base_string = f"💥 Total damage: {self.total_dmg}"
         base_string += f"\n  - feasibility: {self.feasibility}"
         base_string += f"\n  - potential damage: {self.potential_damage}"
+        base_string += f"\n  - creativity multiplier: {self.creativity_multiplier}"
         if is_hero_turn:
             if self._applied_feasibility_boosts_string():
                 base_string += f"\n  - {self._applied_feasibility_boosts_string()}"
@@ -165,6 +175,15 @@ class DamageCalculator:
         self.random_factor_max = game_config.damage_calculation.random_factor_max
         self.random_factor_min = game_config.damage_calculation.random_factor_min
         self.llm_dmg_impact = game_config.damage_calculation.llm_dmg_impact
+        self.creativity_bonus_per_new_word = (
+            game_config.damage_calculation.creativity_bonus_per_new_word
+        )
+        self.creativity_penalty_per_overused_word = (
+            game_config.damage_calculation.creativity_penalty_per_overused_word
+        )
+        self.creativity_min_new_words_for_bonus = (
+            game_config.damage_calculation.creativity_min_new_words_for_bonus
+        )
 
     def _boost_feasibility(
         self, base_feasibility: float, items: List[Item]
@@ -220,10 +239,7 @@ class DamageCalculator:
         total_bonus_damage = 0
         for bonus_multiplier in applied_bonus_multipliers:
             raw_bonus_damage = llm_scaled_base_dmg * bonus_multiplier.multiplier
-            if raw_bonus_damage < 0:
-                scaled_bonus_damage = floor(raw_bonus_damage)
-            else:
-                scaled_bonus_damage = ceil(raw_bonus_damage)
+            scaled_bonus_damage = self._scale_bonus_damage(raw_bonus_damage)
             applied_bonus_multiplier_damages.append(
                 BonusMultiplierDamage(
                     bonus_multiplier=bonus_multiplier,
@@ -232,6 +248,35 @@ class DamageCalculator:
             )
             total_bonus_damage += scaled_bonus_damage
         return total_bonus_damage, applied_bonus_multiplier_damages
+
+    def _scale_bonus_damage(self, raw_bonus_damage: float) -> int:
+        rounded_bonus_damage = round(raw_bonus_damage)
+        if abs(raw_bonus_damage - rounded_bonus_damage) < 1e-9:
+            return int(rounded_bonus_damage)
+        if raw_bonus_damage < 0:
+            return floor(raw_bonus_damage)
+        return ceil(raw_bonus_damage)
+
+    def _calculate_creativity_bonus_damage(
+        self,
+        llm_scaled_base_dmg: float,
+        n_new_words_in_action: int,
+        n_overused_words_in_action: int,
+    ) -> Tuple[float, int]:
+        bonus_words = 0
+        if n_new_words_in_action >= self.creativity_min_new_words_for_bonus:
+            bonus_words = (
+                n_new_words_in_action - self.creativity_min_new_words_for_bonus
+            )
+        creativity_multiplier = (
+            bonus_words * self.creativity_bonus_per_new_word
+            - n_overused_words_in_action * self.creativity_penalty_per_overused_word
+        )
+        if creativity_multiplier == 0:
+            return creativity_multiplier, 0
+        raw_bonus_damage = llm_scaled_base_dmg * creativity_multiplier
+        creativity_bonus_damage = self._scale_bonus_damage(raw_bonus_damage)
+        return creativity_multiplier, creativity_bonus_damage
 
     def calculate_damage(
         self,
@@ -268,6 +313,14 @@ class DamageCalculator:
         )
         llm_scaled_base_dmg = ceil(base_dmg * llm_dmg_scaling)
 
+        creativity_multiplier, creativity_bonus_damage = (
+            self._calculate_creativity_bonus_damage(
+                llm_scaled_base_dmg,
+                n_new_words_in_action,
+                n_overused_words_in_action,
+            )
+        )
+
         # proc items that have bonus multipliers
         procced_bonus_multipliers = self._proc_bonus_multipliers(
             n_new_words_in_action,
@@ -284,7 +337,7 @@ class DamageCalculator:
         )
 
         # calculate total damage
-        total_dmg = llm_scaled_base_dmg + total_bonus_damage
+        total_dmg = llm_scaled_base_dmg + creativity_bonus_damage + total_bonus_damage
         if total_dmg < 0:
             total_dmg = 0
 
@@ -298,6 +351,8 @@ class DamageCalculator:
             llm_dmg_impact=self.llm_dmg_impact,
             llm_dmg_scaling=llm_dmg_scaling,
             llm_scaled_base_dmg=llm_scaled_base_dmg,
+            creativity_multiplier=creativity_multiplier,
+            creativity_bonus_damage=creativity_bonus_damage,
             answer_speed_s=answer_speed_s,
             n_new_words_in_action=n_new_words_in_action,
             n_overused_words_in_action=n_overused_words_in_action,

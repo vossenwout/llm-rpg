@@ -245,6 +245,15 @@ class GameConfig:
                 "random_factor_min"
             ],
             llm_dmg_impact=self.game_config["damage_calculator"]["llm_dmg_impact"],
+            creativity_bonus_per_new_word=self.game_config["damage_calculator"][
+                "creativity_bonus_per_new_word"
+            ],
+            creativity_penalty_per_overused_word=self.game_config["damage_calculator"][
+                "creativity_penalty_per_overused_word"
+            ],
+            creativity_min_new_words_for_bonus=self.game_config["damage_calculator"][
+                "creativity_min_new_words_for_bonus"
+            ],
         )
 
     @cached_property

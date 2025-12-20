@@ -8,7 +8,7 @@ AI RPG is a roguelike where each battle is driven by player-written actions. An 
 2. Player enters the resting hub (menu between battles).
 3. Player starts a battle against a randomly generated enemy.
 4. Player writes an action; LLM judges it; damage is calculated.
-5. After victory, player levels up or gains an item.
+5. After victory, player levels up or gains an item, and the hero fully heals to the current max HP (including item bonuses).
 6. Repeat until hero HP reaches 0.
 
 ## Systems Index

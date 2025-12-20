@@ -27,6 +27,9 @@ class _StubConfig:
         random_factor_min: float = 1.0,
         random_factor_max: float = 1.0,
         llm_dmg_impact: int = 2,
+        creativity_bonus_per_new_word: float = 0.1,
+        creativity_penalty_per_overused_word: float = 0.1,
+        creativity_min_new_words_for_bonus: int = 2,
     ):
         self.damage_calculation = DamageCalculationConfig(
             ad_diff_scaling=ad_diff_scaling,
@@ -34,6 +37,9 @@ class _StubConfig:
             random_factor_min=random_factor_min,
             random_factor_max=random_factor_max,
             llm_dmg_impact=llm_dmg_impact,
+            creativity_bonus_per_new_word=creativity_bonus_per_new_word,
+            creativity_penalty_per_overused_word=creativity_penalty_per_overused_word,
+            creativity_min_new_words_for_bonus=creativity_min_new_words_for_bonus,
         )
 
 
@@ -193,6 +199,9 @@ def test_damage_calculator_bonus_multipliers_positive_and_negative(monkeypatch):
         random_factor_min=1.0,
         random_factor_max=1.0,
         llm_dmg_impact=1,
+        creativity_bonus_per_new_word=0.0,
+        creativity_penalty_per_overused_word=0.0,
+        creativity_min_new_words_for_bonus=2,
     )
     calc = DamageCalculator(cfg)
     monkeypatch.setattr(random, "uniform", lambda a, b: 1.0)
@@ -246,3 +255,65 @@ def test_damage_calculator_clamps_negative_total_to_zero(monkeypatch):
 
     assert result.llm_scaled_base_dmg == 1  # base 1 * scaling 1
     assert result.total_dmg == 0  # clamped
+
+
+def test_damage_calculator_creativity_bonus_and_penalty(monkeypatch):
+    cfg = _StubConfig(
+        ad_diff_scaling=0.0,
+        ad_parity_dmg=10.0,
+        random_factor_min=1.0,
+        random_factor_max=1.0,
+        llm_dmg_impact=1,
+        creativity_bonus_per_new_word=0.1,
+        creativity_penalty_per_overused_word=0.1,
+        creativity_min_new_words_for_bonus=2,
+    )
+    calc = DamageCalculator(cfg)
+    monkeypatch.setattr(random, "uniform", lambda a, b: 1.0)
+
+    result = calc.calculate_damage(
+        attack=1,
+        defense=1,
+        feasibility=1.0,
+        potential_damage=1.0,
+        n_new_words_in_action=3,
+        n_overused_words_in_action=1,
+        answer_speed_s=0.0,
+        equiped_items=[],
+    )
+
+    assert result.llm_scaled_base_dmg == 10
+    assert result.creativity_multiplier == pytest.approx(0.0)
+    assert result.creativity_bonus_damage == 0
+    assert result.total_dmg == 10
+
+
+def test_damage_calculator_creativity_bonus_threshold(monkeypatch):
+    cfg = _StubConfig(
+        ad_diff_scaling=0.0,
+        ad_parity_dmg=10.0,
+        random_factor_min=1.0,
+        random_factor_max=1.0,
+        llm_dmg_impact=1,
+        creativity_bonus_per_new_word=0.1,
+        creativity_penalty_per_overused_word=0.1,
+        creativity_min_new_words_for_bonus=2,
+    )
+    calc = DamageCalculator(cfg)
+    monkeypatch.setattr(random, "uniform", lambda a, b: 1.0)
+
+    result = calc.calculate_damage(
+        attack=1,
+        defense=1,
+        feasibility=1.0,
+        potential_damage=1.0,
+        n_new_words_in_action=1,
+        n_overused_words_in_action=0,
+        answer_speed_s=0.0,
+        equiped_items=[],
+    )
+
+    assert result.llm_scaled_base_dmg == 10
+    assert result.creativity_multiplier == 0
+    assert result.creativity_bonus_damage == 0
+    assert result.total_dmg == 10

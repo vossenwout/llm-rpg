@@ -11,6 +11,8 @@ Every two battles the hero levels up. After the first, third, fifth, etc. battle
 
 The hero chooses one stat to increase by a fixed amount (default: 5).
 
+After each battle victory, the hero fully heals to the current max HP (including item bonuses).
+
 Stats that can be leveled:
 - Attack
 - Defense

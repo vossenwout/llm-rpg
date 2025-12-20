@@ -145,13 +145,17 @@ def render_event_ribbon(
     small_font = theme.fonts["small"]
     feasibility_pct = f"{int(event.damage_calculation_result.feasibility * 100)}%"
     potential_pct = f"{int(event.damage_calculation_result.potential_damage * 100)}%"
+    creativity_bonus_damage = event.damage_calculation_result.creativity_bonus_damage
     total_damage = event.damage_calculation_result.total_dmg
     ribbon_width = card_rect.width
     ribbon_height = small_font.get_linesize() + padding * 2
     ribbon_x = card_rect.x
     ribbon_y = card_rect.top - ribbon_height - line_spacing
     ribbon_rect = pygame.Rect(ribbon_x, ribbon_y, ribbon_width, ribbon_height)
-    left_text = f"Feasibility {feasibility_pct}  Potential {potential_pct}"
+    left_text = (
+        f"Feasibility {feasibility_pct}  Potential {potential_pct}  "
+        f"Creativity {creativity_bonus_damage:+d}"
+    )
     left_surf = small_font.render(left_text, True, theme.colors["text_hint"])
     value_surf = small_font.render(
         f"  DMG {total_damage}", True, theme.colors["text_selected"]
