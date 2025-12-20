@@ -121,6 +121,11 @@ class GameConfig:
         )
 
     @cached_property
+    def enemy_generation_llm(self) -> LLM:
+        llm_config = self._get_llm_config("enemy_generation")
+        return self._build_llm(llm_config)
+
+    @cached_property
     def hero_base_stats(self) -> Stats:
         return Stats(
             attack=self.game_config["hero"]["base_hero_stats"]["attack"],
@@ -262,6 +267,10 @@ class GameConfig:
     @cached_property
     def enemy_next_action_prompt(self) -> str:
         return self.game_config["prompts"]["enemy_next_action"]
+
+    @cached_property
+    def enemy_generation_prompt(self) -> str:
+        return self.game_config["prompts"]["enemy_generation"]
 
     @cached_property
     def action_judge_prompt(self) -> str:

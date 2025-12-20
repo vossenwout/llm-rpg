@@ -8,7 +8,7 @@ from llm_rpg.llm.llm import LLM
 from typing import TYPE_CHECKING
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.utils.theme import Theme
-from llm_rpg.sprite_generator.sprite_generator import DummySpriteGenerator
+from llm_rpg.systems.generation.enemy_generator import EnemyGenerator
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.scene import Scene
@@ -32,7 +32,13 @@ class Game:
             base_stats=self.config.hero_base_stats,
             max_items=self.config.hero_max_items,
         )
-        self.sprite_generator = DummySpriteGenerator(latency_seconds=1.0)
+        self.enemy_generator = EnemyGenerator(
+            llm=self.config.enemy_generation_llm,
+            prompt=self.config.enemy_generation_prompt,
+            enemy_action_generator=self.enemy_action_generator,
+            base_stats=self.config.base_enemy_stats,
+            debug=self.config.debug_mode,
+        )
         # pygame initialization early so surfaces can convert properly
         pygame.init()
         pygame.display.set_caption("LLM RPG")
@@ -88,6 +94,7 @@ class Game:
             self.action_judge,
             self.action_narrator,
             self.enemy_action_generator,
+            self.enemy_generator,
         ]:
             llm = getattr(provider, "llm", None)
             if llm is not None:

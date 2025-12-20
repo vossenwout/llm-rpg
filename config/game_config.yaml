@@ -15,6 +15,10 @@ enemy_action:
   llm:
     model: "llama-3.3-70b-versatile"
     type: "groq"
+enemy_generation:
+  llm:
+    model: "llama-3.3-70b-versatile"
+    type: "groq"
 hero:
   base_hero_stats:
     attack: 5
@@ -168,3 +172,11 @@ prompts:
     
     Describe your next action very briefly in third person like a narrator would.
     Just describe what you want to do not the effects or results of the action.
+
+  enemy_generation: |
+    You are generating a single enemy for a turn-based RPG battle.
+
+    Create a unique enemy name and a short description (1-2 sentences).
+    The enemy should feel like it fits a quirky SNES-era RPG, (earthbound, dragon quest, etc).
+
+    Output only valid JSON matching this schema:

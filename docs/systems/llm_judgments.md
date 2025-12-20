@@ -6,12 +6,14 @@
 - `src/llm_rpg/systems/battle/enemy_action_generators.py`
 - `src/llm_rpg/systems/battle/battle_ai.py`
 - `src/llm_rpg/systems/battle/battle_log.py`
+- `src/llm_rpg/systems/generation/enemy_generator.py`
 - `config/game_config.yaml`
 
 ## What the Models Do
 - The **Action Judge** scores feasibility and potential damage.
 - The **Narrator** writes the effect description.
 - The **Enemy Action Generator** proposes the enemy's next action.
+- The **Enemy Generator** creates enemy names and descriptions before a battle.
 
 ## Action Judgment
 **Prompt source**: `prompts.action_judge` in `config/game_config.yaml`.
@@ -53,4 +55,4 @@
 **Output**: freeform, short third-person narrated action via `generate_completion`.
 
 ## Config Notes
-Models are configured separately under `action_judge`, `narrator`, and `enemy_action` in `config/game_config.yaml`. All three sections are required.
+Models are configured separately under `action_judge`, `narrator`, `enemy_action`, and `enemy_generation` in `config/game_config.yaml`. 

@@ -40,11 +40,10 @@ class BattleScene(Scene):
     def __init__(
         self,
         game: Game,
-        enemy: Enemy,
     ):
         super().__init__(game=game, current_state=BattleStartState(self))
         self.hero = self.game.hero
-        self.enemy = enemy
+        self.enemy: Enemy | None = None
         self.enemy_sprite: pygame.Surface | None = None
         self.battle_ai = BattleAI(
             action_judge=self.game.action_judge,
