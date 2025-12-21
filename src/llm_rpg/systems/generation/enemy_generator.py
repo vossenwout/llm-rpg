@@ -11,7 +11,7 @@ from llm_rpg.llm.llm import LLM
 import pygame
 
 from llm_rpg.sprite_generator.sprite_generator import (
-    DummySpriteGenerator,
+    SpriteGenerator,
 )
 from llm_rpg.systems.battle.enemy import Enemy, EnemyArchetypes
 from llm_rpg.systems.battle.enemy_action_generators import EnemyActionGenerator
@@ -50,12 +50,13 @@ class EnemyGenerator:
         prompt: str,
         enemy_action_generator: EnemyActionGenerator,
         base_stats: Stats,
+        sprite_generator: SpriteGenerator,
         debug: bool = False,
     ):
         self.llm = llm
         self.prompt = prompt
         self.enemy_action_generator = enemy_action_generator
-        self.sprite_generator = DummySpriteGenerator(latency_seconds=1.0)
+        self.sprite_generator = sprite_generator
         self.base_stats = base_stats
         self.debug = debug
 

@@ -25,3 +25,4 @@ UI is inspired by SNES RPGs such as Dragon Quest and Earthbound, in pixel art st
 
 ## Source of Truth
 Balance values and defaults are defined in `config/game_config.yaml`. Code files above should align with those values.
+Sprite generation settings are also defined in `config/game_config.yaml` under `sprite_generator`. Large model files live under `models/`.
