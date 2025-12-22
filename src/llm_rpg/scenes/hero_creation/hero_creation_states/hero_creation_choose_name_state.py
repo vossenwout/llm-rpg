@@ -95,6 +95,7 @@ class HeroCreationChooseNameState(State):
             align="left",
             auto_wrap=True,
             draw_border=True,
+            y=spacing(10),
         )
 
         input_box_rect = draw_input_panel(
@@ -102,7 +103,7 @@ class HeroCreationChooseNameState(State):
             current_text=self.current_name,
             font=self.scene.game.theme.fonts["small"],
             theme=self.scene.game.theme,
-            y=prompt_rect.bottom + spacing(1),
+            y=prompt_rect.bottom + spacing(3),
             width=spacing(14),
             padding=spacing(1.5),
             template="··········",
@@ -120,13 +121,3 @@ class HeroCreationChooseNameState(State):
                 center=(screen.get_width() // 2, input_box_rect.bottom + spacing(1))
             )
             screen.blit(error_text, error_rect)
-
-        instruction_text = self.scene.game.theme.fonts["small"].render(
-            "Press ENTER to confirm",
-            True,
-            self.scene.game.theme.colors["text_hint"],
-        )
-        instruction_rect = instruction_text.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - spacing(2))
-        )
-        screen.blit(instruction_text, instruction_rect)
