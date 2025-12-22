@@ -6,6 +6,79 @@ from llm_rpg.utils.theme import Theme
 PANEL_BORDER_TILE_SIZE = 8
 
 
+def _first_opaque_x(surface: pygame.Surface, y: int, tile_size: int) -> int:
+    for x in range(tile_size):
+        if surface.get_at((x, y)).a > 0:
+            return x
+    return tile_size
+
+
+def _last_opaque_x(surface: pygame.Surface, y: int, tile_size: int) -> int:
+    for x in range(tile_size - 1, -1, -1):
+        if surface.get_at((x, y)).a > 0:
+            return x
+    return -1
+
+
+def _get_corner_cutoffs(
+    border_surface: pygame.Surface, tile_size: int
+) -> tuple[list[int], list[int], list[int], list[int]]:
+    tiles = _get_nine_slice_tiles(border_surface, tile_size)
+    top_left, _, top_right, _, _, _, bottom_left, _, bottom_right = tiles
+
+    top_left_cut = [_first_opaque_x(top_left, y, tile_size) for y in range(tile_size)]
+    top_right_cut = [_last_opaque_x(top_right, y, tile_size) for y in range(tile_size)]
+    bottom_left_cut = [
+        _first_opaque_x(bottom_left, y, tile_size) for y in range(tile_size)
+    ]
+    bottom_right_cut = [
+        _last_opaque_x(bottom_right, y, tile_size) for y in range(tile_size)
+    ]
+
+    return (
+        top_left_cut,
+        top_right_cut,
+        bottom_left_cut,
+        bottom_right_cut,
+    )
+
+
+def _apply_corner_cutouts(
+    surface: pygame.Surface,
+    cutoffs: tuple[list[int], list[int], list[int], list[int]],
+    tile_size: int,
+) -> None:
+    width, height = surface.get_size()
+    top_left_cut, top_right_cut, bottom_left_cut, bottom_right_cut = cutoffs
+    right_x0 = width - tile_size
+    bottom_y0 = height - tile_size
+
+    for y in range(tile_size):
+        tl_cut = top_left_cut[y]
+        for x in range(tl_cut):
+            surface.set_at((x, y), (0, 0, 0, 0))
+
+        tr_cut = top_right_cut[y]
+        if tr_cut == -1:
+            start = right_x0
+        else:
+            start = right_x0 + tr_cut + 1
+        for x in range(start, right_x0 + tile_size):
+            surface.set_at((x, y), (0, 0, 0, 0))
+
+        bl_cut = bottom_left_cut[y]
+        for x in range(bl_cut):
+            surface.set_at((x, bottom_y0 + y), (0, 0, 0, 0))
+
+        br_cut = bottom_right_cut[y]
+        if br_cut == -1:
+            start = right_x0
+        else:
+            start = right_x0 + br_cut + 1
+        for x in range(start, right_x0 + tile_size):
+            surface.set_at((x, bottom_y0 + y), (0, 0, 0, 0))
+
+
 def _get_nine_slice_tiles(
     surface: pygame.Surface, tile_size: int
 ) -> tuple[pygame.Surface, ...]:
@@ -67,9 +140,11 @@ def _draw_nine_slice_panel(
     tiles = _get_nine_slice_tiles(border_surface, tile_size)
     top_left, top, top_right, left, _, right, bottom_left, bottom, bottom_right = tiles
 
-    inner_rect = rect.inflate(-tile_size * 2, -tile_size * 2)
-    if inner_rect.width > 0 and inner_rect.height > 0:
-        pygame.draw.rect(screen, fill_color, inner_rect)
+    fill_surface = pygame.Surface(rect.size, pygame.SRCALPHA)
+    fill_surface.fill(fill_color)
+    cutoffs = _get_corner_cutoffs(border_surface, tile_size)
+    _apply_corner_cutouts(fill_surface, cutoffs, tile_size)
+    screen.blit(fill_surface, rect.topleft)
 
     screen.blit(top_left, rect.topleft)
     screen.blit(top_right, (rect.right - tile_size, rect.top))
