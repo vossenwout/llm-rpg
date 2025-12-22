@@ -1,24 +1,24 @@
 {
   "frames": [
     {
-      "filename": "logo.png",
+      "filename": "unfake-pixel-art-scaled-3.png",
       "frame": {
         "x": 0,
         "y": 0,
-        "w": 180,
-        "h": 58
+        "w": 1089,
+        "h": 306
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 38,
-        "y": 5,
-        "w": 180,
-        "h": 58
+        "x": 189,
+        "y": 324,
+        "w": 1089,
+        "h": 306
       },
       "sourceSize": {
-        "w": 256,
-        "h": 64
+        "w": 1530,
+        "h": 1017
       },
       "pivot": {
         "x": 0.5,
@@ -32,8 +32,8 @@
     "image": "logo.png",
     "format": "RGBA8888",
     "size": {
-      "w": 180,
-      "h": 58
+      "w": 1089,
+      "h": 306
     },
     "scale": 1
   }
