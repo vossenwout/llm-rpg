@@ -25,6 +25,11 @@ class MainMenuNavigationState(State):
         with asset_file("sprites/logo.png") as logo_path:
             self.logo_surface = pygame.image.load(logo_path).convert_alpha()
         self.logo_scaled_surface = self._scale_logo()
+        self.logo_time = 0.0
+        self.scan_band_surface = self._create_scan_band_surface()
+        self.scan_mask_surface = pygame.mask.from_surface(
+            self.logo_scaled_surface
+        ).to_surface(setcolor=(255, 255, 255, 255), unsetcolor=(0, 0, 0, 0))
 
     def handle_input(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
@@ -40,6 +45,7 @@ class MainMenuNavigationState(State):
                 self.option_selected = True
 
     def update(self, dt: float) -> None:
+        self.logo_time += dt
         if self.option_selected:
             if self.selected_index == 1:
                 self.scene.game.change_scene(SceneTypes.HERO_CREATION)
@@ -67,13 +73,44 @@ class MainMenuNavigationState(State):
 
         return self.logo_surface
 
+    def _create_scan_band_surface(self) -> pygame.Surface:
+        band_width = max(10, self.scene.game.theme.spacing(2))
+        height = self.logo_scaled_surface.get_height()
+        surface = pygame.Surface((band_width, height), pygame.SRCALPHA)
+        center = (band_width - 1) / 2 if band_width > 1 else 0
+        max_alpha = 200
+        for x in range(band_width):
+            if band_width <= 1:
+                alpha = max_alpha
+            else:
+                distance = abs(x - center) / center
+                alpha = int(max_alpha * (1.0 - distance))
+            if alpha > 0:
+                pygame.draw.line(surface, (80, 80, 80, alpha), (x, 0), (x, height - 1))
+        return surface
+
     def _render_logo(self, screen: pygame.Surface) -> pygame.Rect:
-        logo_surface = self.logo_scaled_surface
-        logo_rect = logo_surface.get_rect(
-            center=(screen.get_width() // 2, int(screen.get_height() * 0.3))
-        )
-        screen.blit(logo_surface, logo_rect)
-        return logo_rect
+        logo_surface = self.logo_scaled_surface.copy()
+        band_width = self.scan_band_surface.get_width()
+        logo_width = logo_surface.get_width()
+        scan_speed = 360.0
+        pause_seconds = 1.0
+        travel_time = (logo_width + band_width) / scan_speed
+        cycle_time = travel_time + pause_seconds
+        time_in_cycle = self.logo_time % cycle_time
+        if time_in_cycle <= travel_time:
+            scan_x = int(time_in_cycle * scan_speed) - band_width
+            band_surface = pygame.Surface(logo_surface.get_size(), pygame.SRCALPHA)
+            band_surface.blit(self.scan_band_surface, (scan_x, 0))
+            band_surface.blit(
+                self.scan_mask_surface, (0, 0), special_flags=pygame.BLEND_RGBA_MULT
+            )
+            logo_surface.blit(band_surface, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+        base_center = (screen.get_width() // 2, int(screen.get_height() * 0.3))
+        base_rect = self.logo_scaled_surface.get_rect(center=base_center)
+        draw_rect = logo_surface.get_rect(center=base_center)
+        screen.blit(logo_surface, draw_rect)
+        return base_rect
 
     def _render_menu_options(
         self, screen: pygame.Surface, y: int | None = None
