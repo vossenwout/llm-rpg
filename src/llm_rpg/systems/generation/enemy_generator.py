@@ -36,8 +36,6 @@ class LLMEnemyDescriptionOutput(BaseModel):
     description: Annotated[
         str,
         Field(
-            min_length=10,
-            max_length=200,
             description="One or two sentences describing the enemy.",
         ),
     ]
