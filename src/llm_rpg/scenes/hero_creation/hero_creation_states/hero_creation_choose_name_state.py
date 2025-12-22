@@ -5,7 +5,11 @@ from llm_rpg.scenes.hero_creation.hero_creation_states.hero_creation_states impo
     HeroCreationStates,
 )
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_text_panel, draw_input_panel
+from llm_rpg.ui.components import (
+    draw_text_panel,
+    draw_input_panel,
+    draw_checkerboard_background,
+)
 
 from typing import TYPE_CHECKING
 
@@ -79,7 +83,7 @@ class HeroCreationChooseNameState(State):
                 self.scene.change_state(HeroCreationStates.CHOOSE_CLASS)
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.scene.game.theme.colors["background"])
+        draw_checkerboard_background(screen, self.scene.game.theme)
         spacing = self.scene.game.theme.spacing
 
         prompt_rect = draw_text_panel(

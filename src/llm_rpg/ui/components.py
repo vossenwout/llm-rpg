@@ -98,6 +98,17 @@ def _draw_nine_slice_panel(
         )
 
 
+def draw_checkerboard_background(screen: pygame.Surface, theme: Theme) -> None:
+    tile = theme.checkerboard_background
+    tile_width = tile.get_width()
+    tile_height = tile.get_height()
+    screen_width = screen.get_width()
+    screen_height = screen.get_height()
+    for y in range(0, screen_height, tile_height):
+        for x in range(0, screen_width, tile_width):
+            screen.blit(tile, (x, y))
+
+
 @dataclass
 class PagedTextState:
     lines: List[str]

@@ -4,7 +4,7 @@ from llm_rpg.utils.assets import asset_file
 
 
 class Theme:
-    def __init__(self):
+    def __init__(self) -> None:
         self.unit = 4
         with asset_file("fonts/earthbound.ttf") as earthbound_path:
             self.fonts = {
@@ -15,6 +15,8 @@ class Theme:
         with asset_file("sprites/panel_border.png") as panel_border_path:
             base_panel_border = pygame.image.load(panel_border_path)
             self.panel_border = base_panel_border
+        with asset_file("sprites/checkboard.png") as checkerboard_path:
+            self.checkerboard_background = pygame.image.load(checkerboard_path)
 
         self.colors = {
             "background": (0, 0, 0),
