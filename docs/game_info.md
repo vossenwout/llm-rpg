@@ -23,6 +23,7 @@ AI RPG is a roguelike where each battle is driven by player-written actions. An 
 ## Visual / UI Style
 UI is inspired by SNES RPGs such as Dragon Quest and Earthbound, in pixel art style.
 The main menu displays a pixel-art title logo from `src/llm_rpg/assets/sprites/logo.png`.
+Panels use a 9-slice border sprite at `src/llm_rpg/assets/sprites/panel_border.png` (24x24 source with 8x8 tiles). Edges are tiled, corners are unscaled, and the panel interior is a solid fill using `Theme.colors["panel_inner"]`.
 
 ## Source of Truth
 Balance values and defaults are defined in `config/game_config.yaml`. Code files above should align with those values.

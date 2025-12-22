@@ -3,6 +3,100 @@ import pygame
 from typing import Tuple, List, Optional
 from llm_rpg.utils.theme import Theme
 
+PANEL_BORDER_TILE_SIZE = 8
+
+
+def _get_nine_slice_tiles(
+    surface: pygame.Surface, tile_size: int
+) -> tuple[pygame.Surface, ...]:
+    tiles = []
+    for row in range(3):
+        for col in range(3):
+            rect = pygame.Rect(col * tile_size, row * tile_size, tile_size, tile_size)
+            tiles.append(surface.subsurface(rect))
+    return tuple(tiles)
+
+
+def _blit_tiled_horizontal(
+    screen: pygame.Surface,
+    tile: pygame.Surface,
+    x: int,
+    y: int,
+    width: int,
+) -> None:
+    tile_w = tile.get_width()
+    tile_h = tile.get_height()
+    end_x = x + width
+    current_x = x
+    while current_x < end_x:
+        remaining = end_x - current_x
+        if remaining >= tile_w:
+            screen.blit(tile, (current_x, y))
+        else:
+            screen.blit(tile, (current_x, y), area=pygame.Rect(0, 0, remaining, tile_h))
+        current_x += tile_w
+
+
+def _blit_tiled_vertical(
+    screen: pygame.Surface,
+    tile: pygame.Surface,
+    x: int,
+    y: int,
+    height: int,
+) -> None:
+    tile_w = tile.get_width()
+    tile_h = tile.get_height()
+    end_y = y + height
+    current_y = y
+    while current_y < end_y:
+        remaining = end_y - current_y
+        if remaining >= tile_h:
+            screen.blit(tile, (x, current_y))
+        else:
+            screen.blit(tile, (x, current_y), area=pygame.Rect(0, 0, tile_w, remaining))
+        current_y += tile_h
+
+
+def _draw_nine_slice_panel(
+    screen: pygame.Surface,
+    rect: pygame.Rect,
+    border_surface: pygame.Surface,
+    tile_size: int,
+    fill_color: Tuple[int, int, int],
+) -> None:
+    tiles = _get_nine_slice_tiles(border_surface, tile_size)
+    top_left, top, top_right, left, _, right, bottom_left, bottom, bottom_right = tiles
+
+    inner_rect = rect.inflate(-tile_size * 2, -tile_size * 2)
+    if inner_rect.width > 0 and inner_rect.height > 0:
+        pygame.draw.rect(screen, fill_color, inner_rect)
+
+    screen.blit(top_left, rect.topleft)
+    screen.blit(top_right, (rect.right - tile_size, rect.top))
+    screen.blit(bottom_left, (rect.left, rect.bottom - tile_size))
+    screen.blit(bottom_right, (rect.right - tile_size, rect.bottom - tile_size))
+
+    edge_width = rect.width - tile_size * 2
+    edge_height = rect.height - tile_size * 2
+    if edge_width > 0:
+        _blit_tiled_horizontal(screen, top, rect.left + tile_size, rect.top, edge_width)
+        _blit_tiled_horizontal(
+            screen,
+            bottom,
+            rect.left + tile_size,
+            rect.bottom - tile_size,
+            edge_width,
+        )
+    if edge_height > 0:
+        _blit_tiled_vertical(screen, left, rect.left, rect.top + tile_size, edge_height)
+        _blit_tiled_vertical(
+            screen,
+            right,
+            rect.right - tile_size,
+            rect.top + tile_size,
+            edge_height,
+        )
+
 
 @dataclass
 class PagedTextState:
@@ -40,10 +134,26 @@ def draw_panel(
     draw_border: bool = True,
 ):
     base_rect = pygame.Rect(rect)
-    outer_thickness = 2
-    inner_thickness = 1
+    if draw_border:
+        if pygame.display.get_surface() is not None and not getattr(
+            theme, "panel_border_converted", False
+        ):
+            theme.panel_border = theme.panel_border.convert_alpha()
+            theme.panel_border_converted = True
+        tile_size = PANEL_BORDER_TILE_SIZE
+        if base_rect.width >= tile_size * 2 and base_rect.height >= tile_size * 2:
+            _draw_nine_slice_panel(
+                screen,
+                base_rect,
+                theme.panel_border,
+                tile_size,
+                theme.colors["panel_inner"],
+            )
+            return
 
     if draw_border:
+        outer_thickness = 2
+        inner_thickness = 1
         pygame.draw.rect(
             screen, theme.colors["border_light"], base_rect, outer_thickness
         )

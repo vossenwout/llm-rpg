@@ -12,6 +12,9 @@ class Theme:
                 "medium": pygame.font.Font(earthbound_path, 32),
                 "small": pygame.font.Font(earthbound_path, 16),
             }
+        with asset_file("sprites/panel_border.png") as panel_border_path:
+            base_panel_border = pygame.image.load(panel_border_path)
+            self.panel_border = base_panel_border
 
         self.colors = {
             "background": (0, 0, 0),
