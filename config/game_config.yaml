@@ -19,6 +19,9 @@ enemy_generation:
   llm:
     model: "llama-3.3-70b-versatile"
     type: "groq"
+  character_words_path: "src/llm_rpg/assets/word_lists/characters.txt"
+  adjective_words_path: "src/llm_rpg/assets/word_lists/adjectives.txt"
+  place_words_path: "src/llm_rpg/assets/word_lists/places.txt"
 sprite_generator:
   # type: "dummy"
   # latency_seconds: 1.0
@@ -204,6 +207,11 @@ prompts:
 
   enemy_generation: |
     You are generating a single enemy for a turn-based RPG battle.
+
+    The character has to have something to do with:
+    - Adjective: "{enemy_adjective}"
+    - Noun: "{enemy_character}"
+    - Place/setting: "{enemy_place}"
 
     Create a unique enemy name and a short description (1-2 sentences).
     The enemy should feel like it fits a quirky SNES-era RPG, (earthbound, dragon quest, etc).

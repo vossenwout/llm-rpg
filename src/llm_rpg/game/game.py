@@ -38,6 +38,9 @@ class Game:
             enemy_action_generator=self.enemy_action_generator,
             base_stats=self.config.base_enemy_stats,
             sprite_generator=self.config.sprite_generator,
+            characters=self.config.enemy_generation_characters,
+            adjectives=self.config.enemy_generation_adjectives,
+            places=self.config.enemy_generation_places,
             debug=self.config.debug_mode,
         )
         # pygame initialization early so surfaces can convert properly

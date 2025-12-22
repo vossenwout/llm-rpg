@@ -51,6 +51,9 @@ class EnemyGenerator:
         enemy_action_generator: EnemyActionGenerator,
         base_stats: Stats,
         sprite_generator: SpriteGenerator,
+        characters: list[str],
+        adjectives: list[str],
+        places: list[str],
         debug: bool = False,
     ):
         self.llm = llm
@@ -58,6 +61,9 @@ class EnemyGenerator:
         self.enemy_action_generator = enemy_action_generator
         self.sprite_generator = sprite_generator
         self.base_stats = base_stats
+        self.characters = characters
+        self.adjectives = adjectives
+        self.places = places
         self.debug = debug
 
     def generate_enemy(self) -> tuple[Enemy, pygame.Surface]:
@@ -74,8 +80,22 @@ class EnemyGenerator:
         sprite = self.sprite_generator.generate_sprite(enemy)
         return enemy, sprite
 
+    def _pick_word(self, words: list[str], label: str) -> str:
+        if not words:
+            raise ValueError(
+                f"Enemy generation {label} words must be configured for enemy generation"
+            )
+        return random.choice(words)
+
     def _get_prompt(self) -> str:
-        prompt = self.prompt
+        enemy_character = self._pick_word(self.characters, "character")
+        enemy_adjective = self._pick_word(self.adjectives, "adjective")
+        enemy_place = self._pick_word(self.places, "place")
+        prompt = self.prompt.format(
+            enemy_character=enemy_character,
+            enemy_adjective=enemy_adjective,
+            enemy_place=enemy_place,
+        )
         schema = json.dumps(LLMEnemyDescriptionOutput.model_json_schema(), indent=2)
         return f"{prompt}{schema}"
 

@@ -91,6 +91,11 @@ class GameConfig:
             return str(path)
         return str((self.game_root / path).resolve())
 
+    def _load_word_list(self, path: str) -> list[str]:
+        with open(path, "r") as file:
+            lines = [line.strip() for line in file.readlines()]
+        return [line for line in lines if line and not line.startswith("#")]
+
     @cached_property
     def debug_mode(self) -> bool:
         return self.game_config["debug_mode"]
@@ -142,6 +147,34 @@ class GameConfig:
     def enemy_generation_llm(self) -> LLM:
         llm_config = self._get_llm_config("enemy_generation")
         return self._build_llm(llm_config)
+
+    def _get_enemy_generation_words(self, key: str) -> list[str]:
+        section = self.game_config.get("enemy_generation", {})
+        if not isinstance(section, dict):
+            raise ValueError("enemy_generation must be a dict")
+        words_path = section.get(key)
+        if not isinstance(words_path, str) or not words_path.strip():
+            raise ValueError(f"enemy_generation.{key} must be set")
+        resolved_path = self._resolve_path(words_path)
+        if resolved_path is None:
+            raise ValueError(f"enemy_generation.{key} must be set")
+        words = self._load_word_list(resolved_path)
+        words = [word for word in words if word]
+        if not words:
+            raise ValueError(f"enemy_generation.{key} must include at least one word")
+        return words
+
+    @cached_property
+    def enemy_generation_characters(self) -> list[str]:
+        return self._get_enemy_generation_words("character_words_path")
+
+    @cached_property
+    def enemy_generation_adjectives(self) -> list[str]:
+        return self._get_enemy_generation_words("adjective_words_path")
+
+    @cached_property
+    def enemy_generation_places(self) -> list[str]:
+        return self._get_enemy_generation_words("place_words_path")
 
     @cached_property
     def hero_base_stats(self) -> Stats:
