@@ -42,7 +42,6 @@ sprite_generator:
     Rules:
     - Output only the comma-separated list.
     - Use at most 5 tags.
-    - Focus on visual attributes.
     - Keep tags short and descriptive.
   guidance_scale: 7
   num_inference_steps: 20
