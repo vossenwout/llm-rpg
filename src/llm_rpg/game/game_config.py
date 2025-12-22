@@ -307,10 +307,20 @@ class GameConfig:
                 raise ValueError(
                     "sprite_generator.sd requires base_model, lora_path, trigger_prompt"
                 )
+            llm_block = section.get("prompt_llm")
+            if not isinstance(llm_block, dict) or not self._is_llm_block(llm_block):
+                raise ValueError("sprite_generator.prompt_llm must include type/model")
+            prompt_llm = self._build_llm(llm_block)
+            prompt_template = section.get("prompt_template")
+            if prompt_template is None:
+                raise ValueError("sprite_generator.prompt_template is required")
             kwargs: dict[str, object] = {
                 "base_model": self._resolve_path(base_model),
                 "lora_path": self._resolve_path(lora_path),
                 "trigger_prompt": trigger_prompt,
+                "prompt_llm": prompt_llm,
+                "prompt_template": prompt_template,
+                "debug": self.debug_mode,
             }
             if "lcm_lora_path" in section:
                 kwargs["lcm_lora_path"] = self._resolve_path(

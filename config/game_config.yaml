@@ -26,7 +26,21 @@ sprite_generator:
   base_model: "models/sprite/westernBeautiful_v10.safetensors"
   lora_path: "models/sprite/earthbound_lora.safetensors"
   lcm_lora_path: "models/sprite/LCM_LoRA_Weights_SD15.safetensors"
-  trigger_prompt: "sprite, pixel art"
+  trigger_prompt: "Earthbound_enemy, neutral grey background, pixelart, drop shadow"
+  prompt_llm:
+    model: "llama-3.3-70b-versatile"
+    type: "groq"
+  prompt_template: |
+    Describe this character in a comma-separated list of visual tags.
+
+    Enemy name: {enemy_name}
+    Enemy description: {enemy_description}
+
+    Rules:
+    - Output only the comma-separated list.
+    - Use at most 5 tags.
+    - Focus on visual attributes.
+    - Keep tags short and descriptive.
   guidance_scale: 7
   num_inference_steps: 20
   inference_height: 512

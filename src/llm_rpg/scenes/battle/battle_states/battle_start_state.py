@@ -28,7 +28,7 @@ class BattleStartState(State):
         self.loading_error: str | None = None
         self.dots = 0
         self.dot_timer = 0.0
-        self.max_wait = 60.0
+        self.max_wait = 120.0
         self.animation_timer = 0.0
 
     def handle_input(self, event: pygame.event.Event):

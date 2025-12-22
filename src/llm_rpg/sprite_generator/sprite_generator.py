@@ -15,6 +15,7 @@ from diffusers import (
 import unfake
 from PIL import Image
 from llm_rpg.systems.battle.enemy import Enemy
+from llm_rpg.llm.llm import LLM
 
 
 class SpriteGenerator(ABC):
@@ -53,6 +54,8 @@ class SDSpriteGenerator(SpriteGenerator):
         base_model: str,
         lora_path: str,
         trigger_prompt: str,
+        prompt_llm: LLM,
+        prompt_template: str,
         lcm_lora_path: Optional[str] = None,
         guidance_scale: float = 7,
         num_inference_steps: int = 20,
@@ -61,10 +64,13 @@ class SDSpriteGenerator(SpriteGenerator):
         vae_path: Optional[str] = None,
         use_lcm: bool = False,
         negative_prompt: Optional[str] = None,
+        debug: bool = False,
     ):
         self.base_model = base_model
         self.lora_path = lora_path
         self.trigger_prompt = trigger_prompt
+        self.prompt_llm = prompt_llm
+        self.prompt_template = prompt_template
         self.lcm_lora_path = lcm_lora_path
         self.guidance_scale = guidance_scale
         self.num_inference_steps = num_inference_steps
@@ -73,6 +79,7 @@ class SDSpriteGenerator(SpriteGenerator):
         self.vae_path = vae_path
         self.use_lcm = use_lcm
         self.negative_prompt = negative_prompt
+        self.debug = debug
         self.device = self._get_device()
 
     def _get_device(self) -> str:
@@ -91,6 +98,27 @@ class SDSpriteGenerator(SpriteGenerator):
         size: Tuple[int, int] = rgba_sprite.size
         surface = pygame.image.frombuffer(rgba_sprite.tobytes(), size, "RGBA")
         return surface.convert_alpha()
+
+    def _build_sprite_prompt(self, enemy: Enemy) -> str:
+        attempts = 0
+        while attempts < 3:
+            prompt = self.prompt_template.format(
+                enemy_name=enemy.name, enemy_description=enemy.description
+            )
+            try:
+                if self.debug:
+                    print("////////////DEBUG SpritePrompt LLM prompt////////////")
+                    print(prompt)
+                    print("////////////DEBUG SpritePrompt LLM prompt////////////")
+                output = self.prompt_llm.generate_completion(prompt=prompt)
+                if self.debug:
+                    print("////////////DEBUG SpritePrompt LLM response////////////")
+                    print(output)
+                    print("////////////DEBUG SpritePrompt LLM response////////////")
+                return output.strip()
+            except Exception:
+                attempts += 1
+        return enemy.description
 
     def generate_sprite(self, enemy: Enemy) -> pygame.Surface:
         pipe = StableDiffusionPipeline.from_single_file(
@@ -118,8 +146,12 @@ class SDSpriteGenerator(SpriteGenerator):
             pipe.set_adapters(["style", "lcm"], adapter_weights=[1.0, 1.0])
         else:
             pipe.load_lora_weights(self.lora_path)
-        # dummy prompt for now
-        prompt = self.trigger_prompt + " " + "naruto"
+        sprite_prompt = self._build_sprite_prompt(enemy)
+        prompt = f"{self.trigger_prompt}, {sprite_prompt}"
+        if self.debug:
+            print("////////////DEBUG Diffusion prompt////////////")
+            print(prompt)
+            print("////////////DEBUG Diffusion prompt////////////")
         sprite = pipe(
             prompt,
             num_inference_steps=self.num_inference_steps,
