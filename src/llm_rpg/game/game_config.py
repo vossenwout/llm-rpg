@@ -1,4 +1,6 @@
 from functools import cached_property
+from pathlib import Path
+from typing import Optional
 import yaml
 
 from llm_rpg.objects.character import Stats
@@ -26,11 +28,19 @@ from llm_rpg.systems.battle.enemy_scaling import (
 from llm_rpg.systems.hero.hero import HeroClass
 from llm_rpg.llm.llm import LLM, OllamaLLM, GroqLLM
 from llm_rpg.llm.llm_cost_tracker import LLMCostTracker
+from llm_rpg.sprite_generator.sprite_generator import (
+    DummySpriteGenerator,
+    SDSpriteGenerator,
+    SpriteGenerator,
+)
 
 
 class GameConfig:
     def __init__(self, config_path: str):
-        with open(config_path, "r") as file:
+        self.config_path = Path(config_path).resolve()
+        self.config_dir = self.config_path.parent
+        self.game_root = self.config_dir.parent
+        with open(self.config_path, "r") as file:
             self.game_config = yaml.safe_load(file)
 
     def _build_llm(self, llm_config: dict) -> LLM:
@@ -72,6 +82,19 @@ class GameConfig:
                 f"Invalid LLM config under '{section_key}'. Expected type/model."
             )
         return llm_block
+
+    def _resolve_path(self, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        path = Path(value)
+        if path.is_absolute():
+            return str(path)
+        return str((self.game_root / path).resolve())
+
+    def _load_word_list(self, path: str) -> list[str]:
+        with open(path, "r") as file:
+            lines = [line.strip() for line in file.readlines()]
+        return [line for line in lines if line and not line.startswith("#")]
 
     @cached_property
     def debug_mode(self) -> bool:
@@ -119,6 +142,39 @@ class GameConfig:
         return LLMEnemyActionGenerator(
             llm=llm, prompt=self.enemy_next_action_prompt, debug=self.debug_mode
         )
+
+    @cached_property
+    def enemy_generation_llm(self) -> LLM:
+        llm_config = self._get_llm_config("enemy_generation")
+        return self._build_llm(llm_config)
+
+    def _get_enemy_generation_words(self, key: str) -> list[str]:
+        section = self.game_config.get("enemy_generation", {})
+        if not isinstance(section, dict):
+            raise ValueError("enemy_generation must be a dict")
+        words_path = section.get(key)
+        if not isinstance(words_path, str) or not words_path.strip():
+            raise ValueError(f"enemy_generation.{key} must be set")
+        resolved_path = self._resolve_path(words_path)
+        if resolved_path is None:
+            raise ValueError(f"enemy_generation.{key} must be set")
+        words = self._load_word_list(resolved_path)
+        words = [word for word in words if word]
+        if not words:
+            raise ValueError(f"enemy_generation.{key} must include at least one word")
+        return words
+
+    @cached_property
+    def enemy_generation_characters(self) -> list[str]:
+        return self._get_enemy_generation_words("character_words_path")
+
+    @cached_property
+    def enemy_generation_adjectives(self) -> list[str]:
+        return self._get_enemy_generation_words("adjective_words_path")
+
+    @cached_property
+    def enemy_generation_places(self) -> list[str]:
+        return self._get_enemy_generation_words("place_words_path")
 
     @cached_property
     def hero_base_stats(self) -> Stats:
@@ -271,6 +327,63 @@ class GameConfig:
     @cached_property
     def enemy_next_action_prompt(self) -> str:
         return self.game_config["prompts"]["enemy_next_action"]
+
+    @cached_property
+    def enemy_generation_prompt(self) -> str:
+        return self.game_config["prompts"]["enemy_generation"]
+
+    @cached_property
+    def sprite_generator(self) -> SpriteGenerator:
+        section = self.game_config.get("sprite_generator")
+        if section is None or not isinstance(section, dict):
+            raise ValueError("sprite_generator not set in config")
+        generator_type = section.get("type", "dummy")
+        if generator_type == "dummy":
+            latency_seconds = float(section.get("latency_seconds", 1.0))
+            return DummySpriteGenerator(latency_seconds=latency_seconds)
+        if generator_type == "sd":
+            base_model = section.get("base_model")
+            lora_path = section.get("lora_path")
+            trigger_prompt = section.get("trigger_prompt")
+            if not base_model or not lora_path or not trigger_prompt:
+                raise ValueError(
+                    "sprite_generator.sd requires base_model, lora_path, trigger_prompt"
+                )
+            llm_block = section.get("prompt_llm")
+            if not isinstance(llm_block, dict) or not self._is_llm_block(llm_block):
+                raise ValueError("sprite_generator.prompt_llm must include type/model")
+            prompt_llm = self._build_llm(llm_block)
+            prompt_template = section.get("prompt_template")
+            if prompt_template is None:
+                raise ValueError("sprite_generator.prompt_template is required")
+            kwargs: dict[str, object] = {
+                "base_model": self._resolve_path(base_model),
+                "lora_path": self._resolve_path(lora_path),
+                "trigger_prompt": trigger_prompt,
+                "prompt_llm": prompt_llm,
+                "prompt_template": prompt_template,
+                "debug": self.debug_mode,
+            }
+            if "lcm_lora_path" in section:
+                kwargs["lcm_lora_path"] = self._resolve_path(
+                    section.get("lcm_lora_path")
+                )
+            if "guidance_scale" in section:
+                kwargs["guidance_scale"] = float(section.get("guidance_scale"))
+            if "num_inference_steps" in section:
+                kwargs["num_inference_steps"] = int(section.get("num_inference_steps"))
+            if "inference_height" in section:
+                kwargs["inference_height"] = int(section.get("inference_height"))
+            if "inference_width" in section:
+                kwargs["inference_width"] = int(section.get("inference_width"))
+            if "vae_path" in section:
+                kwargs["vae_path"] = self._resolve_path(section.get("vae_path"))
+            if "use_lcm" in section:
+                kwargs["use_lcm"] = bool(section.get("use_lcm"))
+            if "negative_prompt" in section:
+                kwargs["negative_prompt"] = section.get("negative_prompt")
+            return SDSpriteGenerator(**kwargs)
+        raise ValueError(f"Unsupported sprite_generator type: {generator_type}")
 
     @cached_property
     def action_judge_prompt(self) -> str:

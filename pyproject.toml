@@ -17,6 +17,12 @@ python-dotenv = "^1.0.1"
 pyyaml = "^6.0.2"
 ollama = "^0.5.1"
 pygame = "^2.6.1"
+unfake = "^1.0.7"
+torchvision = "^0.24.1"
+diffusers = "^0.36.0"
+transformers = ">=4.57.3"
+tokenizers = ">=0.22.1"
+peft = "^0.18.0"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -125,3 +125,5 @@ cython_debug/
 .vscode/
 
 .ruff_cache/
+
+models/

@@ -1,0 +1,291 @@
+home
+apartment
+house
+bedroom
+bathroom
+kitchen
+living room
+garage
+basement
+attic
+balcony
+garden
+yard
+driveway
+hallway
+staircase
+laundry room
+office
+workplace
+coworking space
+conference room
+meeting room
+break room
+reception
+cubicle
+desk
+school
+classroom
+lecture hall
+library
+computer lab
+cafeteria
+gymnasium
+playground
+schoolyard
+daycare
+kindergarten
+university
+campus
+dormitory
+grocery store
+supermarket
+corner store
+convenience store
+bakery
+butcher
+fishmonger
+farmers market
+mall
+shopping center
+department store
+clothing store
+shoe store
+electronics store
+hardware store
+bookstore
+newsstand
+pharmacy
+drugstore
+liquor store
+pet store
+florist
+restaurant
+cafe
+coffee shop
+tea shop
+bakery cafe
+fast food restaurant
+diner
+food court
+bar
+pub
+brewery
+wine bar
+takeout place
+pizza place
+sandwich shop
+ice cream shop
+playground
+dog park
+sports field
+stadium
+arena
+skate park
+swimming pool
+public pool
+beach
+boardwalk
+pier
+lake
+riverbank
+trail
+hiking path
+bike path
+hospital
+clinic
+doctor’s office
+dentist
+waiting room
+emergency room
+pharmacy counter
+laboratory
+therapy center
+veterinary clinic
+hotel
+hostel
+motel
+bed and breakfast
+lobby
+hotel room
+elevator
+hallway
+rooftop terrace
+movie theater
+cinema
+concert hall
+theater
+opera house
+museum
+art gallery
+exhibition hall
+cultural center
+community center
+market
+street market
+flea market
+thrift store
+secondhand shop
+pawn shop
+antique store
+warehouse
+factory
+workshop
+studio
+storage unit
+loading dock
+game room
+arcade
+bowling alley
+billiards hall
+escape room
+restroom
+bathroom stall
+changing room
+locker
+tavern
+inn
+castle
+keep
+fortress
+citadel
+stronghold
+watchtower
+guard tower
+battlement
+barracks
+armory
+war room
+throne room
+dungeon
+prison
+torture chamber
+dreamscape
+memory realm
+time fracture
+echo realm
+mirror world
+sanctum
+inner sanctum
+hidden sanctum
+forbidden sanctum
+vault
+treasury
+sealed vault
+forgotten vault
+farmstead
+plantation
+windmill
+watermill
+tower
+lighthouse
+signal tower
+clock tower
+ship
+airship
+skyship
+spelljammer
+ghost ship
+warship
+hideout
+bandit camp
+outlaw camp
+smugglers den
+pirate cove
+assassins hideout
+sewer
+ancient sewers
+understreets
+arena
+colosseum
+fighting pit
+blood arena
+graveyard
+cursed graveyard
+necropolis
+bone fields
+crypt fields
+material plane
+shadow realm
+spirit world
+astral plane
+ethereal plane
+elemental plane
+fire plane
+ice plane
+storm plane
+void
+abyss
+hell
+heavens
+celestial realm
+fae realm
+dream realm
+nightmare realm
+ancient portal
+teleport circle
+planar gate
+rift
+void tear
+stone bridge
+rope bridge
+broken bridge
+arcane bridge
+ancient road
+king’s road
+pilgrim road
+trade route
+smugglers path
+wizard tower
+mage tower
+arcane academy
+magic school
+library of spells
+forbidden archive
+enchanter’s workshop
+alchemy lab
+summoning chamber
+ritual circle
+ley line nexus
+temple
+shrine
+holy sanctuary
+cathedral
+abbey
+monastery
+chapel
+oracle chamber
+divination hall
+altar room
+crypt
+catacombs
+hamlet
+town
+city
+capital
+port city
+trade city
+border town
+fishing village
+mountain village
+forest village
+desert town
+underground city
+floating city
+ruined city
+ancient city
+forgotten city
+keep
+fortress
+citadel
+stronghold
+watchtower
+guard tower
+battlement
+barracks
+armory
+war room
+throne room
+dungeon
+prison
+torture chamber
