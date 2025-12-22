@@ -669,6 +669,87 @@ def draw_input_panel(
         template_color = theme.colors["text_hint"]
 
     visible_template = template or ""
+    has_template = len(visible_template) > 0
+
+    if has_template:
+        width_chars = (
+            visible_template
+            + current_text
+            + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        )
+        cell_width = max(font.size(char)[0] for char in width_chars) or 1
+        text_height = font.get_height()
+        total_cells = max(len(visible_template), len(current_text))
+
+        template_cells = len(visible_template)
+        measured_width = cell_width * max(template_cells, total_cells) + padding * 2
+        measured_height = text_height + padding * 2
+        if width is None:
+            resolved_width = measured_width
+        else:
+            resolved_width = max(width, measured_width)
+        resolved_height = measured_height
+
+        if x is None:
+            x = (screen.get_width() - resolved_width) // 2
+        if y is None:
+            y = (screen.get_height() - resolved_height) // 2
+
+        panel_rect = pygame.Rect(x, y, resolved_width, resolved_height)
+        draw_panel(screen, panel_rect, theme, draw_border=draw_border)
+
+        text_x = x + padding
+        text_y = y + padding
+        available_text_width = resolved_width - padding * 2
+        visible_cells = max(1, available_text_width // cell_width)
+        visible_cells = min(visible_cells, max(template_cells, total_cells))
+        start_index = 0
+        end_index = min(max(template_cells, total_cells), start_index + visible_cells)
+
+        cursor_index = (
+            len(current_text)
+            if show_cursor
+            and time_ms is not None
+            and len(current_text) < template_cells
+            else -1
+        )
+        for idx in range(start_index, end_index):
+            slot_x = text_x + (idx - start_index) * cell_width
+            if idx == cursor_index:
+                pass
+            elif idx >= len(current_text):
+                template_char = (
+                    visible_template[idx] if idx < len(visible_template) else " "
+                )
+                template_surface = font.render(template_char, True, template_color)
+                template_x = slot_x + (cell_width - template_surface.get_width()) // 2
+                screen.blit(template_surface, (template_x, text_y))
+            else:
+                typed_char = current_text[idx]
+                typed_surface = font.render(typed_char, True, text_color)
+                typed_x = slot_x + (cell_width - typed_surface.get_width()) // 2
+                screen.blit(typed_surface, (typed_x, text_y))
+
+        if show_cursor and time_ms is not None and len(current_text) < template_cells:
+            cursor_slot = min(len(current_text), start_index + visible_cells)
+            cursor_width = max(3, text_height // 8)
+            cursor_x = (
+                text_x
+                + (cursor_slot - start_index) * cell_width
+                + (cell_width - cursor_width) // 2
+            )
+            draw_blinking_cursor(
+                screen,
+                cursor_x,
+                text_y,
+                text_height,
+                theme,
+                time_ms,
+                interval_ms=cursor_interval_ms,
+            )
+
+        return panel_rect
+
     template_chars = list(visible_template)
     for idx, char in enumerate(current_text):
         if idx < len(template_chars):
@@ -695,11 +776,7 @@ def draw_input_panel(
     text_x = x + padding
     text_y = y + padding
 
-    if visible_template:
-        filled_text = "".join(template_chars[: len(current_text)])
-    else:
-        filled_text = current_text
-
+    filled_text = current_text
     filled_width = font.size(filled_text)[0]
 
     available_text_width = resolved_width - padding * 2

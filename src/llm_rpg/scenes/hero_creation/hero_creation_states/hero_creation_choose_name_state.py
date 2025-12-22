@@ -88,7 +88,7 @@ class HeroCreationChooseNameState(State):
 
         prompt_rect = draw_text_panel(
             screen=screen,
-            lines="Enter a name for your hero (max 10 characters):",
+            lines="Enter a name for your hero (max 10 characters)",
             font=self.scene.game.theme.fonts["small"],
             theme=self.scene.game.theme,
             max_width=screen.get_width() - spacing(4),
@@ -105,10 +105,9 @@ class HeroCreationChooseNameState(State):
             y=prompt_rect.bottom + spacing(1),
             width=spacing(14),
             padding=spacing(1.5),
-            template="**********",
+            template="··········",
             time_ms=pygame.time.get_ticks(),
-            show_cursor=False,
-            draw_border=False,
+            show_cursor=True,
         )
 
         if self.error_message:
