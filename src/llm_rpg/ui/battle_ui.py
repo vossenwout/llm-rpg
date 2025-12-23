@@ -17,11 +17,8 @@ from llm_rpg.ui.components import (
 HP_BAR_WIDTH = 180
 HP_BAR_HEIGHT = 16
 HP_LABEL_OFFSET = 12
-CARD_PADDING = 10
-CARD_LINE_HEIGHT = 22
 CARD_BORDER = 2
 DOTS_PERIOD = 0.25
-SPRITE_SCALE = 2.0
 SPRITE_STAGE_Y = 90
 MAX_SPRITE_SIZE = 128
 
@@ -40,7 +37,10 @@ def render_enemy_sprite(
         return
 
     width, height = sprite.get_size()
-    scale_factor = min(MAX_SPRITE_SIZE / max(width, height), 1.0)
+    max_dim = max(width, height)
+    if max_dim <= 0:
+        return
+    scale_factor = MAX_SPRITE_SIZE / max_dim
     scaled = (
         pygame.transform.scale_by(sprite, scale_factor)
         if scale_factor != 1.0

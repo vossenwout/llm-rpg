@@ -8,7 +8,11 @@ from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
     RestingHubStates,
 )
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_selection_panel, draw_text_panel
+from llm_rpg.ui.components import (
+    draw_checkerboard_background,
+    draw_selection_panel,
+    draw_text_panel,
+)
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -55,15 +59,16 @@ class RestingHubLevelUpState(State):
     def render(self, screen: pygame.Surface):
         theme = self.resting_hub_scene.game.theme
         spacing = theme.spacing
-        screen.fill(theme.colors["background"])
+        draw_checkerboard_background(screen, theme)
 
-        title_surface = theme.fonts["medium"].render(
-            "Level Up!", True, theme.colors["primary"]
+        title_rect = draw_text_panel(
+            screen=screen,
+            lines="Level Up!",
+            font=theme.fonts["medium"],
+            theme=theme,
+            y=spacing(4),
+            text_color=theme.colors["primary"],
         )
-        title_rect = title_surface.get_rect(
-            center=(screen.get_width() // 2, spacing(6))
-        )
-        screen.blit(title_surface, title_rect)
 
         margin = spacing(2)
         panel_width = screen.get_width() - margin * 4
@@ -78,7 +83,7 @@ class RestingHubLevelUpState(State):
             width=panel_width,
             align="left",
             auto_wrap=True,
-            draw_border=False,
+            draw_border=True,
         )
 
         stat_labels = [
@@ -98,16 +103,4 @@ class RestingHubLevelUpState(State):
             padding=spacing(2),
             option_spacing=spacing(1.5),
             align="left",
-        )
-
-        hint = theme.fonts["small"].render(
-            "Press ENTER to confirm",
-            True,
-            theme.colors["text_hint"],
-        )
-        screen.blit(
-            hint,
-            hint.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(2))
-            ),
         )
