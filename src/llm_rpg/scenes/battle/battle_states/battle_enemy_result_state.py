@@ -9,7 +9,6 @@ from llm_rpg.ui.battle_ui import (
     render_event_card,
     render_event_ribbon,
     render_stats_row,
-    render_items_panel,
     render_enemy_sprite,
 )
 
@@ -53,12 +52,6 @@ class BattleEnemyResultState(State):
             theme=self.battle_scene.game.theme,
             hero=self.battle_scene.hero,
             enemy=self.battle_scene.enemy,
-        )
-        render_items_panel(
-            screen=screen,
-            theme=self.battle_scene.game.theme,
-            hero=self.battle_scene.hero,
-            proc_impacts=None,
         )
         if self.event:
             card_rect = render_event_card(

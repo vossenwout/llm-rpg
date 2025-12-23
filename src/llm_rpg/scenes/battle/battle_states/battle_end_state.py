@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
 from llm_rpg.ui.components import PagedTextState
-from llm_rpg.ui.battle_ui import render_event_card, render_items_panel, render_stats_row
+from llm_rpg.ui.battle_ui import render_event_card, render_stats_row
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -50,13 +50,6 @@ class BattleEndState(State):
             hero=self.battle_scene.hero,
             enemy=self.battle_scene.enemy,
         )
-        render_items_panel(
-            screen=screen,
-            theme=self.battle_scene.game.theme,
-            hero=self.battle_scene.hero,
-            proc_impacts=None,
-        )
-
         defeated_name = (
             self.battle_scene.enemy.name
             if self.battle_scene.enemy.is_dead()
