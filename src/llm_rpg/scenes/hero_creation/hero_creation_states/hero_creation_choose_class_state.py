@@ -100,16 +100,6 @@ class HeroCreationChooseClassState(State):
             auto_wrap=True,
         )
 
-        instruction_surface = theme.fonts["small"].render(
-            "Press ENTER to confirm",
-            True,
-            theme.colors["text_hint"],
-        )
-        instruction_rect = instruction_surface.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - spacing(2))
-        )
-        screen.blit(instruction_surface, instruction_rect)
-
     def _build_info_lines(self, hero_class: HeroClass) -> list[str]:
         starting_item = hero_class.starting_item
         return [
