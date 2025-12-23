@@ -60,6 +60,7 @@ class BattleHeroThinkingState(State):
         return
 
     def update(self, dt: float):
+        self.battle_scene.update_background(dt)
         self.animation_timer += dt
         self.dots, self.dot_timer = advance_dots(
             dots=self.dots,
@@ -97,7 +98,7 @@ class BattleHeroThinkingState(State):
             self.battle_scene.change_state(BattleStates.HERO_RESULT)
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.battle_scene.game.theme.colors["background"])
+        self.battle_scene.render_background(screen)
         render_enemy_sprite(
             screen=screen,
             theme=self.battle_scene.game.theme,

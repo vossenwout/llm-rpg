@@ -33,6 +33,7 @@ from llm_rpg.sprite_generator.sprite_generator import (
     SDSpriteGenerator,
     SpriteGenerator,
 )
+from llm_rpg.ui.backgrounds import BattleBackgroundConfig
 
 
 class GameConfig:
@@ -175,6 +176,25 @@ class GameConfig:
     @cached_property
     def enemy_generation_places(self) -> list[str]:
         return self._get_enemy_generation_words("place_words_path")
+
+    @cached_property
+    def battle_background_config(self) -> BattleBackgroundConfig:
+        section = self.game_config.get("battle_background", {})
+        base_resolution = section.get("base_resolution", [160, 120])
+        if (
+            not isinstance(base_resolution, list)
+            or len(base_resolution) != 2
+            or not all(isinstance(value, int) for value in base_resolution)
+        ):
+            raise ValueError(
+                "battle_background.base_resolution must be [width, height]"
+            )
+        speed_multiplier = float(section.get("speed_multiplier", 1.0))
+        return BattleBackgroundConfig(
+            base_width=base_resolution[0],
+            base_height=base_resolution[1],
+            speed_multiplier=speed_multiplier,
+        )
 
     @cached_property
     def hero_base_stats(self) -> Stats:
