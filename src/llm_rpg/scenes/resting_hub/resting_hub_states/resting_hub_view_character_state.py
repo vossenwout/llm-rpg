@@ -7,7 +7,11 @@ from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
     RestingHubStates,
 )
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_text_panel, measure_text_block
+from llm_rpg.ui.components import (
+    draw_text_panel,
+    measure_text_block,
+    draw_checkerboard_background,
+)
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -33,7 +37,7 @@ class RestingHubViewCharacterState(State):
     def render(self, screen: pygame.Surface):
         theme = self.resting_hub_scene.game.theme
         hero = self.resting_hub_scene.game.hero
-        screen.fill(theme.colors["background"])
+        draw_checkerboard_background(screen, theme)
 
         if self.current_page == 0:
             self._render_stats_page(screen, hero, theme)
@@ -49,13 +53,14 @@ class RestingHubViewCharacterState(State):
         padding = spacing(2)
         line_spacing = spacing(1)
 
-        title_surface = theme.fonts["medium"].render(
-            "Stats", True, theme.colors["primary"]
+        title_rect = draw_text_panel(
+            screen=screen,
+            lines="Stats",
+            font=theme.fonts["medium"],
+            theme=theme,
+            y=spacing(4),
+            text_color=theme.colors["primary"],
         )
-        title_rect = title_surface.get_rect(
-            center=(screen.get_width() // 2, spacing(6))
-        )
-        screen.blit(title_surface, title_rect)
 
         hero_lines = [
             f"Name: {hero.name}",
@@ -133,13 +138,14 @@ class RestingHubViewCharacterState(State):
         line_spacing = spacing(1)
         available_width = screen.get_width() - margin * 2
 
-        title_surface = theme.fonts["medium"].render(
-            "Items", True, theme.colors["primary"]
+        title_rect = draw_text_panel(
+            screen=screen,
+            lines="Items",
+            font=theme.fonts["medium"],
+            theme=theme,
+            y=spacing(4),
+            text_color=theme.colors["primary"],
         )
-        title_rect = title_surface.get_rect(
-            center=(screen.get_width() // 2, spacing(6))
-        )
-        screen.blit(title_surface, title_rect)
 
         item_lines = (
             [
@@ -162,16 +168,4 @@ class RestingHubViewCharacterState(State):
             line_spacing=line_spacing,
             align="left",
             auto_wrap=True,
-        )
-
-        hint = theme.fonts["small"].render(
-            "Press ENTER to return",
-            True,
-            theme.colors["text_hint"],
-        )
-        screen.blit(
-            hint,
-            hint.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(2))
-            ),
         )

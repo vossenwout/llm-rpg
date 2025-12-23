@@ -8,7 +8,11 @@ from llm_rpg.scenes.resting_hub.resting_hub_states.resting_hub_states import (
 )
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_selection_panel, draw_text_panel
+from llm_rpg.ui.components import (
+    draw_selection_panel,
+    draw_text_panel,
+    draw_checkerboard_background,
+)
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.resting_hub.resting_hub_scene import RestingHubScene
@@ -45,15 +49,16 @@ class RestingHubNavigationState(State):
     def render(self, screen: pygame.Surface):
         theme = self.resting_hub_scene.game.theme
         spacing = theme.spacing
-        screen.fill(theme.colors["background"])
+        draw_checkerboard_background(screen, theme)
 
-        title_surface = theme.fonts["medium"].render(
-            "Resting Hub", True, theme.colors["primary"]
+        title_rect = draw_text_panel(
+            screen=screen,
+            lines="Resting Hub",
+            font=theme.fonts["medium"],
+            theme=theme,
+            y=spacing(5),
+            text_color=theme.colors["primary"],
         )
-        title_rect = title_surface.get_rect(
-            center=(screen.get_width() // 2, spacing(8))
-        )
-        screen.blit(title_surface, title_rect)
 
         margin = spacing(2)
         panel_width = screen.get_width() - margin * 4
@@ -68,7 +73,7 @@ class RestingHubNavigationState(State):
             width=panel_width,
             align="left",
             auto_wrap=False,
-            draw_border=False,
+            draw_border=True,
         )
 
         draw_selection_panel(
