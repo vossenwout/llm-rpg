@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING
 from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.systems.hero.hero import ProposedHeroAction
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_input_panel
+from llm_rpg.ui.components import (
+    draw_hud_backdrop,
+    draw_input_panel,
+    render_text_with_shadow,
+)
 from llm_rpg.ui.battle_ui import (
     render_stats_row,
     render_enemy_sprite,
@@ -129,15 +133,36 @@ class BattleTurnState(State):
         focus_limit = self.battle_scene.hero.get_current_stats().focus
         remaining_chars = max(focus_limit - len(self.input_text.replace(" ", "")), 0)
         focus_meter = f"Focus: {remaining_chars}/{focus_limit} characters remaining."
-        prompt_surface = self.battle_scene.game.theme.fonts["small"].render(
-            focus_meter, True, self.battle_scene.game.theme.colors["text_hint"]
+        prompt_surface = render_text_with_shadow(
+            font=self.battle_scene.game.theme.fonts["small"],
+            text=focus_meter,
+            color=self.battle_scene.game.theme.colors["text_hint"],
+            shadow_color=self.battle_scene.game.theme.colors["text_hint_shadow"],
         )
 
         prompt_x = panel_rect.x + (panel_rect.width - prompt_surface.get_width()) // 2
-        screen.blit(
-            prompt_surface,
-            (prompt_x, panel_rect.y - spacing(4)),
+        prompt_padding = max(2, spacing(0.5))
+        ribbon_gap = max(2, spacing(0.5))
+        prompt_text_height = max(prompt_surface.get_height(), font.get_linesize())
+        prompt_height = prompt_text_height + prompt_padding * 2
+        backdrop_rect = pygame.Rect(
+            prompt_x - prompt_padding,
+            panel_rect.y - ribbon_gap - prompt_height,
+            prompt_surface.get_width() + prompt_padding * 2,
+            prompt_height,
         )
+        prompt_y = (
+            backdrop_rect.y
+            + prompt_padding
+            + (prompt_text_height - prompt_surface.get_height()) // 2
+        )
+        draw_hud_backdrop(
+            screen=screen,
+            rect=backdrop_rect,
+            theme=self.battle_scene.game.theme,
+            draw_border=False,
+        )
+        screen.blit(prompt_surface, (prompt_x, prompt_y))
 
         if self.error_message:
             error_surface = self.battle_scene.game.theme.fonts["small"].render(

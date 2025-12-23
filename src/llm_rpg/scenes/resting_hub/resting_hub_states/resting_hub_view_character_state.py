@@ -11,6 +11,7 @@ from llm_rpg.ui.components import (
     draw_text_panel,
     measure_text_block,
     draw_checkerboard_background,
+    render_text_with_shadow,
 )
 
 if TYPE_CHECKING:
@@ -119,10 +120,11 @@ class RestingHubViewCharacterState(State):
             min_height=target_height,
         )
 
-        hint = theme.fonts["small"].render(
-            "Press ENTER to view items",
-            True,
-            theme.colors["text_hint"],
+        hint = render_text_with_shadow(
+            font=theme.fonts["small"],
+            text="Press ENTER to view items",
+            color=theme.colors["text_hint"],
+            shadow_color=theme.colors["text_hint_shadow"],
         )
         screen.blit(
             hint,

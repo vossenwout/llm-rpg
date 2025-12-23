@@ -138,19 +138,12 @@ class BattleStartState(State):
                 True,
                 (255, 80, 80),
             )
-        else:
-            prompt_surface = self.battle_scene.game.theme.fonts["small"].render(
-                "Press ENTER to start battle",
-                True,
-                self.battle_scene.game.theme.colors["text_hint"],
+            screen.blit(
+                prompt_surface,
+                prompt_surface.get_rect(
+                    center=(screen.get_width() // 2, screen.get_height() - spacing(6))
+                ),
             )
-
-        screen.blit(
-            prompt_surface,
-            prompt_surface.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(6))
-            ),
-        )
 
     def _generate_enemy(self):
         try:

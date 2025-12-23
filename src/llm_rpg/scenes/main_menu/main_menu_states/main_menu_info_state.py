@@ -3,7 +3,11 @@ from __future__ import annotations
 import pygame
 from llm_rpg.scenes.main_menu.main_menu_states.main_menu_states import MainMenuStates
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_text_panel, draw_checkerboard_background
+from llm_rpg.ui.components import (
+    draw_text_panel,
+    draw_checkerboard_background,
+    render_text_with_shadow,
+)
 
 from typing import TYPE_CHECKING
 
@@ -53,10 +57,11 @@ class MainMenuInfoState(State):
             auto_wrap=True,
         )
 
-        back_text = theme.fonts["small"].render(
-            "Press ENTER to go back",
-            True,
-            theme.colors["text_hint"],
+        back_text = render_text_with_shadow(
+            font=theme.fonts["small"],
+            text="Press ENTER to go back",
+            color=theme.colors["text_hint"],
+            shadow_color=theme.colors["text_hint_shadow"],
         )
         back_rect = back_text.get_rect(
             center=(screen.get_width() // 2, screen.get_height() - spacing(2))

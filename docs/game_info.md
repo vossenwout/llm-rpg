@@ -25,6 +25,7 @@ UI is inspired by SNES RPGs such as Dragon Quest and Earthbound, in pixel art st
 Battle backgrounds include classic Earthbound-style geometric patterns, plasma ripple variants with palette cycling, plus VCR-inspired glitch variants with scanlines, tracking bars, and horizontal jitter.
 The main menu displays a pixel-art title logo from `src/llm_rpg/assets/sprites/logo.png`.
 Panels use a 9-slice border sprite at `src/llm_rpg/assets/sprites/panel_border.png` (24x24 source with 8x8 tiles). Edges are tiled, corners are unscaled, and the panel interior is a solid fill using `Theme.colors["panel_inner"]`.
+Battle HUD hints (focus meter and damage ribbon) use a translucent dark ribbon backdrop and subtle text shadow to preserve legibility over animated backgrounds.
 Battle scenes render a low-resolution procedurally generated background per enemy, seeded by enemy name, and then scale it to the display. Background base resolution and speed tuning live under `battle_background` in `config/game_config.yaml`.
 Battle sprites are scaled in `src/llm_rpg/ui/battle_ui.py` so the largest dimension fits `MAX_SPRITE_SIZE`.
 

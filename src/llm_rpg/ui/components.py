@@ -255,6 +255,42 @@ def draw_panel(
         pygame.draw.rect(screen, theme.colors["panel_inner"], base_rect)
 
 
+def render_text_with_shadow(
+    font: pygame.font.Font,
+    text: str,
+    color: Tuple[int, int, int],
+    shadow_color: Tuple[int, int, int, int],
+    shadow_offset: Tuple[int, int] = (1, 1),
+    antialias: bool = True,
+) -> pygame.Surface:
+    base_surface = font.render(text, antialias, color)
+    shadow_surface = font.render(text, antialias, shadow_color[:3])
+    shadow_surface.set_alpha(shadow_color[3])
+    width = max(base_surface.get_width(), shadow_surface.get_width() + shadow_offset[0])
+    height = max(
+        base_surface.get_height(), shadow_surface.get_height() + shadow_offset[1]
+    )
+    combined = pygame.Surface((width, height), pygame.SRCALPHA)
+    combined.blit(shadow_surface, shadow_offset)
+    combined.blit(base_surface, (0, 0))
+    return combined
+
+
+def draw_hud_backdrop(
+    screen: pygame.Surface,
+    rect: pygame.Rect | Tuple[int, int, int, int],
+    theme: Theme,
+    draw_border: bool = True,
+) -> pygame.Rect:
+    base_rect = pygame.Rect(rect)
+    backdrop = pygame.Surface(base_rect.size, pygame.SRCALPHA)
+    backdrop.fill(theme.colors["hud_backdrop"])
+    if draw_border:
+        pygame.draw.rect(backdrop, theme.colors["hud_border"], backdrop.get_rect(), 1)
+    screen.blit(backdrop, base_rect.topleft)
+    return base_rect
+
+
 def wrap_text_lines(
     text: str,
     font: pygame.font.Font,
@@ -455,13 +491,23 @@ def draw_paginated_panel(
             text_y += line_height + line_spacing
 
     cue = "" if paged_state.is_last_page else "..."
-    cue_surf = font.render(cue, True, theme.colors["text_hint"])
+    cue_surf = render_text_with_shadow(
+        font=font,
+        text=cue,
+        color=theme.colors["text_hint"],
+        shadow_color=theme.colors["text_hint_shadow"],
+    )
     cue_x = base_rect.right - padding - cue_surf.get_width()
     cue_y = base_rect.bottom - padding - cue_surf.get_height()
     screen.blit(cue_surf, (cue_x, cue_y))
 
     if prompt_text:
-        prompt_surf = font.render(prompt_text, True, theme.colors["text_hint"])
+        prompt_surf = render_text_with_shadow(
+            font=font,
+            text=prompt_text,
+            color=theme.colors["text_hint"],
+            shadow_color=theme.colors["text_hint_shadow"],
+        )
         prompt_pos = prompt_surf.get_rect(
             center=(screen.get_width() // 2, base_rect.bottom + padding)
         )
