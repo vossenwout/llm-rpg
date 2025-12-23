@@ -26,33 +26,37 @@ enemy_generation:
   adjective_words_path: "src/llm_rpg/assets/word_lists/adjectives.txt"
   place_words_path: "src/llm_rpg/assets/word_lists/places.txt"
 sprite_generator:
-  type: "dummy"
-  latency_seconds: 0.0
-  #type: "sd"
-  #base_model: "models/sprite/westernBeautiful_v10.safetensors"
-  #lora_path: "models/sprite/earthbound_lora.safetensors"
-  #lcm_lora_path: "models/sprite/LCM_LoRA_Weights_SD15.safetensors"
-  #trigger_prompt: "Earthbound_enemy, neutral grey background, pixelart, drop shadow"
+  #type: "dummy"
+  #latency_seconds: 0.0
+  type: "sd"
+  base_model: "models/sprite/westernBeautiful_v10.safetensors"
+  lora_path: "models/sprite/earthbound_lora.safetensors"
+  lcm_lora_path: "models/sprite/LCM_LoRA_Weights_SD15.safetensors"
+  trigger_prompt: "Earthbound_enemy, neutral grey background, pixelart, drop shadow"
   prompt_llm:
     model: "llama-3.3-70b-versatile"
     type: "groq"
   prompt_template: |
-    Describe this character in a comma-separated list of visual tags.
+    Generate Stable Diffusion visual tags describing ONLY the physical appearance of this character.
 
     Enemy name: {enemy_name}
     Enemy description: {enemy_description}
 
     Rules:
-    - Output only the comma-separated list.
-    - Use at most 5 tags.
-    - Keep tags short and descriptive.
+    - Output only a comma-separated list
+    - Use at most 5 tags
+    - Tags must describe visible, physical traits only
+    - Do NOT include personality, emotions, behavior, or abstract qualities
+    - Prefer clothing, armor, body type, age, facial features, and gear
+    - Each tag should be usable directly as a Stable Diffusion prompt
+    - Describe ONLY the physical appearance of this character.
   guidance_scale: 7
-  num_inference_steps: 20 
+  num_inference_steps: 40 
   inference_height: 512
   inference_width: 512
   vae_path: null
   use_lcm: false
-  negative_prompt: ""
+  negative_prompt: "ng_deepnegative_v1_75t,"
 hero:
   base_hero_stats:
     attack: 5
@@ -212,13 +216,15 @@ prompts:
 
   enemy_generation: |
     You are generating a single enemy for a turn-based RPG battle.
-
-    The character has to have something to do with:
+    The enemy must be clearly related to at least one of the following:
     - Adjective: "{enemy_adjective}"
     - Noun: "{enemy_character}"
     - Place/setting: "{enemy_place}"
-
-    Create a unique enemy name and a short description (1-2 sentences).
-    The enemy should feel like it fits a quirky SNES-era RPG, (earthbound, dragon quest, etc).
+    
+    Create a coherent, memorable enemy name and a short description:
+    Style Guidelines: 
+      - Fits a quirky SNES-era RPG (EarthBound, Dragon Quest–like)
+      - Quirkiness should come from personality, behavior, or theme — not random word combinations
+      - Simple and memorable is better than complex and obscure
 
     Output only valid JSON matching this schema:

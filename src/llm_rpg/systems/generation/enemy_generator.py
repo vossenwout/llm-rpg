@@ -30,7 +30,7 @@ class LLMEnemyDescriptionOutput(BaseModel):
         Field(
             min_length=2,
             max_length=40,
-            description="Short enemy name suitable for a UI title.",
+            description="Short enemy name (one or two words).",
         ),
     ]
     description: Annotated[
