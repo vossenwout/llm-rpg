@@ -30,7 +30,9 @@ def build_battle_background(
     rng = random.Random(seed)
     effect = rng.choice(
         [
-            DiamondBandedBackground,
+            # DiamondBandedBackground,
+            VCRGlitchBackground,
+            # VCRTrackingBackground,
         ]
     )
     palette = rng.choice(effect.palettes)
@@ -48,6 +50,14 @@ def _hash_seed(name: str) -> int:
 
 
 _DIAMOND_PALETTES: list[list[tuple[int, int, int]]] = [
+    [(226, 158, 82), (238, 186, 98), (194, 146, 92), (212, 168, 130)],
+    [(216, 64, 112), (236, 96, 136), (192, 56, 96), (168, 88, 160)],
+    [(236, 200, 96), (216, 184, 72), (184, 216, 120), (156, 196, 112)],
+    [(168, 112, 184), (188, 144, 204), (112, 176, 136), (96, 152, 120)],
+    [(96, 136, 216), (120, 160, 232), (152, 128, 216), (128, 112, 196)],
+]
+
+_GLITCH_PALETTES: list[list[tuple[int, int, int]]] = [
     [(226, 158, 82), (238, 186, 98), (194, 146, 92), (212, 168, 130)],
     [(216, 64, 112), (236, 96, 136), (192, 56, 96), (168, 88, 160)],
     [(236, 200, 96), (216, 184, 72), (184, 216, 120), (156, 196, 112)],
@@ -143,6 +153,78 @@ class DiamondBandedBackground(_BaseBackground):
                 )
 
 
+class VCRGlitchBackground(_BaseBackground):
+    palettes = _GLITCH_PALETTES
+
+    def __init__(
+        self,
+        base_size: tuple[int, int],
+        palette: list[tuple[int, int, int]],
+        seed: int,
+        speed_multiplier: float,
+    ) -> None:
+        super().__init__(
+            base_size=base_size,
+            palette=palette,
+            seed=seed,
+            speed_multiplier=speed_multiplier,
+        )
+        rng = random.Random(seed ^ 0xC0FFEE)
+        self.scanline_speed = rng.uniform(1.6, 2.4)
+        self.scanline_intensity = rng.uniform(0.12, 0.2)
+        self.noise_intensity = rng.uniform(3.0, 8.0)
+        self.drift_speed = rng.uniform(0.5, 0.9)
+        self.drift_amount = rng.uniform(3.0, 6.0)
+        self.chroma_amount = rng.uniform(12.0, 20.0)
+        self.tear_speed = rng.uniform(0.35, 0.6)
+        self.tear_height = rng.uniform(6.0, 12.0)
+
+    def _render_to_surface(self, surface: pygame.Surface) -> None:
+        width, height = surface.get_size()
+        palette = self.palette
+        plen = len(palette)
+        time = self.time
+        scanline_speed = self.scanline_speed
+        scanline_intensity = self.scanline_intensity
+        noise_intensity = self.noise_intensity
+        drift_speed = self.drift_speed
+        drift_amount = self.drift_amount
+        chroma_amount = self.chroma_amount
+        tear_speed = self.tear_speed
+        tear_height = self.tear_height
+        tear_pos = (time * tear_speed * height) % height
+        for y in range(height):
+            y_phase = y * 0.07 + time * drift_speed
+            drift = math.sin(y_phase) * drift_amount
+            tear_offset = 0.0
+            if abs(y - tear_pos) < tear_height:
+                band = (tear_height - abs(y - tear_pos)) / tear_height
+                tear_offset = (
+                    math.sin(time * 12.0 + y * 0.2) * (drift_amount * 2.5) * band
+                )
+            scanline = 1.0 - scanline_intensity * (
+                0.5 + 0.5 * math.sin(y * 0.6 + time * scanline_speed)
+            )
+            for x in range(width):
+                nx = (x + drift + tear_offset) * 0.04
+                ny = y * 0.03
+                wave = 0.5 + 0.5 * math.sin(nx + ny + time * 0.8)
+                palette_index = wave * (plen - 1)
+                base_index = int(palette_index)
+                next_index = min(base_index + 1, plen - 1)
+                frac = palette_index - base_index
+                base = _lerp_color(palette[base_index], palette[next_index], frac)
+                chroma = chroma_amount * math.sin((x + drift) * 0.06 + time * 1.6)
+                noise = (_hash_noise(x, y, int(time * 14.0), self.seed) - 0.5) * 2.0
+                r = base[0] + chroma + noise * noise_intensity
+                g = base[1] + noise * (noise_intensity * 0.6)
+                b = base[2] - chroma + noise * (noise_intensity * 0.8)
+                r = max(0, min(255, int(r * scanline)))
+                g = max(0, min(255, int(g * scanline)))
+                b = max(0, min(255, int(b * scanline)))
+                surface.set_at((x, y), (r, g, b))
+
+
 def _lerp_color(
     start: tuple[int, int, int],
     end: tuple[int, int, int],
@@ -154,3 +236,10 @@ def _lerp_color(
         int(round(start[1] + (end[1] - start[1]) * t)),
         int(round(start[2] + (end[2] - start[2]) * t)),
     )
+
+
+def _hash_noise(x: int, y: int, t: int, seed: int) -> float:
+    n = x * 374761393 + y * 668265263 + t * 2147483647 + seed * 1442695041
+    n = (n ^ (n >> 13)) * 1274126177
+    n = n ^ (n >> 16)
+    return (n & 0xFF) / 255.0
