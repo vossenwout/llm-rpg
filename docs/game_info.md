@@ -22,7 +22,7 @@ AI RPG is a roguelike where each battle is driven by player-written actions. An 
 
 ## Visual / UI Style
 UI is inspired by SNES RPGs such as Dragon Quest and Earthbound, in pixel art style.
-Battle backgrounds include classic Earthbound-style geometric patterns plus VCR-inspired glitch variants with scanlines, tracking bars, and horizontal jitter.
+Battle backgrounds include classic Earthbound-style geometric patterns, plasma ripple variants with palette cycling, plus VCR-inspired glitch variants with scanlines, tracking bars, and horizontal jitter.
 The main menu displays a pixel-art title logo from `src/llm_rpg/assets/sprites/logo.png`.
 Panels use a 9-slice border sprite at `src/llm_rpg/assets/sprites/panel_border.png` (24x24 source with 8x8 tiles). Edges are tiled, corners are unscaled, and the panel interior is a solid fill using `Theme.colors["panel_inner"]`.
 Battle scenes render a low-resolution procedurally generated background per enemy, seeded by enemy name, and then scale it to the display. Background base resolution and speed tuning live under `battle_background` in `config/game_config.yaml`.

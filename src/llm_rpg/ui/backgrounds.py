@@ -31,8 +31,8 @@ def build_battle_background(
     effect = rng.choice(
         [
             # DiamondBandedBackground,
-            VCRGlitchBackground,
-            # VCRTrackingBackground,
+            # VCRGlitchBackground,
+            PlasmaRippleBackground,
         ]
     )
     palette = rng.choice(effect.palettes)
@@ -49,15 +49,7 @@ def _hash_seed(name: str) -> int:
     return int.from_bytes(digest[:8], "big", signed=False)
 
 
-_DIAMOND_PALETTES: list[list[tuple[int, int, int]]] = [
-    [(226, 158, 82), (238, 186, 98), (194, 146, 92), (212, 168, 130)],
-    [(216, 64, 112), (236, 96, 136), (192, 56, 96), (168, 88, 160)],
-    [(236, 200, 96), (216, 184, 72), (184, 216, 120), (156, 196, 112)],
-    [(168, 112, 184), (188, 144, 204), (112, 176, 136), (96, 152, 120)],
-    [(96, 136, 216), (120, 160, 232), (152, 128, 216), (128, 112, 196)],
-]
-
-_GLITCH_PALETTES: list[list[tuple[int, int, int]]] = [
+_COLOR_PALLETES: list[list[tuple[int, int, int]]] = [
     [(226, 158, 82), (238, 186, 98), (194, 146, 92), (212, 168, 130)],
     [(216, 64, 112), (236, 96, 136), (192, 56, 96), (168, 88, 160)],
     [(236, 200, 96), (216, 184, 72), (184, 216, 120), (156, 196, 112)],
@@ -102,7 +94,7 @@ class _BaseBackground:
 
 
 class DiamondBandedBackground(_BaseBackground):
-    palettes = _DIAMOND_PALETTES
+    palettes = _COLOR_PALLETES
 
     def __init__(
         self,
@@ -154,7 +146,7 @@ class DiamondBandedBackground(_BaseBackground):
 
 
 class VCRGlitchBackground(_BaseBackground):
-    palettes = _GLITCH_PALETTES
+    palettes = _COLOR_PALLETES
 
     def __init__(
         self,
@@ -225,6 +217,66 @@ class VCRGlitchBackground(_BaseBackground):
                 surface.set_at((x, y), (r, g, b))
 
 
+class PlasmaRippleBackground(_BaseBackground):
+    palettes = _COLOR_PALLETES
+
+    def __init__(
+        self,
+        base_size: tuple[int, int],
+        palette: list[tuple[int, int, int]],
+        seed: int,
+        speed_multiplier: float,
+    ) -> None:
+        super().__init__(
+            base_size=base_size,
+            palette=palette,
+            seed=seed,
+            speed_multiplier=speed_multiplier,
+        )
+        rng = random.Random(seed ^ 0xA1B2)
+        self.wave_speed = rng.uniform(0.5, 0.95)
+        self.wave_scale = rng.uniform(0.045, 0.075)
+        self.wave_mix = rng.uniform(0.35, 0.65)
+        self.interleave = rng.uniform(0.6, 1.4)
+        self.palette_speed = rng.uniform(0.05, 0.1)
+        self.band_count = rng.randint(10, 14)
+        self.contrast = rng.uniform(1.25, 1.45)
+
+    def _render_to_surface(self, surface: pygame.Surface) -> None:
+        width, height = surface.get_size()
+        palette = self.palette
+        plen = len(palette)
+        time = self.time
+        wave_speed = self.wave_speed
+        wave_scale = self.wave_scale
+        wave_mix = self.wave_mix
+        interleave = self.interleave
+        palette_shift = (time * self.palette_speed * plen) % plen
+        band_count = self.band_count
+        contrast = self.contrast
+        for y in range(height):
+            row_dir = 1.0 if (y % 2 == 0) else -1.0
+            row_shift = math.sin(time * 1.3 + y * 0.14) * interleave * row_dir
+            for x in range(width):
+                nx = (x + row_shift) * wave_scale
+                ny = y * wave_scale
+                wave_a = math.sin(nx + time * wave_speed)
+                wave_b = math.sin(ny * 1.25 - time * (wave_speed * 0.8))
+                wave_c = math.sin((nx + ny) * 0.85 + time * (wave_speed * 1.05))
+                plasma = wave_a + wave_b * wave_mix + wave_c * (1.0 - wave_mix)
+                value = _clamp01((plasma + 3.0) / 6.0)
+                value = _clamp01(0.5 + (value - 0.5) * contrast)
+                value = round(value * (band_count - 1)) / (band_count - 1)
+                palette_index = (value * (plen - 1) + palette_shift) % plen
+                base_index = int(palette_index)
+                next_index = (base_index + 1) % plen
+                frac = palette_index - base_index
+                surface.set_at(
+                    (x, y),
+                    _lerp_color(palette[base_index], palette[next_index], frac),
+                )
+
+
 def _lerp_color(
     start: tuple[int, int, int],
     end: tuple[int, int, int],
@@ -236,6 +288,10 @@ def _lerp_color(
         int(round(start[1] + (end[1] - start[1]) * t)),
         int(round(start[2] + (end[2] - start[2]) * t)),
     )
+
+
+def _clamp01(value: float) -> float:
+    return max(0.0, min(1.0, value))
 
 
 def _hash_noise(x: int, y: int, t: int, seed: int) -> float:
