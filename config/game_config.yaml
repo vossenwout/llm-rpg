@@ -2,6 +2,9 @@ debug_mode: true
 display:
   fullscreen: False
   windowed_scale: 3
+battle_background:
+  base_resolution: [160, 120]
+  speed_multiplier: 1.5 
 action_judge:
   backend: "llm"
   llm:
@@ -23,13 +26,13 @@ enemy_generation:
   adjective_words_path: "src/llm_rpg/assets/word_lists/adjectives.txt"
   place_words_path: "src/llm_rpg/assets/word_lists/places.txt"
 sprite_generator:
-  # type: "dummy"
-  # latency_seconds: 1.0
-  type: "sd"
-  base_model: "models/sprite/westernBeautiful_v10.safetensors"
-  lora_path: "models/sprite/earthbound_lora.safetensors"
-  lcm_lora_path: "models/sprite/LCM_LoRA_Weights_SD15.safetensors"
-  trigger_prompt: "Earthbound_enemy, neutral grey background, pixelart, drop shadow"
+  type: "dummy"
+  latency_seconds: 0.0
+  #type: "sd"
+  #base_model: "models/sprite/westernBeautiful_v10.safetensors"
+  #lora_path: "models/sprite/earthbound_lora.safetensors"
+  #lcm_lora_path: "models/sprite/LCM_LoRA_Weights_SD15.safetensors"
+  #trigger_prompt: "Earthbound_enemy, neutral grey background, pixelart, drop shadow"
   prompt_llm:
     model: "llama-3.3-70b-versatile"
     type: "groq"
@@ -44,12 +47,12 @@ sprite_generator:
     - Use at most 5 tags.
     - Keep tags short and descriptive.
   guidance_scale: 7
-  num_inference_steps: 20
+  num_inference_steps: 1
   inference_height: 512
   inference_width: 512
   vae_path: null
   use_lcm: false
-  negative_prompt: "blurry, low quality"
+  negative_prompt: ""
 hero:
   base_hero_stats:
     attack: 5

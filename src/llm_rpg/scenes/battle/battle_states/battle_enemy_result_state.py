@@ -38,10 +38,11 @@ class BattleEnemyResultState(State):
                 self.battle_scene.change_state(BattleStates.TURN)
 
     def update(self, dt: float):
+        self.battle_scene.update_background(dt)
         return
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.battle_scene.game.theme.colors["background"])
+        self.battle_scene.render_background(screen)
         render_enemy_sprite(
             screen=screen,
             theme=self.battle_scene.game.theme,

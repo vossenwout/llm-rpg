@@ -34,6 +34,7 @@ import pygame
 if TYPE_CHECKING:
     from llm_rpg.game.game import Game
     from llm_rpg.systems.hero.hero import ProposedHeroAction
+    from llm_rpg.ui.backgrounds import BattleBackground
 
 
 class BattleScene(Scene):
@@ -45,6 +46,7 @@ class BattleScene(Scene):
         self.hero = self.game.hero
         self.enemy: Enemy | None = None
         self.enemy_sprite: pygame.Surface | None = None
+        self.background: BattleBackground | None = None
         self.battle_ai = BattleAI(
             action_judge=self.game.action_judge,
             action_narrator=self.game.action_narrator,
@@ -73,3 +75,13 @@ class BattleScene(Scene):
             self.current_state = BattleEnemyResultState(self)
         elif new_state == BattleStates.END:
             self.current_state = BattleEndState(self)
+
+    def update_background(self, dt: float) -> None:
+        if self.background is not None:
+            self.background.update(dt)
+
+    def render_background(self, screen: pygame.Surface) -> None:
+        if self.background is not None:
+            self.background.render(screen)
+            return
+        screen.fill(self.game.theme.colors["background"])

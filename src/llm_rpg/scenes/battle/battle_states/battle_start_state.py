@@ -9,6 +9,7 @@ from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.scenes.state import State
 from llm_rpg.ui.components import draw_text_panel
 from llm_rpg.ui.battle_ui import advance_dots
+from llm_rpg.ui.backgrounds import build_battle_background
 from llm_rpg.systems.battle.enemy_scaling import scale_enemy
 from llm_rpg.systems.battle.enemy import Enemy
 
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 class BattleStartState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
+        self.battle_scene.background = None
         self.ready_to_start = False
         self.enemy_generation_result_queue: queue.Queue[
             tuple[Enemy, pygame.Surface] | Exception
@@ -36,6 +38,7 @@ class BattleStartState(State):
             self.ready_to_start = True
 
     def update(self, dt: float):
+        self.battle_scene.update_background(dt)
         self.animation_timer += dt
         self.dots, self.dot_timer = advance_dots(
             dots=self.dots,
@@ -57,6 +60,10 @@ class BattleStartState(State):
                     enemy, sprite = result
                     self.battle_scene.enemy = enemy
                     self.battle_scene.enemy_sprite = sprite
+                    self.battle_scene.background = build_battle_background(
+                        enemy_name=enemy.name,
+                        config=self.battle_scene.game.config.battle_background_config,
+                    )
                 self.loading_done = True
             except queue.Empty:
                 if self.animation_timer >= self.max_wait:
@@ -71,7 +78,7 @@ class BattleStartState(State):
             self.battle_scene.change_state(BattleStates.TURN)
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.battle_scene.game.theme.colors["background"])
+        self.battle_scene.render_background(screen)
         spacing = self.battle_scene.game.theme.spacing
 
         if not self.loading_done:

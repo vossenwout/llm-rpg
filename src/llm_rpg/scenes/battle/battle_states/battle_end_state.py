@@ -26,6 +26,7 @@ class BattleEndState(State):
             self.ready_to_exit = True
 
     def update(self, dt: float):
+        self.battle_scene.update_background(dt)
         if not self.ready_to_exit:
             return
 
@@ -41,7 +42,7 @@ class BattleEndState(State):
             self.battle_scene.game.change_scene(SceneTypes.GAME_OVER)
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.battle_scene.game.theme.colors["background"])
+        self.battle_scene.render_background(screen)
 
         render_stats_row(
             screen=screen,
