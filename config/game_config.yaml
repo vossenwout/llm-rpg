@@ -12,8 +12,8 @@ action_judge:
     type: "groq"
 narrator:
   llm:
-    model: "ministral-3:3b"
-    type: "ollama"
+    model: "llama-3.3-70b-versatile"
+    type: "groq"
 enemy_action:
   llm:
     model: "llama-3.3-70b-versatile"
