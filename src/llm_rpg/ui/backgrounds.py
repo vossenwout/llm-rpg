@@ -30,8 +30,8 @@ def build_battle_background(
     rng = random.Random(seed)
     effect = rng.choice(
         [
-            # DiamondBandedBackground,
-            # VCRGlitchBackground,
+            DiamondBandedBackground,
+            VCRGlitchBackground,
             PlasmaRippleBackground,
         ]
     )

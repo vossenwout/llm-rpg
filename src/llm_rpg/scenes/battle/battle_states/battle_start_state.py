@@ -111,16 +111,11 @@ class BattleStartState(State):
             )
             return
 
-        title = self.battle_scene.game.theme.fonts["medium"].render(
-            "An enemy appears", True, self.battle_scene.game.theme.colors["primary"]
-        )
-        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, spacing(8))))
-
         enemy_name = self.battle_scene.game.theme.fonts["medium"].render(
             enemy.name, True, self.battle_scene.game.theme.colors["primary"]
         )
         enemy_name_rect = enemy_name.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() // 2 - spacing(3))
+            center=(screen.get_width() // 2, spacing(15))
         )
         screen.blit(enemy_name, enemy_name_rect)
 
@@ -134,7 +129,7 @@ class BattleStartState(State):
             y=enemy_name_rect.bottom + spacing(2),
             max_width=description_max_width,
             auto_wrap=True,
-            draw_border=False,
+            draw_border=True,
         )
 
         if self.loading_error:
