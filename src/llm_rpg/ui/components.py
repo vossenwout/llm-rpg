@@ -570,6 +570,9 @@ def draw_selection_panel(
     for index, lines in enumerate(wrapped_options):
         is_selected = index == selected_index
         color = theme.colors["text_selected"] if is_selected else theme.colors["text"]
+        show_indicator = (pygame.time.get_ticks() // 400) % 2 == 0
+        option_top = current_y
+        option_height = block_sizes[index][1] if index < len(block_sizes) else 0
 
         for line_idx, line in enumerate(lines):
             text_surface = font.render(line, False, color)
@@ -582,9 +585,9 @@ def draw_selection_panel(
 
             screen.blit(text_surface, (text_x, current_y))
 
-            if is_selected and line_idx == 0:
+            if is_selected and line_idx == 0 and show_indicator:
                 arrow_x = text_x - theme.spacing(1)
-                arrow_y = current_y + text_surface.get_height() // 2
+                arrow_y = option_top + option_height // 2
                 points = [
                     (arrow_x, arrow_y),
                     (arrow_x - arrow_size, arrow_y - arrow_size // 2),
