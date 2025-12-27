@@ -1,19 +1,67 @@
-debug_mode: false
+debug_mode: true
 display:
   fullscreen: False
   windowed_scale: 3
-# outcomment if you want to use ollama
-#llm:
-#  model: "qwen3:4b"
-#  type: "ollama"
-llm:
-  model: "llama-3.3-70b-versatile"
-  type: "groq"
+battle_background:
+  base_resolution: [160, 120]
+  speed_multiplier: 1.5 
+action_judge:
+  backend: "llm"
+  llm:
+    model: "llama-3.3-70b-versatile" 
+    type: "groq"
+narrator:
+  llm:
+    model: "llama-3.3-70b-versatile"
+    type: "groq"
+enemy_action:
+  llm:
+    model: "llama-3.3-70b-versatile"
+    type: "groq"
+enemy_generation:
+  llm:
+    model: "llama-3.3-70b-versatile"
+    type: "groq"
+  character_words_path: "src/llm_rpg/assets/word_lists/characters.txt"
+  adjective_words_path: "src/llm_rpg/assets/word_lists/adjectives.txt"
+  place_words_path: "src/llm_rpg/assets/word_lists/places.txt"
+sprite_generator:
+  #type: "dummy"
+  #latency_seconds: 0.0
+  type: "sd"
+  base_model: "models/sprite/westernBeautiful_v10.safetensors"
+  lora_path: "models/sprite/earthbound_lora.safetensors"
+  lcm_lora_path: "models/sprite/LCM_LoRA_Weights_SD15.safetensors"
+  trigger_prompt: "Earthbound_enemy, neutral grey background, pixelart, drop shadow"
+  prompt_llm:
+    model: "llama-3.3-70b-versatile"
+    type: "groq"
+  prompt_template: |
+    Generate Stable Diffusion visual tags describing ONLY the physical appearance of this character.
+
+    Enemy name: {enemy_name}
+    Enemy description: {enemy_description}
+
+    Rules:
+    - Output only a comma-separated list
+    - Use at most 5 tags
+    - Tags must describe visible, physical traits only
+    - Do NOT include personality, emotions, behavior, or abstract qualities
+    - Prefer clothing, armor, body type, age, facial features, and gear
+    - Each tag should be usable directly as a Stable Diffusion prompt
+    - Describe ONLY the physical appearance of this character.
+  guidance_scale: 7
+  num_inference_steps: 40 
+  inference_height: 512
+  inference_width: 512
+  vae_path: null
+  use_lcm: false
+  negative_prompt: "ng_deepnegative_v1_75t,"
 hero:
   base_hero_stats:
     attack: 5
     defense: 5
-    focus: 10
+    focus: 20
     max_hp: 5
   stats_level_up_amount: 5
   max_items: 3
@@ -72,11 +120,14 @@ damage_calculator:
   random_factor_max: 1.05
   random_factor_min: 0.95
   llm_dmg_impact: 2
+  creativity_bonus_per_new_word: 0.1
+  creativity_penalty_per_overused_word: 0.1
+  creativity_min_new_words_for_bonus: 2
 creativity_tracker:
   word_overuse_threshold: 2
 prompts:
-  battle_ai_effect_determination: |
-    You are a video game ai that determines the effect of proposed actions in a battle
+  action_judge: |
+    You are a video game ai that determines the feasibility and potential damage of proposed actions in a battle
     between two characters.
 
     The characters are:
@@ -100,7 +151,7 @@ prompts:
     Proposed action of {attacker_name}:
     {proposed_action_attacker}
 
-    You should determine what happens next. Actions should have different effects depending on the history.
+    You should score feasibility and potential damage. Actions should have different effects depending on the history.
 
     It is infeasible for {hero_name} to use items not in his inventory.
     Supernatural moves by {hero_name} are impossible unless the items or description of {hero_name} hints at it.
@@ -108,7 +159,37 @@ prompts:
     Important: repeated actions by {attacker_name} should have reduced potential damage, look in the battle history for past actions.
     Vaguely worded actions should also have reduced potential damage as I want to promote precise or verbose actions.
 
-    I need you to output the effect of the proposed action in the following JSON format:
+    I need you to output the feasibility and potential damage of the proposed action in the following JSON format:
+
+  action_narration: |
+    You are a video game narrator that describes the result of a proposed action in a battle.
+
+    The characters are:
+    - {attacker_name}
+    - {defender_name}
+
+    {attacker_name} is attacking {defender_name}.
+
+    {attacker_name} description:
+    {attacker_description}
+
+    {defender_name} description:
+    {defender_description}
+
+    {hero_name} items in inventory:
+    {items_hero}
+
+    Battle history:
+    {battle_log_string}
+
+    Proposed action of {attacker_name}:
+    {proposed_action_attacker}
+
+    Feasibility score: {feasibility}
+    Potential damage score: {potential_damage}
+    Total damage dealt: {total_damage}
+
+    Describe the effect of the action in a single sentence. If the action was infeasible, explain why.
 
   enemy_next_action: |
     You are a video game character called {self_name} that is in a battle against an enemy called {hero_name}.
@@ -132,3 +213,18 @@ prompts:
     
     Describe your next action very briefly in third person like a narrator would.
     Just describe what you want to do not the effects or results of the action.
+
+  enemy_generation: |
+    You are generating a single enemy for a turn-based RPG battle.
+    The enemy must be clearly related to at least one of the following:
+    - Adjective: "{enemy_adjective}"
+    - Noun: "{enemy_character}"
+    - Place/setting: "{enemy_place}"
+    
+    Create a coherent, memorable enemy name and a short description:
+    Style Guidelines: 
+      - Fits a quirky SNES-era RPG (EarthBound, Dragon Quest–like)
+      - Quirkiness should come from personality, behavior, or theme — not random word combinations
+      - Simple and memorable is better than complex and obscure
+
+    Output only valid JSON matching this schema:

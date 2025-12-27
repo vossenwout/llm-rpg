@@ -1,4 +1,6 @@
 from functools import cached_property
+from pathlib import Path
+from typing import Optional
 import yaml
 
 from llm_rpg.objects.character import Stats
@@ -8,6 +10,16 @@ from llm_rpg.objects.item import (
     FocusStartingItem,
 )
 from llm_rpg.systems.battle.damage_calculator import DamageCalculationConfig
+from llm_rpg.systems.battle.action_judges import (
+    ActionJudge,
+    LLMActionJudge,
+    TransformersActionJudge,
+)
+from llm_rpg.systems.battle.action_narrators import ActionNarrator, LLMActionNarrator
+from llm_rpg.systems.battle.enemy_action_generators import (
+    EnemyActionGenerator,
+    LLMEnemyActionGenerator,
+)
 from llm_rpg.systems.battle.enemy_scaling import (
     EnemyArchetypesLevelingAttributeProbs,
     LevelScaling,
@@ -16,31 +28,173 @@ from llm_rpg.systems.battle.enemy_scaling import (
 from llm_rpg.systems.hero.hero import HeroClass
 from llm_rpg.llm.llm import LLM, OllamaLLM, GroqLLM
 from llm_rpg.llm.llm_cost_tracker import LLMCostTracker
+from llm_rpg.sprite_generator.sprite_generator import (
+    DummySpriteGenerator,
+    SDSpriteGenerator,
+    SpriteGenerator,
+)
+from llm_rpg.ui.backgrounds import BattleBackgroundConfig
 
 
 class GameConfig:
     def __init__(self, config_path: str):
-        with open(config_path, "r") as file:
+        self.config_path = Path(config_path).resolve()
+        self.config_dir = self.config_path.parent
+        self.game_root = self.config_dir.parent
+        with open(self.config_path, "r") as file:
             self.game_config = yaml.safe_load(file)
+
+    def _build_llm(self, llm_config: dict) -> LLM:
+        if llm_config["type"] == "ollama":
+            return OllamaLLM(
+                llm_cost_tracker=LLMCostTracker(),
+                model=llm_config["model"],
+            )
+        if llm_config["type"] == "groq":
+            return GroqLLM(
+                llm_cost_tracker=LLMCostTracker(),
+                model=llm_config["model"],
+            )
+        raise ValueError(f"Unsupported LLM type: {llm_config['type']}")
+
+    def _is_llm_block(self, block: dict) -> bool:
+        return (
+            "type" in block
+            and "model" in block
+            and block["type"]
+            in [
+                "ollama",
+                "groq",
+            ]
+        )
+
+    def _extract_llm_block(self, block: dict) -> dict:
+        if "llm" in block:
+            return block["llm"]
+        return block
+
+    def _get_llm_config(self, section_key: str) -> dict:
+        if section_key not in self.game_config:
+            raise ValueError(f"Missing required config section '{section_key}'")
+        section = self.game_config[section_key]
+        llm_block = self._extract_llm_block(section)
+        if not self._is_llm_block(llm_block):
+            raise ValueError(
+                f"Invalid LLM config under '{section_key}'. Expected type/model."
+            )
+        return llm_block
+
+    def _resolve_path(self, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        path = Path(value)
+        if path.is_absolute():
+            return str(path)
+        return str((self.game_root / path).resolve())
+
+    def _load_word_list(self, path: str) -> list[str]:
+        with open(path, "r") as file:
+            lines = [line.strip() for line in file.readlines()]
+        return [line for line in lines if line and not line.startswith("#")]
 
     @cached_property
     def debug_mode(self) -> bool:
         return self.game_config["debug_mode"]
 
     @cached_property
-    def llm(self) -> LLM:
-        if self.game_config["llm"]["type"] == "ollama":
-            return OllamaLLM(
-                llm_cost_tracker=LLMCostTracker(),
-                model=self.game_config["llm"]["model"],
+    def action_judge(self) -> ActionJudge:
+        section = self.game_config.get("action_judge")
+        if section is None:
+            raise ValueError("Missing required config section 'action_judge'")
+        backend = section.get("backend")
+        if backend is None:
+            if self._is_llm_block(section) or "llm" in section:
+                backend = "llm"
+            else:
+                backend = section.get("type")
+        if backend == "llm":
+            llm_config = self._extract_llm_block(section)
+            if not self._is_llm_block(llm_config):
+                raise ValueError("action_judge.llm must include type/model")
+            llm = self._build_llm(llm_config)
+            return LLMActionJudge(
+                llm=llm, prompt=self.action_judge_prompt, debug=self.debug_mode
             )
-        elif self.game_config["llm"]["type"] == "groq":
-            return GroqLLM(
-                llm_cost_tracker=LLMCostTracker(),
-                model=self.game_config["llm"]["model"],
+        if backend == "transformers":
+            model_name = section.get("model")
+            if model_name is None:
+                raise ValueError("action_judge.model is required for transformers")
+            device = section.get("device", "cpu")
+            return TransformersActionJudge(model_name=model_name, device=device)
+        raise ValueError(f"Unsupported action_judge backend: {backend}")
+
+    @cached_property
+    def action_narrator(self) -> ActionNarrator:
+        llm_config = self._get_llm_config("narrator")
+        llm = self._build_llm(llm_config)
+        return LLMActionNarrator(
+            llm=llm, prompt=self.action_narration_prompt, debug=self.debug_mode
+        )
+
+    @cached_property
+    def enemy_action_generator(self) -> EnemyActionGenerator:
+        llm_config = self._get_llm_config("enemy_action")
+        llm = self._build_llm(llm_config)
+        return LLMEnemyActionGenerator(
+            llm=llm, prompt=self.enemy_next_action_prompt, debug=self.debug_mode
+        )
+
+    @cached_property
+    def enemy_generation_llm(self) -> LLM:
+        llm_config = self._get_llm_config("enemy_generation")
+        return self._build_llm(llm_config)
+
+    def _get_enemy_generation_words(self, key: str) -> list[str]:
+        section = self.game_config.get("enemy_generation", {})
+        if not isinstance(section, dict):
+            raise ValueError("enemy_generation must be a dict")
+        words_path = section.get(key)
+        if not isinstance(words_path, str) or not words_path.strip():
+            raise ValueError(f"enemy_generation.{key} must be set")
+        resolved_path = self._resolve_path(words_path)
+        if resolved_path is None:
+            raise ValueError(f"enemy_generation.{key} must be set")
+        words = self._load_word_list(resolved_path)
+        words = [word for word in words if word]
+        if not words:
+            raise ValueError(f"enemy_generation.{key} must include at least one word")
+        return words
+
+    @cached_property
+    def enemy_generation_characters(self) -> list[str]:
+        return self._get_enemy_generation_words("character_words_path")
+
+    @cached_property
+    def enemy_generation_adjectives(self) -> list[str]:
+        return self._get_enemy_generation_words("adjective_words_path")
+
+    @cached_property
+    def enemy_generation_places(self) -> list[str]:
+        return self._get_enemy_generation_words("place_words_path")
+
+    @cached_property
+    def battle_background_config(self) -> BattleBackgroundConfig:
+        section = self.game_config.get("battle_background", {})
+        base_resolution = section.get("base_resolution", [160, 120])
+        if (
+            not isinstance(base_resolution, list)
+            or len(base_resolution) != 2
+            or not all(isinstance(value, int) for value in base_resolution)
+        ):
+            raise ValueError(
+                "battle_background.base_resolution must be [width, height]"
             )
-        else:
-            raise ValueError(f"Unsupported LLM type: {self.game_config['llm']['type']}")
+        speed_multiplier = float(section.get("speed_multiplier", 1.0))
+        return BattleBackgroundConfig(
+            base_width=base_resolution[0],
+            base_height=base_resolution[1],
+            speed_multiplier=speed_multiplier,
+        )
 
     @cached_property
     def hero_base_stats(self) -> Stats:
@@ -167,6 +321,15 @@ class GameConfig:
                 "random_factor_min"
             ],
             llm_dmg_impact=self.game_config["damage_calculator"]["llm_dmg_impact"],
+            creativity_bonus_per_new_word=self.game_config["damage_calculator"][
+                "creativity_bonus_per_new_word"
+            ],
+            creativity_penalty_per_overused_word=self.game_config["damage_calculator"][
+                "creativity_penalty_per_overused_word"
+            ],
+            creativity_min_new_words_for_bonus=self.game_config["damage_calculator"][
+                "creativity_min_new_words_for_bonus"
+            ],
         )
 
     @cached_property
@@ -182,12 +345,79 @@ class GameConfig:
         return self.game_config["hero"]["max_items"]
 
     @cached_property
-    def battle_ai_effect_determination_prompt(self) -> str:
-        return self.game_config["prompts"]["battle_ai_effect_determination"]
-
-    @cached_property
     def enemy_next_action_prompt(self) -> str:
         return self.game_config["prompts"]["enemy_next_action"]
+
+    @cached_property
+    def enemy_generation_prompt(self) -> str:
+        return self.game_config["prompts"]["enemy_generation"]
+
+    @cached_property
+    def sprite_generator(self) -> SpriteGenerator:
+        section = self.game_config.get("sprite_generator")
+        if section is None or not isinstance(section, dict):
+            raise ValueError("sprite_generator not set in config")
+        generator_type = section.get("type", "dummy")
+        if generator_type == "dummy":
+            latency_seconds = float(section.get("latency_seconds", 1.0))
+            return DummySpriteGenerator(latency_seconds=latency_seconds)
+        if generator_type == "sd":
+            base_model = section.get("base_model")
+            lora_path = section.get("lora_path")
+            trigger_prompt = section.get("trigger_prompt")
+            if not base_model or not lora_path or not trigger_prompt:
+                raise ValueError(
+                    "sprite_generator.sd requires base_model, lora_path, trigger_prompt"
+                )
+            llm_block = section.get("prompt_llm")
+            if not isinstance(llm_block, dict) or not self._is_llm_block(llm_block):
+                raise ValueError("sprite_generator.prompt_llm must include type/model")
+            prompt_llm = self._build_llm(llm_block)
+            prompt_template = section.get("prompt_template")
+            if prompt_template is None:
+                raise ValueError("sprite_generator.prompt_template is required")
+            kwargs: dict[str, object] = {
+                "base_model": self._resolve_path(base_model),
+                "lora_path": self._resolve_path(lora_path),
+                "trigger_prompt": trigger_prompt,
+                "prompt_llm": prompt_llm,
+                "prompt_template": prompt_template,
+                "debug": self.debug_mode,
+            }
+            if "lcm_lora_path" in section:
+                kwargs["lcm_lora_path"] = self._resolve_path(
+                    section.get("lcm_lora_path")
+                )
+            if "guidance_scale" in section:
+                kwargs["guidance_scale"] = float(section.get("guidance_scale"))
+            if "num_inference_steps" in section:
+                kwargs["num_inference_steps"] = int(section.get("num_inference_steps"))
+            if "inference_height" in section:
+                kwargs["inference_height"] = int(section.get("inference_height"))
+            if "inference_width" in section:
+                kwargs["inference_width"] = int(section.get("inference_width"))
+            if "vae_path" in section:
+                kwargs["vae_path"] = self._resolve_path(section.get("vae_path"))
+            if "use_lcm" in section:
+                kwargs["use_lcm"] = bool(section.get("use_lcm"))
+            if "negative_prompt" in section:
+                kwargs["negative_prompt"] = section.get("negative_prompt")
+            return SDSpriteGenerator(**kwargs)
+        raise ValueError(f"Unsupported sprite_generator type: {generator_type}")
+
+    @cached_property
+    def action_judge_prompt(self) -> str:
+        prompts = self.game_config["prompts"]
+        if "action_judge" in prompts:
+            return prompts["action_judge"]
+        return prompts["battle_ai_effect_determination"]
+
+    @cached_property
+    def action_narration_prompt(self) -> str:
+        prompts = self.game_config["prompts"]
+        if "action_narration" in prompts:
+            return prompts["action_narration"]
+        raise ValueError("prompts.action_narration is required in config")
 
     @cached_property
     def display_fullscreen(self) -> bool:

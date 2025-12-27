@@ -3,11 +3,12 @@ import pygame
 from llm_rpg.game.game_config import GameConfig
 from llm_rpg.scenes.factory import SceneFactory
 from llm_rpg.systems.hero.hero import Hero
+from llm_rpg.llm.llm import LLM
 
 from typing import TYPE_CHECKING
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.utils.theme import Theme
-from llm_rpg.sprite_generator.sprite_generator import DummySpriteGenerator
+from llm_rpg.systems.generation.enemy_generator import EnemyGenerator
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.scene import Scene
@@ -19,7 +20,9 @@ class Game:
 
     def __init__(self, config: GameConfig):
         self.config = config
-        self.llm = config.llm
+        self.action_judge = config.action_judge
+        self.action_narrator = config.action_narrator
+        self.enemy_action_generator = config.enemy_action_generator
         self.is_running = True
         self.hero = Hero(
             name="",
@@ -29,7 +32,17 @@ class Game:
             base_stats=self.config.hero_base_stats,
             max_items=self.config.hero_max_items,
         )
-        self.sprite_generator = DummySpriteGenerator(latency_seconds=1.0)
+        self.enemy_generator = EnemyGenerator(
+            llm=self.config.enemy_generation_llm,
+            prompt=self.config.enemy_generation_prompt,
+            enemy_action_generator=self.enemy_action_generator,
+            base_stats=self.config.base_enemy_stats,
+            sprite_generator=self.config.sprite_generator,
+            characters=self.config.enemy_generation_characters,
+            adjectives=self.config.enemy_generation_adjectives,
+            places=self.config.enemy_generation_places,
+            debug=self.config.debug_mode,
+        )
         # pygame initialization early so surfaces can convert properly
         pygame.init()
         pygame.display.set_caption("LLM RPG")
@@ -46,6 +59,7 @@ class Game:
         self.scene_factory = SceneFactory(self)
         self.current_scene: Scene = self.scene_factory.get_initial_scene()
         self.battles_won = 0
+        self.llms = self._get_llms()
 
     def _setup_fullscreen(self):
         display_info = pygame.display.Info()
@@ -78,6 +92,22 @@ class Game:
         else:
             raise ValueError(f"Tried to change to invalid scene: {scene_type}")
 
+    def _get_llms(self) -> list[LLM]:
+        llms = []
+        for provider in [
+            self.action_judge,
+            self.action_narrator,
+            self.enemy_action_generator,
+            self.enemy_generator,
+        ]:
+            llm = getattr(provider, "llm", None)
+            if llm is not None:
+                llms.append(llm)
+        return llms
+
+    def _get_total_llm_cost(self) -> float:
+        return sum(llm.llm_cost_tracker.total_cost for llm in self.llms)
+
     def run(self):
         while self.is_running:
             dt = self.clock.tick(60) / 1000.0
@@ -93,4 +123,4 @@ class Game:
             self.screen.blit(scaled, (0, 0))
             pygame.display.flip()
 
-        print(f"Total llm cost $: {self.llm.llm_cost_tracker.total_cost}")
+        print(f"Total llm cost $: {self._get_total_llm_cost()}")

@@ -3,7 +3,11 @@ from __future__ import annotations
 import pygame
 from llm_rpg.scenes.main_menu.main_menu_states.main_menu_states import MainMenuStates
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_text_panel
+from llm_rpg.ui.components import (
+    draw_text_panel,
+    draw_checkerboard_background,
+    render_text_with_shadow,
+)
 
 from typing import TYPE_CHECKING
 
@@ -26,8 +30,9 @@ class MainMenuInfoState(State):
             self.scene.change_state(MainMenuStates.NAVIGATION)
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.scene.game.theme.colors["background"])
-        spacing = self.scene.game.theme.spacing
+        theme = self.scene.game.theme
+        draw_checkerboard_background(screen, theme)
+        spacing = theme.spacing
 
         info_lines = [
             "Create a character and fight against increasingly difficult enemies.",
@@ -44,18 +49,19 @@ class MainMenuInfoState(State):
         draw_text_panel(
             screen,
             info_lines,
-            self.scene.game.theme.fonts["small"],
-            self.scene.game.theme,
-            text_color=self.scene.game.theme.colors["text"],
+            theme.fonts["small"],
+            theme,
+            text_color=theme.colors["text"],
             align="left",
             max_width=panel_width,
             auto_wrap=True,
         )
 
-        back_text = self.scene.game.theme.fonts["small"].render(
-            "Press ENTER to go back",
-            True,
-            self.scene.game.theme.colors["text_hint"],
+        back_text = render_text_with_shadow(
+            font=theme.fonts["small"],
+            text="Press ENTER to go back",
+            color=theme.colors["text_hint"],
+            shadow_color=theme.colors["text_hint_shadow"],
         )
         back_rect = back_text.get_rect(
             center=(screen.get_width() // 2, screen.get_height() - spacing(2))

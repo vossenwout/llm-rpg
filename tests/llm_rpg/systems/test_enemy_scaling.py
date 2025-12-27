@@ -25,8 +25,8 @@ class _Config:
         self.enemy_stats_level_up_amount = 5
 
 
-class _LLMStub:
-    def generate_completion(self, prompt: str) -> str:
+class _EnemyActionGeneratorStub:
+    def generate_next_action(self, enemy, hero, battle_log) -> str:
         return ""
 
 
@@ -37,9 +37,8 @@ def test_scale_enemy_levels_and_applies_stat_growth(monkeypatch):
         description="",
         level=1,
         base_stats=Stats(attack=2, defense=2, focus=0, max_hp=5),
-        llm=_LLMStub(),
         archetype=EnemyArchetypes.ATTACKER,
-        enemy_next_action_prompt="",
+        enemy_action_generator=_EnemyActionGeneratorStub(),
     )
 
     monkeypatch.setattr(random, "choices", lambda opts, probs: [opts[0]])

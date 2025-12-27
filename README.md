@@ -39,9 +39,12 @@ LLM-RPG is intended to be a role-playing game that leverages large language mode
    ```plaintext
    GROQ_API_KEY=your_api_key_here
    ```
-
 You can get a Groq API key from [here](https://groq.com/). This gives you free tokens each day.
 
+4. Create `/models/sprite` dir then download and place the following models:
+- models/sprites/earthbound_lora.safetensors: [link](https://civitai.com/models/167491)
+- models/sprites/westernBeautiful_v10.safetensors [link](https://civitai.com/models/264807?modelVersionId=298593)
+- models/sprite/LCM_LoRA_Weights_SD15.safetensors: [link](https://civitai.com/models/195519?modelVersionId=424706)
 ## Usage
 
 To start the game, run the following command:
@@ -60,15 +63,22 @@ Using local llms with ollama:
 
 3. Start ollama
 
-4. In game_config.yaml, uncomment the ollama model section and comment the groq model. Remember to select the correct model name you installed.
+4. In game_config.yaml, set the models under `action_judge`, `narrator`, and `enemy_action` to the ollama model you installed.
 
 ```bash
-llm:
-  model: "qwen3:4b"
-  type: "ollama"
-#llm:
-#  model: "llama-3.3-70b-versatile"
-#  type: "groq"
+action_judge:
+  backend: "llm"
+  llm:
+    model: "qwen3:4b"
+    type: "ollama"
+narrator:
+  llm:
+    model: "qwen3:4b"
+    type: "ollama"
+enemy_action:
+  llm:
+    model: "qwen3:4b"
+    type: "ollama"
 ```
 
 5. Run the game

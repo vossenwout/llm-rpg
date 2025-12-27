@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING
 
 from llm_rpg.scenes.scene import SceneTypes
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_selection_panel, draw_text_panel
+from llm_rpg.ui.components import (
+    draw_selection_panel,
+    draw_text_panel,
+    draw_checkerboard_background,
+)
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.hero_creation.hero_creation_scene import HeroCreationScene
@@ -53,13 +57,16 @@ class HeroCreationChooseClassState(State):
     def render(self, screen: pygame.Surface):
         theme = self.scene.game.theme
         spacing = theme.spacing
-        screen.fill(theme.colors["background"])
+        draw_checkerboard_background(screen, theme)
 
-        title_text = theme.fonts["medium"].render(
-            "Choose Your Class", True, theme.colors["primary"]
+        draw_text_panel(
+            screen=screen,
+            lines="Choose Your Class",
+            font=theme.fonts["medium"],
+            theme=theme,
+            y=spacing(5),
+            text_color=theme.colors["primary"],
         )
-        title_rect = title_text.get_rect(center=(screen.get_width() // 2, spacing(8)))
-        screen.blit(title_text, title_rect)
 
         options = [hero_class.class_name for hero_class in self.hero_classes]
 
@@ -92,16 +99,6 @@ class HeroCreationChooseClassState(State):
             align="left",
             auto_wrap=True,
         )
-
-        instruction_surface = theme.fonts["small"].render(
-            "Press ENTER to confirm",
-            True,
-            theme.colors["text_hint"],
-        )
-        instruction_rect = instruction_surface.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - spacing(2))
-        )
-        screen.blit(instruction_surface, instruction_rect)
 
     def _build_info_lines(self, hero_class: HeroClass) -> list[str]:
         starting_item = hero_class.starting_item

@@ -39,7 +39,15 @@ class GroqLLM(LLM):
             "llama-3.3-70b-versatile": {
                 "input_token_price": 0.59 / 1000000,
                 "output_token_price": 0.79 / 1000000,
-            }
+            },
+            "openai/gpt-oss-20b": {
+                "input_token_price": 0.075 / 1000000,
+                "output_token_price": 0.30 / 1000000,
+            },
+            "openai/gpt-oss-120b": {
+                "input_token_price": 0.15 / 1000000,
+                "output_token_price": 0.60 / 1000000,
+            },
         }
         self.llm_cost_tracker = llm_cost_tracker
 

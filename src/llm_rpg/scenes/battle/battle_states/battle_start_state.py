@@ -9,6 +9,9 @@ from llm_rpg.scenes.battle.battle_states.battle_states import BattleStates
 from llm_rpg.scenes.state import State
 from llm_rpg.ui.components import draw_text_panel
 from llm_rpg.ui.battle_ui import advance_dots
+from llm_rpg.ui.backgrounds import build_battle_background
+from llm_rpg.systems.battle.enemy_scaling import scale_enemy
+from llm_rpg.systems.battle.enemy import Enemy
 
 if TYPE_CHECKING:
     from llm_rpg.scenes.battle.battle_scene import BattleScene
@@ -17,16 +20,17 @@ if TYPE_CHECKING:
 class BattleStartState(State):
     def __init__(self, battle_scene: BattleScene):
         self.battle_scene = battle_scene
+        self.battle_scene.background = None
         self.ready_to_start = False
-        self.sprite_queue: queue.Queue[pygame.Surface | Exception] = queue.Queue(
-            maxsize=1
-        )
+        self.enemy_generation_result_queue: queue.Queue[
+            tuple[Enemy, pygame.Surface] | Exception
+        ] = queue.Queue(maxsize=1)
         self.loading_started = False
         self.loading_done = False
         self.loading_error: str | None = None
         self.dots = 0
         self.dot_timer = 0.0
-        self.max_wait = 15.0
+        self.max_wait = 120.0
         self.animation_timer = 0.0
 
     def handle_input(self, event: pygame.event.Event):
@@ -34,6 +38,7 @@ class BattleStartState(State):
             self.ready_to_start = True
 
     def update(self, dt: float):
+        self.battle_scene.update_background(dt)
         self.animation_timer += dt
         self.dots, self.dot_timer = advance_dots(
             dots=self.dots,
@@ -43,27 +48,37 @@ class BattleStartState(State):
 
         if not self.loading_started:
             self.loading_started = True
-            thread = threading.Thread(target=self._generate_sprite, daemon=True)
+            thread = threading.Thread(target=self._generate_enemy, daemon=True)
             thread.start()
 
         if not self.loading_done:
             try:
-                result = self.sprite_queue.get_nowait()
+                result = self.enemy_generation_result_queue.get_nowait()
                 if isinstance(result, Exception):
                     self.loading_error = str(result)
                 else:
-                    self.battle_scene.enemy_sprite = result
+                    enemy, sprite = result
+                    self.battle_scene.enemy = enemy
+                    self.battle_scene.enemy_sprite = sprite
+                    self.battle_scene.background = build_battle_background(
+                        enemy_name=enemy.name,
+                        config=self.battle_scene.game.config.battle_background_config,
+                    )
                 self.loading_done = True
             except queue.Empty:
                 if self.animation_timer >= self.max_wait:
                     self.loading_error = "Sprite generation timed out"
                     self.loading_done = True
 
-        if self.loading_done and self.ready_to_start:
+        if (
+            self.loading_done
+            and self.ready_to_start
+            and self.battle_scene.enemy is not None
+        ):
             self.battle_scene.change_state(BattleStates.TURN)
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.battle_scene.game.theme.colors["background"])
+        self.battle_scene.render_background(screen)
         spacing = self.battle_scene.game.theme.spacing
 
         if not self.loading_done:
@@ -82,17 +97,25 @@ class BattleStartState(State):
             return
 
         enemy = self.battle_scene.enemy
-
-        title = self.battle_scene.game.theme.fonts["medium"].render(
-            "An enemy appears", True, self.battle_scene.game.theme.colors["primary"]
-        )
-        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, spacing(8))))
+        if enemy is None:
+            prompt_surface = self.battle_scene.game.theme.fonts["small"].render(
+                "Enemy generation failed",
+                True,
+                (255, 80, 80),
+            )
+            screen.blit(
+                prompt_surface,
+                prompt_surface.get_rect(
+                    center=(screen.get_width() // 2, screen.get_height() - spacing(6))
+                ),
+            )
+            return
 
         enemy_name = self.battle_scene.game.theme.fonts["medium"].render(
             enemy.name, True, self.battle_scene.game.theme.colors["primary"]
         )
         enemy_name_rect = enemy_name.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() // 2 - spacing(3))
+            center=(screen.get_width() // 2, spacing(15))
         )
         screen.blit(enemy_name, enemy_name_rect)
 
@@ -106,7 +129,7 @@ class BattleStartState(State):
             y=enemy_name_rect.bottom + spacing(2),
             max_width=description_max_width,
             auto_wrap=True,
-            draw_border=False,
+            draw_border=True,
         )
 
         if self.loading_error:
@@ -115,25 +138,22 @@ class BattleStartState(State):
                 True,
                 (255, 80, 80),
             )
-        else:
-            prompt_surface = self.battle_scene.game.theme.fonts["small"].render(
-                "Press ENTER to start battle",
-                True,
-                self.battle_scene.game.theme.colors["text_hint"],
+            screen.blit(
+                prompt_surface,
+                prompt_surface.get_rect(
+                    center=(screen.get_width() // 2, screen.get_height() - spacing(6))
+                ),
             )
 
-        screen.blit(
-            prompt_surface,
-            prompt_surface.get_rect(
-                center=(screen.get_width() // 2, screen.get_height() - spacing(6))
-            ),
-        )
-
-    def _generate_sprite(self):
+    def _generate_enemy(self):
         try:
-            sprite = self.battle_scene.game.sprite_generator.generate_sprite(
-                self.battle_scene.enemy.name
+            enemy, sprite = self.battle_scene.game.enemy_generator.generate_enemy()
+            scale_enemy(
+                enemy=enemy,
+                battles_won=self.battle_scene.game.battles_won,
+                game_config=self.battle_scene.game.config,
+                debug=self.battle_scene.game.config.debug_mode,
             )
-            self.sprite_queue.put(sprite)
+            self.enemy_generation_result_queue.put((enemy, sprite))
         except Exception as exc:
-            self.sprite_queue.put(exc)
+            self.enemy_generation_result_queue.put(exc)

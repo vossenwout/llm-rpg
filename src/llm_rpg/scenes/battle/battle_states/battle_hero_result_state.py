@@ -9,7 +9,6 @@ from llm_rpg.ui.battle_ui import (
     render_event_card,
     render_event_ribbon,
     render_stats_row,
-    render_items_panel,
     render_enemy_sprite,
 )
 
@@ -49,10 +48,11 @@ class BattleHeroResultState(State):
                 self.battle_scene.change_state(BattleStates.END)
 
     def update(self, dt: float):
+        self.battle_scene.update_background(dt)
         return
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.battle_scene.game.theme.colors["background"])
+        self.battle_scene.render_background(screen)
         render_enemy_sprite(
             screen=screen,
             theme=self.battle_scene.game.theme,
@@ -63,12 +63,6 @@ class BattleHeroResultState(State):
             theme=self.battle_scene.game.theme,
             hero=self.battle_scene.hero,
             enemy=self.battle_scene.enemy,
-        )
-        render_items_panel(
-            screen=screen,
-            theme=self.battle_scene.game.theme,
-            hero=self.battle_scene.hero,
-            proc_impacts=self._build_proc_impacts(),
         )
         if self.event:
             card_rect = render_event_card(

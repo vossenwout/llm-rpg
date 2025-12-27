@@ -217,55 +217,6 @@ class HeartTransplant(Item):
         return current_max_hp + 10
 
 
-# BONUS DAMAGE MULTIPLIERS (should encourage specific playstyles)
-
-
-class PoetryBook(Item):
-    def __init__(self):
-        super().__init__(
-            name="Poetry Book",
-            description="A book of poetry. + 5% damage for each new word in action that has not been used before in the current battle. However, also -5% damage for each word used more than twice.",
-            item_type=ItemType.ACCESSORY,
-            rarity=Rarity.UNCOMMON,
-        )
-
-    def get_bonus_multipliers(
-        self,
-        n_new_words_in_action: int,
-        n_overused_words_in_action: int,
-        answer_speed_s: float,
-    ) -> list[BonusMultiplier]:
-        # TODO don't return a bonus if there are no new words in action
-        bonus_multipliers = []
-        if n_new_words_in_action > 0:
-            bonus_multipliers.append(
-                BonusMultiplier(
-                    item_name=self.name,
-                    boost_name="New word bonus",
-                    multiplier=0.05 * n_new_words_in_action,
-                    is_procced=True,
-                    proc_reason=ProcReason(
-                        proc_condition=ProcCondition.N_NEW_WORDS_IN_ACTION,
-                        condition_value=n_new_words_in_action,
-                    ),
-                )
-            )
-        if n_overused_words_in_action > 0:
-            bonus_multipliers.append(
-                BonusMultiplier(
-                    item_name=self.name,
-                    boost_name="Overused word penalty",
-                    multiplier=-0.05 * n_overused_words_in_action,
-                    is_procced=True,
-                    proc_reason=ProcReason(
-                        proc_condition=ProcCondition.N_OVERUSED_WORDS_IN_ACTION,
-                        condition_value=n_overused_words_in_action,
-                    ),
-                )
-            )
-        return bonus_multipliers
-
-
 class AdrenalinePump(Item):
     def __init__(self):
         super().__init__(
@@ -304,6 +255,5 @@ ALL_ITEMS: List[Item] = [
     TurtleShell(),
     AdderallBox(),
     HeartTransplant(),
-    PoetryBook(),
     AdrenalinePump(),
 ]

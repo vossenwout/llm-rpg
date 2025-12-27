@@ -3,6 +3,186 @@ import pygame
 from typing import Tuple, List, Optional
 from llm_rpg.utils.theme import Theme
 
+PANEL_BORDER_TILE_SIZE = 8
+
+
+def _first_opaque_x(surface: pygame.Surface, y: int, tile_size: int) -> int:
+    for x in range(tile_size):
+        if surface.get_at((x, y)).a > 0:
+            return x
+    return tile_size
+
+
+def _last_opaque_x(surface: pygame.Surface, y: int, tile_size: int) -> int:
+    for x in range(tile_size - 1, -1, -1):
+        if surface.get_at((x, y)).a > 0:
+            return x
+    return -1
+
+
+def _get_corner_cutoffs(
+    border_surface: pygame.Surface, tile_size: int
+) -> tuple[list[int], list[int], list[int], list[int]]:
+    tiles = _get_nine_slice_tiles(border_surface, tile_size)
+    top_left, _, top_right, _, _, _, bottom_left, _, bottom_right = tiles
+
+    top_left_cut = [_first_opaque_x(top_left, y, tile_size) for y in range(tile_size)]
+    top_right_cut = [_last_opaque_x(top_right, y, tile_size) for y in range(tile_size)]
+    bottom_left_cut = [
+        _first_opaque_x(bottom_left, y, tile_size) for y in range(tile_size)
+    ]
+    bottom_right_cut = [
+        _last_opaque_x(bottom_right, y, tile_size) for y in range(tile_size)
+    ]
+
+    return (
+        top_left_cut,
+        top_right_cut,
+        bottom_left_cut,
+        bottom_right_cut,
+    )
+
+
+def _apply_corner_cutouts(
+    surface: pygame.Surface,
+    cutoffs: tuple[list[int], list[int], list[int], list[int]],
+    tile_size: int,
+) -> None:
+    width, height = surface.get_size()
+    top_left_cut, top_right_cut, bottom_left_cut, bottom_right_cut = cutoffs
+    right_x0 = width - tile_size
+    bottom_y0 = height - tile_size
+
+    for y in range(tile_size):
+        tl_cut = top_left_cut[y]
+        for x in range(tl_cut):
+            surface.set_at((x, y), (0, 0, 0, 0))
+
+        tr_cut = top_right_cut[y]
+        if tr_cut == -1:
+            start = right_x0
+        else:
+            start = right_x0 + tr_cut + 1
+        for x in range(start, right_x0 + tile_size):
+            surface.set_at((x, y), (0, 0, 0, 0))
+
+        bl_cut = bottom_left_cut[y]
+        for x in range(bl_cut):
+            surface.set_at((x, bottom_y0 + y), (0, 0, 0, 0))
+
+        br_cut = bottom_right_cut[y]
+        if br_cut == -1:
+            start = right_x0
+        else:
+            start = right_x0 + br_cut + 1
+        for x in range(start, right_x0 + tile_size):
+            surface.set_at((x, bottom_y0 + y), (0, 0, 0, 0))
+
+
+def _get_nine_slice_tiles(
+    surface: pygame.Surface, tile_size: int
+) -> tuple[pygame.Surface, ...]:
+    tiles = []
+    for row in range(3):
+        for col in range(3):
+            rect = pygame.Rect(col * tile_size, row * tile_size, tile_size, tile_size)
+            tiles.append(surface.subsurface(rect))
+    return tuple(tiles)
+
+
+def _blit_tiled_horizontal(
+    screen: pygame.Surface,
+    tile: pygame.Surface,
+    x: int,
+    y: int,
+    width: int,
+) -> None:
+    tile_w = tile.get_width()
+    tile_h = tile.get_height()
+    end_x = x + width
+    current_x = x
+    while current_x < end_x:
+        remaining = end_x - current_x
+        if remaining >= tile_w:
+            screen.blit(tile, (current_x, y))
+        else:
+            screen.blit(tile, (current_x, y), area=pygame.Rect(0, 0, remaining, tile_h))
+        current_x += tile_w
+
+
+def _blit_tiled_vertical(
+    screen: pygame.Surface,
+    tile: pygame.Surface,
+    x: int,
+    y: int,
+    height: int,
+) -> None:
+    tile_w = tile.get_width()
+    tile_h = tile.get_height()
+    end_y = y + height
+    current_y = y
+    while current_y < end_y:
+        remaining = end_y - current_y
+        if remaining >= tile_h:
+            screen.blit(tile, (x, current_y))
+        else:
+            screen.blit(tile, (x, current_y), area=pygame.Rect(0, 0, tile_w, remaining))
+        current_y += tile_h
+
+
+def _draw_nine_slice_panel(
+    screen: pygame.Surface,
+    rect: pygame.Rect,
+    border_surface: pygame.Surface,
+    tile_size: int,
+    fill_color: Tuple[int, int, int],
+) -> None:
+    tiles = _get_nine_slice_tiles(border_surface, tile_size)
+    top_left, top, top_right, left, _, right, bottom_left, bottom, bottom_right = tiles
+
+    fill_surface = pygame.Surface(rect.size, pygame.SRCALPHA)
+    fill_surface.fill(fill_color)
+    cutoffs = _get_corner_cutoffs(border_surface, tile_size)
+    _apply_corner_cutouts(fill_surface, cutoffs, tile_size)
+    screen.blit(fill_surface, rect.topleft)
+
+    screen.blit(top_left, rect.topleft)
+    screen.blit(top_right, (rect.right - tile_size, rect.top))
+    screen.blit(bottom_left, (rect.left, rect.bottom - tile_size))
+    screen.blit(bottom_right, (rect.right - tile_size, rect.bottom - tile_size))
+
+    edge_width = rect.width - tile_size * 2
+    edge_height = rect.height - tile_size * 2
+    if edge_width > 0:
+        _blit_tiled_horizontal(screen, top, rect.left + tile_size, rect.top, edge_width)
+        _blit_tiled_horizontal(
+            screen,
+            bottom,
+            rect.left + tile_size,
+            rect.bottom - tile_size,
+            edge_width,
+        )
+    if edge_height > 0:
+        _blit_tiled_vertical(screen, left, rect.left, rect.top + tile_size, edge_height)
+        _blit_tiled_vertical(
+            screen,
+            right,
+            rect.right - tile_size,
+            rect.top + tile_size,
+            edge_height,
+        )
+
+
+def draw_checkerboard_background(screen: pygame.Surface, theme: Theme) -> None:
+    tile = theme.checkerboard_background
+    tile_width = tile.get_width()
+    tile_height = tile.get_height()
+    screen_width = screen.get_width()
+    screen_height = screen.get_height()
+    for y in range(0, screen_height, tile_height):
+        for x in range(0, screen_width, tile_width):
+            screen.blit(tile, (x, y))
+
 
 @dataclass
 class PagedTextState:
@@ -40,10 +220,26 @@ def draw_panel(
     draw_border: bool = True,
 ):
     base_rect = pygame.Rect(rect)
-    outer_thickness = 2
-    inner_thickness = 1
+    if draw_border:
+        if pygame.display.get_surface() is not None and not getattr(
+            theme, "panel_border_converted", False
+        ):
+            theme.panel_border = theme.panel_border.convert_alpha()
+            theme.panel_border_converted = True
+        tile_size = PANEL_BORDER_TILE_SIZE
+        if base_rect.width >= tile_size * 2 and base_rect.height >= tile_size * 2:
+            _draw_nine_slice_panel(
+                screen,
+                base_rect,
+                theme.panel_border,
+                tile_size,
+                theme.colors["panel_inner"],
+            )
+            return
 
     if draw_border:
+        outer_thickness = 2
+        inner_thickness = 1
         pygame.draw.rect(
             screen, theme.colors["border_light"], base_rect, outer_thickness
         )
@@ -57,6 +253,42 @@ def draw_panel(
         pygame.draw.rect(screen, theme.colors["panel_inner"], fill_rect)
     else:
         pygame.draw.rect(screen, theme.colors["panel_inner"], base_rect)
+
+
+def render_text_with_shadow(
+    font: pygame.font.Font,
+    text: str,
+    color: Tuple[int, int, int],
+    shadow_color: Tuple[int, int, int, int],
+    shadow_offset: Tuple[int, int] = (1, 1),
+    antialias: bool = True,
+) -> pygame.Surface:
+    base_surface = font.render(text, antialias, color)
+    shadow_surface = font.render(text, antialias, shadow_color[:3])
+    shadow_surface.set_alpha(shadow_color[3])
+    width = max(base_surface.get_width(), shadow_surface.get_width() + shadow_offset[0])
+    height = max(
+        base_surface.get_height(), shadow_surface.get_height() + shadow_offset[1]
+    )
+    combined = pygame.Surface((width, height), pygame.SRCALPHA)
+    combined.blit(shadow_surface, shadow_offset)
+    combined.blit(base_surface, (0, 0))
+    return combined
+
+
+def draw_hud_backdrop(
+    screen: pygame.Surface,
+    rect: pygame.Rect | Tuple[int, int, int, int],
+    theme: Theme,
+    draw_border: bool = True,
+) -> pygame.Rect:
+    base_rect = pygame.Rect(rect)
+    backdrop = pygame.Surface(base_rect.size, pygame.SRCALPHA)
+    backdrop.fill(theme.colors["hud_backdrop"])
+    if draw_border:
+        pygame.draw.rect(backdrop, theme.colors["hud_border"], backdrop.get_rect(), 1)
+    screen.blit(backdrop, base_rect.topleft)
+    return base_rect
 
 
 def wrap_text_lines(
@@ -259,13 +491,23 @@ def draw_paginated_panel(
             text_y += line_height + line_spacing
 
     cue = "" if paged_state.is_last_page else "..."
-    cue_surf = font.render(cue, True, theme.colors["text_hint"])
+    cue_surf = render_text_with_shadow(
+        font=font,
+        text=cue,
+        color=theme.colors["text_hint"],
+        shadow_color=theme.colors["text_hint_shadow"],
+    )
     cue_x = base_rect.right - padding - cue_surf.get_width()
     cue_y = base_rect.bottom - padding - cue_surf.get_height()
     screen.blit(cue_surf, (cue_x, cue_y))
 
     if prompt_text:
-        prompt_surf = font.render(prompt_text, True, theme.colors["text_hint"])
+        prompt_surf = render_text_with_shadow(
+            font=font,
+            text=prompt_text,
+            color=theme.colors["text_hint"],
+            shadow_color=theme.colors["text_hint_shadow"],
+        )
         prompt_pos = prompt_surf.get_rect(
             center=(screen.get_width() // 2, base_rect.bottom + padding)
         )
@@ -374,6 +616,9 @@ def draw_selection_panel(
     for index, lines in enumerate(wrapped_options):
         is_selected = index == selected_index
         color = theme.colors["text_selected"] if is_selected else theme.colors["text"]
+        show_indicator = (pygame.time.get_ticks() // 400) % 2 == 0
+        option_top = current_y
+        option_height = block_sizes[index][1] if index < len(block_sizes) else 0
 
         for line_idx, line in enumerate(lines):
             text_surface = font.render(line, False, color)
@@ -386,9 +631,9 @@ def draw_selection_panel(
 
             screen.blit(text_surface, (text_x, current_y))
 
-            if is_selected and line_idx == 0:
+            if is_selected and line_idx == 0 and show_indicator:
                 arrow_x = text_x - theme.spacing(1)
-                arrow_y = current_y + text_surface.get_height() // 2
+                arrow_y = option_top + option_height // 2
                 points = [
                     (arrow_x, arrow_y),
                     (arrow_x - arrow_size, arrow_y - arrow_size // 2),
@@ -473,6 +718,87 @@ def draw_input_panel(
         template_color = theme.colors["text_hint"]
 
     visible_template = template or ""
+    has_template = len(visible_template) > 0
+
+    if has_template:
+        width_chars = (
+            visible_template
+            + current_text
+            + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        )
+        cell_width = max(font.size(char)[0] for char in width_chars) or 1
+        text_height = font.get_height()
+        total_cells = max(len(visible_template), len(current_text))
+
+        template_cells = len(visible_template)
+        measured_width = cell_width * max(template_cells, total_cells) + padding * 2
+        measured_height = text_height + padding * 2
+        if width is None:
+            resolved_width = measured_width
+        else:
+            resolved_width = max(width, measured_width)
+        resolved_height = measured_height
+
+        if x is None:
+            x = (screen.get_width() - resolved_width) // 2
+        if y is None:
+            y = (screen.get_height() - resolved_height) // 2
+
+        panel_rect = pygame.Rect(x, y, resolved_width, resolved_height)
+        draw_panel(screen, panel_rect, theme, draw_border=draw_border)
+
+        text_x = x + padding
+        text_y = y + padding
+        available_text_width = resolved_width - padding * 2
+        visible_cells = max(1, available_text_width // cell_width)
+        visible_cells = min(visible_cells, max(template_cells, total_cells))
+        start_index = 0
+        end_index = min(max(template_cells, total_cells), start_index + visible_cells)
+
+        cursor_index = (
+            len(current_text)
+            if show_cursor
+            and time_ms is not None
+            and len(current_text) < template_cells
+            else -1
+        )
+        for idx in range(start_index, end_index):
+            slot_x = text_x + (idx - start_index) * cell_width
+            if idx == cursor_index:
+                pass
+            elif idx >= len(current_text):
+                template_char = (
+                    visible_template[idx] if idx < len(visible_template) else " "
+                )
+                template_surface = font.render(template_char, True, template_color)
+                template_x = slot_x + (cell_width - template_surface.get_width()) // 2
+                screen.blit(template_surface, (template_x, text_y))
+            else:
+                typed_char = current_text[idx]
+                typed_surface = font.render(typed_char, True, text_color)
+                typed_x = slot_x + (cell_width - typed_surface.get_width()) // 2
+                screen.blit(typed_surface, (typed_x, text_y))
+
+        if show_cursor and time_ms is not None and len(current_text) < template_cells:
+            cursor_slot = min(len(current_text), start_index + visible_cells)
+            cursor_width = max(3, text_height // 8)
+            cursor_x = (
+                text_x
+                + (cursor_slot - start_index) * cell_width
+                + (cell_width - cursor_width) // 2
+            )
+            draw_blinking_cursor(
+                screen,
+                cursor_x,
+                text_y,
+                text_height,
+                theme,
+                time_ms,
+                interval_ms=cursor_interval_ms,
+            )
+
+        return panel_rect
+
     template_chars = list(visible_template)
     for idx, char in enumerate(current_text):
         if idx < len(template_chars):
@@ -499,11 +825,7 @@ def draw_input_panel(
     text_x = x + padding
     text_y = y + padding
 
-    if visible_template:
-        filled_text = "".join(template_chars[: len(current_text)])
-    else:
-        filled_text = current_text
-
+    filled_text = current_text
     filled_width = font.size(filled_text)[0]
 
     available_text_width = resolved_width - padding * 2

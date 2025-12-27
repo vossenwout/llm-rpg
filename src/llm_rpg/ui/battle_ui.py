@@ -11,17 +11,16 @@ from llm_rpg.ui.components import (
     measure_text_block,
     draw_paginated_panel,
     PagedTextState,
+    draw_hud_backdrop,
+    render_text_with_shadow,
 )
 
 
 HP_BAR_WIDTH = 180
 HP_BAR_HEIGHT = 16
 HP_LABEL_OFFSET = 12
-CARD_PADDING = 10
-CARD_LINE_HEIGHT = 22
 CARD_BORDER = 2
 DOTS_PERIOD = 0.25
-SPRITE_SCALE = 2.0
 SPRITE_STAGE_Y = 90
 MAX_SPRITE_SIZE = 128
 
@@ -40,7 +39,10 @@ def render_enemy_sprite(
         return
 
     width, height = sprite.get_size()
-    scale_factor = min(MAX_SPRITE_SIZE / max(width, height), 1.0)
+    max_dim = max(width, height)
+    if max_dim <= 0:
+        return
+    scale_factor = MAX_SPRITE_SIZE / max_dim
     scaled = (
         pygame.transform.scale_by(sprite, scale_factor)
         if scale_factor != 1.0
@@ -140,25 +142,35 @@ def render_event_ribbon(
     event: BattleEvent,
     card_rect: pygame.Rect,
 ) -> pygame.Rect:
-    padding = theme.spacing(0)
-    line_spacing = theme.spacing(1)
+    padding = max(2, theme.spacing(0.5))
+    ribbon_gap = max(2, theme.spacing(0.5))
     small_font = theme.fonts["small"]
     feasibility_pct = f"{int(event.damage_calculation_result.feasibility * 100)}%"
     potential_pct = f"{int(event.damage_calculation_result.potential_damage * 100)}%"
+    creativity_bonus_damage = event.damage_calculation_result.creativity_bonus_damage
     total_damage = event.damage_calculation_result.total_dmg
-    ribbon_width = card_rect.width
-    ribbon_height = small_font.get_linesize() + padding * 2
-    ribbon_x = card_rect.x
-    ribbon_y = card_rect.top - ribbon_height - line_spacing
-    ribbon_rect = pygame.Rect(ribbon_x, ribbon_y, ribbon_width, ribbon_height)
-    left_text = f"Feasibility {feasibility_pct}  Potential {potential_pct}"
-    left_surf = small_font.render(left_text, True, theme.colors["text_hint"])
+    left_text = (
+        f"Feasibility {feasibility_pct}  Potential {potential_pct}  "
+        f"Creativity {creativity_bonus_damage:+d}"
+    )
+    left_surf = render_text_with_shadow(
+        font=small_font,
+        text=left_text,
+        color=theme.colors["text_hint"],
+        shadow_color=theme.colors["text_hint_shadow"],
+    )
     value_surf = small_font.render(
         f"  DMG {total_damage}", True, theme.colors["text_selected"]
     )
     combined_width = left_surf.get_width() + value_surf.get_width()
-    x_cursor = ribbon_rect.x + (ribbon_width - combined_width) // 2
+    ribbon_width = combined_width + padding * 2
+    ribbon_height = small_font.get_linesize() + padding * 2
+    ribbon_x = card_rect.x + (card_rect.width - ribbon_width) // 2
+    ribbon_y = card_rect.top - ribbon_height - ribbon_gap
+    ribbon_rect = pygame.Rect(ribbon_x, ribbon_y, ribbon_width, ribbon_height)
+    x_cursor = ribbon_rect.x + padding
     y_cursor = ribbon_rect.y + padding
+    draw_hud_backdrop(screen=screen, rect=ribbon_rect, theme=theme, draw_border=False)
     screen.blit(left_surf, (x_cursor, y_cursor))
     x_cursor += left_surf.get_width()
     screen.blit(value_surf, (x_cursor, y_cursor))

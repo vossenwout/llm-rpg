@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from math import floor
 import random
 
-from llm_rpg.objects.character import StatTypes
+from llm_rpg.objects.character import StatTypes, Stats
 from llm_rpg.systems.battle.enemy import Enemy, EnemyArchetypes
 
 if TYPE_CHECKING:
@@ -90,7 +90,9 @@ def _get_leveling_attribute_probs(
         raise ValueError(f"Invalid enemy archetype: {archetype}")
 
 
-def scale_enemy(enemy: Enemy, battles_won: int, game_config: GameConfig):
+def scale_enemy(
+    enemy: Enemy, battles_won: int, game_config: GameConfig, debug: bool = False
+):
     enemy_level = _get_enemy_scaled_level(
         battles_won=battles_won,
         exp_growth_rate=game_config.enemy_level_scaling.exp_growth_rate,
@@ -112,3 +114,28 @@ def scale_enemy(enemy: Enemy, battles_won: int, game_config: GameConfig):
         enemy.level_up(
             stat_type=stat_type, amount=game_config.enemy_stats_level_up_amount
         )
+
+    if debug:
+        _debug_log(
+            "Enemy scaled",
+            [
+                f"name: {enemy.name}",
+                f"archetype: {enemy.archetype.value}",
+                f"battles won: {battles_won}",
+                f"level: {enemy.level}",
+                f"stats: {_format_stats(enemy.base_stats)}",
+            ],
+        )
+
+
+def _format_stats(stats: Stats) -> str:
+    return (
+        f"ATK {stats.attack} | DEF {stats.defense} | "
+        f"FOC {stats.focus} | HP {stats.max_hp}"
+    )
+
+
+def _debug_log(title: str, lines: list[str]) -> None:
+    print(f"\n[DEBUG] {title}")
+    for line in lines:
+        print(f"  {line}")

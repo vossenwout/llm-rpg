@@ -5,7 +5,11 @@ from llm_rpg.scenes.hero_creation.hero_creation_states.hero_creation_states impo
     HeroCreationStates,
 )
 from llm_rpg.scenes.state import State
-from llm_rpg.ui.components import draw_text_panel, draw_input_panel
+from llm_rpg.ui.components import (
+    draw_text_panel,
+    draw_input_panel,
+    draw_checkerboard_background,
+)
 
 from typing import TYPE_CHECKING
 
@@ -79,18 +83,19 @@ class HeroCreationChooseNameState(State):
                 self.scene.change_state(HeroCreationStates.CHOOSE_CLASS)
 
     def render(self, screen: pygame.Surface):
-        screen.fill(self.scene.game.theme.colors["background"])
+        draw_checkerboard_background(screen, self.scene.game.theme)
         spacing = self.scene.game.theme.spacing
 
         prompt_rect = draw_text_panel(
             screen=screen,
-            lines="Enter a name for your hero (max 10 characters):",
+            lines="Enter a name for your hero (max 10 characters)",
             font=self.scene.game.theme.fonts["small"],
             theme=self.scene.game.theme,
             max_width=screen.get_width() - spacing(4),
             align="left",
             auto_wrap=True,
             draw_border=True,
+            y=spacing(10),
         )
 
         input_box_rect = draw_input_panel(
@@ -98,13 +103,12 @@ class HeroCreationChooseNameState(State):
             current_text=self.current_name,
             font=self.scene.game.theme.fonts["small"],
             theme=self.scene.game.theme,
-            y=prompt_rect.bottom + spacing(1),
+            y=prompt_rect.bottom + spacing(3),
             width=spacing(14),
             padding=spacing(1.5),
-            template="**********",
+            template="··········",
             time_ms=pygame.time.get_ticks(),
-            show_cursor=False,
-            draw_border=False,
+            show_cursor=True,
         )
 
         if self.error_message:
@@ -117,13 +121,3 @@ class HeroCreationChooseNameState(State):
                 center=(screen.get_width() // 2, input_box_rect.bottom + spacing(1))
             )
             screen.blit(error_text, error_rect)
-
-        instruction_text = self.scene.game.theme.fonts["small"].render(
-            "Press ENTER to confirm",
-            True,
-            self.scene.game.theme.colors["text_hint"],
-        )
-        instruction_rect = instruction_text.get_rect(
-            center=(screen.get_width() // 2, screen.get_height() - spacing(2))
-        )
-        screen.blit(instruction_text, instruction_rect)
