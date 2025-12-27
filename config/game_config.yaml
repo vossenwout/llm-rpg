@@ -61,7 +61,7 @@ hero:
   base_hero_stats:
     attack: 5
     defense: 5
-    focus: 10
+    focus: 20
     max_hp: 5
   stats_level_up_amount: 5
   max_items: 3

@@ -23,12 +23,24 @@ class SpriteGenerator(ABC):
     def generate_sprite(self, enemy: Enemy) -> pygame.Surface: ...
 
 
+def _clean_sprite(sprite: Image.Image) -> Image.Image:
+    result = unfake.process_image_sync(sprite, transparent_background=True)
+    return result["image"]
+
+
+def _pil_to_surface(sprite: Image.Image) -> pygame.Surface:
+    rgba_sprite = sprite.convert("RGBA")
+    size: Tuple[int, int] = rgba_sprite.size
+    surface = pygame.image.frombuffer(rgba_sprite.tobytes(), size, "RGBA")
+    return surface.convert_alpha()
+
+
 class DummySpriteGenerator(SpriteGenerator):
     def __init__(self, latency_seconds: float = 0.0):
         self.latency_seconds = latency_seconds
         self._cache: dict[str, pygame.Surface] = {}
         self._sprites_dir = Path(__file__).parent / "dummy_sprites"
-        self._sprite_paths = list(self._sprites_dir.glob("*.png"))
+        self._sprite_paths = list(self._sprites_dir.glob("*devil_dog.png"))
 
     def generate_sprite(self, enemy: Enemy) -> pygame.Surface:
         if not self._sprite_paths:
@@ -43,7 +55,9 @@ class DummySpriteGenerator(SpriteGenerator):
         if self.latency_seconds > 0:
             time.sleep(self.latency_seconds)
 
-        surface = pygame.image.load(sprite_path.as_posix()).convert_alpha()
+        with Image.open(sprite_path) as raw_sprite:
+            cleaned_sprite = _clean_sprite(raw_sprite.convert("RGBA"))
+        surface = _pil_to_surface(cleaned_sprite)
         self._cache[cache_key] = surface
         return surface
 
@@ -88,16 +102,6 @@ class SDSpriteGenerator(SpriteGenerator):
         if torch.backends.mps.is_available():
             return "mps"
         return "cpu"
-
-    def _clean_sprite(self, sprite: Image.Image) -> Image.Image:
-        result = unfake.process_image_sync(sprite, transparent_background=True)
-        return result["image"]
-
-    def _pil_to_surface(self, sprite: Image.Image) -> pygame.Surface:
-        rgba_sprite = sprite.convert("RGBA")
-        size: Tuple[int, int] = rgba_sprite.size
-        surface = pygame.image.frombuffer(rgba_sprite.tobytes(), size, "RGBA")
-        return surface.convert_alpha()
 
     def _build_sprite_prompt(self, enemy: Enemy) -> str:
         attempts = 0
@@ -162,5 +166,5 @@ class SDSpriteGenerator(SpriteGenerator):
             width=self.inference_width,
             safety_checker=None,
         ).images[0]
-        sprite = self._clean_sprite(sprite)
-        return self._pil_to_surface(sprite)
+        sprite = _clean_sprite(sprite)
+        return _pil_to_surface(sprite)
