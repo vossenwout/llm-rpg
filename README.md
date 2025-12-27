@@ -42,8 +42,8 @@ LLM-RPG is intended to be a role-playing game that leverages large language mode
 You can get a Groq API key from [here](https://groq.com/). This gives you free tokens each day.
 
 4. Create `/models/sprite` dir then download and place the following models:
-- models/sprites/earthbound_lora.safetensors: [link](https://civitai.com/models/167491)
-- models/sprites/westernBeautiful_v10.safetensors [link](https://civitai.com/models/264807?modelVersionId=298593)
+- models/sprite/earthbound_lora.safetensors: [link](https://civitai.com/models/167491)
+- models/sprite/westernBeautiful_v10.safetensors [link](https://civitai.com/models/264807?modelVersionId=298593)
 - models/sprite/LCM_LoRA_Weights_SD15.safetensors: [link](https://civitai.com/models/195519?modelVersionId=424706)
 ## Usage
 
